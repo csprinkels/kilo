@@ -1,7 +1,8 @@
 // App shell: cache-first for same-origin pages/assets so the UI opens with zero signal.
 // Data JSON is fetched by the page itself (lib/data.ts) with its own localStorage fallback.
-const SHELL = "shell-v5";
-const PAGES = ["/", "/sources/", "/storms/", "/traffic/", "/weather/", "/quakes/", "/volcano/", "/tsunami/", "/report/", "/manifest.webmanifest", "/icon-192.png", "/hawaii-coast.json"];
+const SHELL = "shell-v6";
+const PAGES = ["/", "/sources/", "/storms/", "/traffic/", "/weather/", "/quakes/", "/volcano/", "/tsunami/", "/report/", "/manifest.webmanifest", "/icon-192.png", "/hawaii-coast.json",
+  "/icons/weather/clear-day.svg", "/icons/weather/clear-night.svg", "/icons/weather/partly-cloudy-day.svg", "/icons/weather/partly-cloudy-night.svg", "/icons/weather/overcast-day.svg", "/icons/weather/overcast-night.svg", "/icons/weather/overcast.svg", "/icons/weather/partly-cloudy-day-drizzle.svg", "/icons/weather/partly-cloudy-night-drizzle.svg", "/icons/weather/partly-cloudy-day-rain.svg", "/icons/weather/partly-cloudy-night-rain.svg", "/icons/weather/rain.svg", "/icons/weather/thunderstorms-day-rain.svg", "/icons/weather/thunderstorms-night-rain.svg", "/icons/weather/fog-day.svg", "/icons/weather/fog-night.svg", "/icons/weather/wind.svg", "/icons/weather/hurricane.svg", "/icons/weather/sunrise.svg", "/icons/weather/sunset.svg", "/icons/weather/raindrop.svg", "/icons/weather/humidity.svg", "/icons/weather/uv-index.svg", "/icons/topic/road.svg", "/icons/topic/quake.svg", "/icons/topic/volcano.svg", "/icons/topic/tsunami.svg", "/icons/topic/neighbors.svg", "/icons/topic/shelter.svg", "/icons/topic/school.svg", "/icons/topic/power.svg", "/icons/topic/alert.svg", "/icons/topic/storm.svg", "/icons/topic/air.svg"];
 
 // Precache the pages plus every /_next/static asset they reference, so a first-visit-then-offline reload still hydrates.
 async function precache() {

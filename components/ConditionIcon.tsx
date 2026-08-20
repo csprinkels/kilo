@@ -1,22 +1,29 @@
 "use client";
-import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSun, Moon, Sun, Wind, type LucideIcon } from "lucide-react";
 import { ICON_FOR } from "@/lib/summary";
 
-const ICONS: Record<string, LucideIcon> = { Sun, Moon, CloudSun, CloudMoon, Cloud, CloudDrizzle, CloudRain, CloudLightning, CloudFog, Wind };
-const TONE_CLASS: Record<string, string> = {
-  clear: "text-cond-clear", cloud: "text-cond-cloud", showers: "text-cond-showers", rain: "text-cond-rain",
-  storm: "text-cond-storm", fog: "text-cond-fog", windy: "text-cond-windy", night: "text-cond-night",
+/** Meteocons (MIT, Bas Milius) fill icons: code 0–10 × day/night → /public/icons/weather/*.svg */
+const FILE: Record<number, [day: string, night: string]> = {
+  0: ["clear-day", "clear-night"], 1: ["clear-day", "clear-night"],
+  2: ["partly-cloudy-day", "partly-cloudy-night"], 3: ["overcast-day", "overcast-night"], 4: ["overcast", "overcast"],
+  5: ["partly-cloudy-day-rain", "partly-cloudy-night-rain"], 6: ["rain", "rain"],
+  7: ["thunderstorms-day-rain", "thunderstorms-night-rain"], 8: ["fog-day", "fog-night"], 9: ["wind", "wind"], 10: ["hurricane", "hurricane"],
 };
+export const conditionIconSrc = (code: number, night = false) => `/icons/weather/${(FILE[code] ?? FILE[4])[night ? 1 : 0]}.svg`;
+
 export const toneVar = (code: number, night: boolean) => {
   const t = ICON_FOR[code]?.tone ?? "cloud";
   return `var(--cond-${night && (t === "clear" || t === "cloud") ? "night" : t})`;
 };
 
-/** Weather condition glyph: lucide line icon in the condition colour (icons only: colour never carries text). */
-export default function ConditionIcon({ code, night = false, size = 20, className = "" }: { code: number; night?: boolean; size?: number; className?: string }) {
-  const m = ICON_FOR[code] ?? ICON_FOR[4];
-  const Icon = ICONS[night ? m.night : m.day] ?? Cloud;
-  const tone = night && (m.tone === "clear" || m.tone === "cloud") ? "night" : m.tone;
-  const fill = Icon === Sun || Icon === Moon;
-  return <Icon aria-hidden className={`${TONE_CLASS[tone]} ${className}`} style={{ width: size, height: size }} strokeWidth={2} fill={fill ? "currentColor" : "none"} fillOpacity={fill ? 0.25 : 0} />;
+/** Illustrated weather icon. An <img> keeps gradient ids from colliding and lets the service worker cache it like any asset. */
+export default function ConditionIcon({ code, night = false, size = 24, className = "" }: { code: number; night?: boolean; size?: number; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={conditionIconSrc(code, night)} alt="" aria-hidden width={size} height={size} className={`inline-block shrink-0 ${className}`} style={{ width: size, height: size }} />;
+}
+
+export type Topic = "road" | "quake" | "volcano" | "tsunami" | "neighbors" | "shelter" | "school" | "power" | "alert" | "storm" | "air";
+/** Illustrated topic icon (bespoke set in /public/icons/topic). Always shown next to a word. */
+export function TopicIcon({ topic, size = 24, className = "" }: { topic: Topic; size?: number; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={`/icons/topic/${topic}.svg`} alt="" aria-hidden width={size} height={size} className={`inline-block shrink-0 ${className}`} style={{ width: size, height: size }} />;
 }
