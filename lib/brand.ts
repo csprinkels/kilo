@@ -1,6 +1,7 @@
 import type { Island, ItemType } from "./types";
 
-export const APP_NAME = "Hawaiʻi Status"; // placeholder: naming is open decision #2 in the plan
+export const APP_NAME = "Kilo";
+export const TAGLINE = "Hawaiʻi, at a glance"; // kilo: to watch, observe, forecast
 
 export const ISLAND_LABEL: Record<Island, string> = {
   hawaii: "Hawaiʻi Island",

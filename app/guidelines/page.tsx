@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { APP_NAME, okina } from "@/lib/brand";
+import { APP_NAME } from "@/lib/brand";
 
 const RULES: [string, string][] = [
   ["Call 911 first.", "If anyone is hurt or in danger, call 911 before posting here."],
@@ -17,7 +17,7 @@ export default function Guidelines() {
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20 pt-6 text-[16px] leading-relaxed text-ink-2">
       <Link href="/report/" className="inline-flex items-center gap-1 text-sm font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
       <h1 className="display mt-5 text-[36px] font-medium leading-[1] tracking-[-0.02em] text-ink">Community guidelines</h1>
-      <p className="mt-4">The neighbour reports on {okina(APP_NAME)} work because people keep them honest and boring. Seven rules:</p>
+      <p className="mt-4">The neighbour reports on {APP_NAME} work because people keep them honest and boring. Seven rules:</p>
       <ol className="mt-5 space-y-4">
         {RULES.map(([h, b], i) => (
           <li key={h} className="flex gap-3">

@@ -9,7 +9,7 @@ import { HDOT_URL, HIEMA_URL, HNL_TRAFFIC_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_
 import { districtFor } from "../lib/places.ts";
 import { reportToItem } from "../lib/reportRules.ts";
 
-export const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
+export const UA = "Kilo/0.1 (kilohawaii.app; aloha@csprinkels.com)";
 const BROWSER_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const FETCH_TIMEOUT_MS = 8_000;
 const MAX_ITEMS_PER_SNAPSHOT = 200;

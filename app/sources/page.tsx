@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { APP_NAME, okina } from "@/lib/brand";
+import { APP_NAME } from "@/lib/brand";
 
 const SOURCES = [
   { name: "National Weather Service — Honolulu", what: "Watches, warnings and advisories for every Hawaiʻi zone", url: "https://www.weather.gov/hfo/" },
@@ -18,7 +18,8 @@ export default function Sources() {
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20 pt-6 text-[16px] leading-relaxed text-ink-2">
       <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
-      <h1 className="display mt-5 text-[40px] font-medium leading-[1] tracking-[-0.02em] text-ink">About {okina(APP_NAME)}</h1>
+      <h1 className="display mt-5 text-[40px] font-medium leading-[1] tracking-[-0.02em] text-ink">About {APP_NAME}</h1>
+      <p className="mt-2 text-[14px] text-muted">Kilo (Hawaiian): to watch, observe, forecast — as in kilo makani, a weather forecaster.</p>
       <p className="mt-5 text-[18px] leading-relaxed text-ink">
         One page that pulls official Hawaiʻi emergency and community information into a single list, sorted by what matters most — and keeps the last copy on your phone so it still opens when the signal is gone.
       </p>

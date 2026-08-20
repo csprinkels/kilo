@@ -1,4 +1,6 @@
-# Hawaiʻi Status (working title)
+# Kilo — Hawaiʻi, at a glance
+
+*Kilo* (Hawaiian): to watch, observe, forecast.
 
 Official Hawaiʻi alerts, shelters, road closures and county notices in one offline-capable page. Read-only, no account, no ads. Plan and research: `~/.claude/plans/so-i-had-this-twinkling-crab.md`.
 

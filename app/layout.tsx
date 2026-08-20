@@ -2,18 +2,18 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { APP_NAME } from "@/lib/brand";
+import { APP_NAME, TAGLINE } from "@/lib/brand";
 
 // Self-hosted by next/font at build time, so the offline shell carries them too.
 const display = Fraunces({ subsets: ["latin"], variable: "--font-display", axes: ["opsz", "SOFT"], display: "swap" });
 const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: "Official Hawaiʻi alerts, shelters, road closures and county notices in one place. Works offline.",
+  title: `${APP_NAME} — ${TAGLINE}`,
+  description: "Official Hawaiʻi alerts, storms, shelters, roads, weather, quakes, volcano and neighbour reports in one place. Works offline.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: APP_NAME },
-  icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
+  icons: { icon: [{ url: "/favicon.png", sizes: "64x64" }, { url: "/icon.svg", type: "image/svg+xml" }], apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

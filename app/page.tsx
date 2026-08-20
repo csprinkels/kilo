@@ -9,7 +9,7 @@ import { useFeed, useStoredIsland } from "@/lib/data";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
 import SectionNav from "@/components/SectionNav";
-import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtDateTime, fmtTime, okina } from "@/lib/brand";
+import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtDateTime, fmtTime, okina } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
 
@@ -62,7 +62,7 @@ export default function Home() {
       {/* Masthead */}
       <header className="pt-6">
         <div className="flex items-baseline justify-between">
-          <span className="display text-[17px] font-semibold tracking-tight text-ink">{okina(APP_NAME)}</span>
+          <span className="display text-[17px] font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {okina(TAGLINE)}</span></span>
           <Link href="/sources/" className="text-xs font-medium text-muted underline-offset-4 hover:underline">Sources &amp; about</Link>
         </div>
         <SectionNav />
