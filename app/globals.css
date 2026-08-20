@@ -103,7 +103,7 @@
 @utility btn { @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-label font-medium text-ink-2 num; }
 @utility btn-primary { @apply border-transparent bg-brand text-brand-ink; }
 @utility chip-active { @apply border-transparent bg-ink text-bg; }
-@utility h2-display { @apply text-h2 font-semibold tracking-[-0.02em] text-ink; }
+@utility h2-display { @apply text-[28px] font-bold leading-tight tracking-[-0.02em] text-ink; }
 
 html { background: var(--bg); }
 body {
@@ -112,18 +112,6 @@ body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: "ss01", "cv11";
-}
-
-/* Subtle paper grain so large flat areas don't read as "default". */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.035;
-  background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0);
-  background-size: 3px 3px;
 }
 
 .display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.03em; }

@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, CarFront, CircleCheck, Clock, Dog, HelpCircle, Siren, TrafficCone, Waves, ZapOff, type LucideIcon } from "lucide-react";
+import { CarFront, CircleCheck, Clock, Dog, HelpCircle, Siren, TrafficCone, Waves, ZapOff, type LucideIcon } from "lucide-react";
 import SectionNav from "@/components/SectionNav";
+import TopBar from "@/components/TopBar";
 import Banner from "@/components/Banner";
 import { HAWAII_DISTRICTS, districtFor } from "@/lib/places";
 import { HOLD_COPY, LOC_MAX, REPORT_TYPES, REPORT_TYPE_KEYS, TEXT_MAX, holdReason, validateReport, type ReportType } from "@/lib/reportRules";
@@ -51,11 +52,11 @@ export default function ReportPage() {
   };
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 pt-s5 md:pb-20">
-      <Link href="/" className="inline-flex items-center gap-1 text-label font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
+      <TopBar />
       <SectionNav />
-      <h1 className="display mt-s4 text-display text-ink">Report something</h1>
-      <p className="mt-s2 text-lead text-ink-2">Crash, signal out, flooded road, outage, lost pet. Shown to neighbours as unverified until others confirm.</p>
+      <h1 className="h2-display mt-s6">Report something</h1>
+      <p className="mt-s2 text-body leading-snug text-ink-2">Crash, signal out, flooded road, outage, lost pet. Shown to neighbours as unverified until others confirm.</p>
       <Banner sev={4} icon={Siren} title="Hurt or in danger? Call 911 first.">This is for letting neighbours know, not for getting help.</Banner>
 
       {result?.ok ? (

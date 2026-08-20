@@ -1,29 +1,66 @@
 "use client";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { CircleCheck, ExternalLink, Gauge, Megaphone, Radio, Siren, TriangleAlert } from "lucide-react";
+import {
+  Activity, CarFront, ChevronDown, ChevronRight, CircleCheck, CloudRainWind, ExternalLink, Gauge, Megaphone, Mountain,
+  Radio, School, Siren, Tent, TrafficCone, TriangleAlert, Users, Waves, Wind, ZapOff, type LucideIcon,
+} from "lucide-react";
 import ItemRow, { ICON, SEV_TEXT } from "@/components/ItemRow";
 import Banner from "@/components/Banner";
-import StatusLine from "@/components/StatusLine";
-import type { DigestItem, Item } from "@/lib/types";
-import { ISLANDS, hashOf } from "@/lib/types";
-import { useFeed, useStoredIsland } from "@/lib/data";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
 import SectionNav from "@/components/SectionNav";
-import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtTime } from "@/lib/brand";
+import TopBar from "@/components/TopBar";
+import ConditionIcon from "@/components/ConditionIcon";
+import type { DigestItem, Island, Item, ItemType } from "@/lib/types";
+import { ISLANDS, hashOf } from "@/lib/types";
+import type { StormsSnapshot } from "@/lib/storm";
+import { ISLAND_POINTS, outlookFor } from "@/lib/storm";
+import type { Weather } from "@/lib/pages";
+import { useFeed, useJson, useStoredIsland } from "@/lib/data";
+import { condWord, summarize as weatherSentence } from "@/lib/summary";
+import { COUNTY_ALERTS, ISLAND_LABEL, ago, fmtDayTime, fmtTime } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
-
+/** Warnings that earn a full row on Now; everything else folds into a one-line group. */
+const ALERT_TYPES = new Set<ItemType>(["advisory", "storm", "tsunami", "evac", "hazard", "outage"]);
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
   ...d, source: "digest", tier: "official", islands: [], lastConfirmedAt: at, hash: "",
 });
 
+type Group = { key: string; label: string; icon: LucideIcon; items: Item[]; summary: string; href?: string };
+const plural = (c: number, one: string, many = `${one}s`) => `${c} ${c === 1 ? one : many}`;
+
+function groupItems(items: Item[], island: Island): Group[] {
+  const of = (...t: ItemType[]) => items.filter((i) => i.tier !== "community" && t.includes(i.type));
+  const roads = of("road_closure"), lanes = roads.filter((i) => i.source === "hdot"), closed = roads.length - lanes.length;
+  const shelters = of("shelter"), schools = of("school"), traffic = of("traffic"), signals = traffic.filter((i) => i.status === "signal");
+  const volcano = of("volcano"), quakes = of("quake"), notices = of("notice"), tsunami = of("tsunami"), hazards = of("hazard", "outage");
+  const weather = of("advisory", "storm").filter((i) => i.sev <= 2);
+  const community = items.filter((i) => i.tier === "community");
+  const firstName = (i?: Item) => i?.title.replace(/^Shelter \w+: /, "") ?? "";
+  const groups: Group[] = [
+    { key: "weather", label: "Weather advisories", icon: CloudRainWind, items: weather, summary: weather.map((i) => i.title).join(" · "), href: "/weather/" },
+    { key: "tsunami", label: "Tsunami", icon: Waves, items: tsunami, summary: tsunami[0]?.sev >= 3 ? tsunami[0].title : "No threat · information statement", href: "/tsunami/" },
+    { key: "shelters", label: "Shelters", icon: Tent, items: shelters, summary: shelters.length ? `${plural(shelters.length, "open", "open")} · ${firstName(shelters[0])}` : "" },
+    { key: "roads", label: "Roads", icon: TrafficCone, items: roads, summary: [closed ? plural(closed, "closure") : "", lanes.length ? plural(lanes.length, "lane closure") : ""].filter(Boolean).join(", ") },
+    { key: "traffic", label: "Traffic", icon: CarFront, items: traffic, summary: [traffic.length - signals.length ? plural(traffic.length - signals.length, "incident") : "", signals.length ? plural(signals.length, "signal out", "signals out") : ""].filter(Boolean).join(", "), href: "/traffic/" },
+    { key: "schools", label: "Schools", icon: School, items: schools, summary: plural(schools.length, "closed", "closed") },
+    { key: "hazards", label: "Hazards & outages", icon: ZapOff, items: hazards, summary: hazards[0]?.title ?? "" },
+    { key: "volcano", label: "Volcano", icon: Mountain, items: volcano, summary: volcano.map((v) => v.title.replace(/\s*\/.*$/, "").replace(/:\s*(\w+)/, (_, l: string) => `: ${l[0]}${l.slice(1).toLowerCase()}`)).join(" · "), href: "/volcano/" },
+    { key: "quakes", label: "Earthquakes", icon: Activity, items: quakes, summary: `${plural(quakes.length, "quake")} this week`, href: "/quakes/" },
+    { key: "notices", label: "Notices", icon: Megaphone, items: notices, summary: `${notices.length} from the state and county` },
+  ].filter((g) => g.items.length);
+  if (island !== "state") groups.push({ key: "community", label: "Neighbours", icon: Users, items: community, summary: community.length ? plural(community.length, "unverified report") : "Nothing reported", href: "/report/" });
+  return groups;
+}
+
 export default function Home() {
   const [island, setIsland] = useStoredIsland();
   const { ess, snap, digest, mode } = useFeed(island);
+  const stormsSnap = useJson<StormsSnapshot>("v1/storms.json");
   const now = ess?.fetchedAt || snap?.fetchedAt || 0;
   const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
   // Deep link from a notification: /?island=hawaii&item=<key> (read once; static export has no server-side params)
@@ -42,159 +79,114 @@ export default function Home() {
     }
     return base;
   }, [snap, digest, island]);
-  const sections = useMemo(() => {
-    const by: Record<number, Item[]> = { 4: [], 3: [], 2: [], 1: [] };
-    for (const i of items) if (i.tier !== "community") by[i.sev].push(i);
-    return ([4, 3, 2, 1] as const).filter((s) => by[s].length).map((s) => ({ sev: s, items: by[s] }));
-  }, [items]);
-  const community = useMemo(() => items.filter((i) => i.tier === "community"), [items]);
-  const situation = useMemo(() => summarize(items), [items]);
+  const alerts = useMemo(() => items.filter((i) => i.tier !== "community" && (i.sev >= 4 || (i.sev === 3 && ALERT_TYPES.has(i.type)))), [items]);
+  const groups = useMemo(() => groupItems(items, island), [items, island]);
+  const clauses = useMemo(() => summarize(items), [items]);
 
   const offline = !!ess?.offline && !!snap?.offline;
   const stale = gen > 0 && now - gen > STALE_MS;
   const slow = mode === "low" && !offline;
   const watch = ess?.data?.mode === "watch";
-  const [srcOk, srcTotal] = ess?.data?.ok ?? [0, 0];
-  const topSev = items[0]?.sev ?? 0;
+  const loaded = !!(snap?.data || ess?.data);
   // Headlines the essentials file knows about but the (older or missing) snapshot doesn't: show titles now, details when the link allows.
   const headlinesOnly = ess?.data && ess.data.gen > (snap?.data?.gen ?? 0) ? ess.data.alerts.filter((a) => !items.some((i) => i.key && hashOf(i.key) === a.h)) : [];
 
+  const storms = stormsSnap?.data?.storms ?? [];
+  const place = island === "state" ? ISLAND_POINTS.hawaii : ISLAND_POINTS[island];
+  const approaching = storms.map((s) => ({ s, o: outlookFor(s, place) })).filter((x) => !x.o.movingAway).sort((a, b) => a.o.closest.distNm - b.o.closest.distNm)[0];
+
+  // The one thing to know, Acme's "Right Now": the worst active warning, else an approaching storm, else the counts.
+  const top = alerts[0];
+  const rightNow = !loaded ? null
+    : top?.sev === 4 ? { icon: ICON[top.type] ?? TriangleAlert, tone: "var(--sev4)", head: top.title, sub: clauses.slice(0, 3).join("\u00a0· ") }
+    : approaching ? { icon: Wind, tone: "var(--cond-storm)", head: `${approaching.s.name} approaching`, sub: [`Closest ${fmtDayTime(approaching.o.closest.at)}`, ...clauses.slice(0, 2)].join("\u00a0· ") }
+    : top ? { icon: ICON[top.type] ?? TriangleAlert, tone: "var(--sev3)", head: top.title, sub: clauses.slice(0, 3).join("\u00a0· ") }
+    : clauses.length ? { icon: CircleCheck, tone: "var(--cond-windy)", head: "No warnings", sub: clauses.slice(0, 3).join("\u00a0· ") }
+    : { icon: CircleCheck, tone: "var(--cond-windy)", head: "All quiet", sub: "No alerts, closures or shelters from the sources we track." };
+
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
-      {/* Masthead */}
-      <header className="pt-6">
-        <div className="flex items-baseline justify-between">
-          <span className="display text-body font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {TAGLINE}</span></span>
-          <Link href="/sources/" className="text-micro font-medium text-muted underline-offset-4 hover:underline">Sources &amp; about</Link>
+      <TopBar island={island} onIsland={setIsland} home />
+      <SectionNav />
+
+      {offline && <Banner sev={4} icon={Radio} title="No connection">Showing the copy saved {fmtTime(gen)}. For emergencies call 911; Civil Defense messages air on AM/FM radio.</Banner>}
+      {!offline && slow && <Banner sev={2} icon={Gauge} title="Weak connection">Showing saved details plus the newest headlines. Alerts you turned on still arrive in full.</Banner>}
+      {!offline && !slow && stale && <Banner sev={2} icon={TriangleAlert} title={`Updates paused for ${ago(gen, now)}`}>Treat everything below as possibly out of date.</Banner>}
+      {watch && <Banner sev={4} icon={Siren} title="Hurricane, tropical storm or tsunami watch/warning in effect">Follow your county&apos;s alerts.</Banner>}
+
+      {/* Right now */}
+      <h2 className="h2-display mt-s6">Right now</h2>
+      {rightNow ? (
+        <div className="mt-s3 flex items-start gap-s4">
+          <rightNow.icon className="mt-1 size-14 shrink-0" strokeWidth={1.5} style={{ color: rightNow.tone }} aria-hidden />
+          <div className="min-w-0">
+            <p className="text-h2 font-semibold leading-tight tracking-[-0.01em]">{rightNow.head}</p>
+            <p className="mt-1 text-body leading-snug text-ink-2">{rightNow.sub}</p>
+            <p className="mt-1.5 text-label text-muted num">{gen ? <>Updated {fmtTime(gen)} · {ago(gen, now)}</> : "Loading…"}</p>
+          </div>
         </div>
-        <SectionNav />
-        <h1 className="display mt-4 text-display font-medium leading-[0.95] tracking-[-0.02em] text-ink sm:text-[56px]">
-          {ISLAND_LABEL[island].split(" · ")[0]}
-          {ISLAND_LABEL[island].includes(" · ") && (
-            <span className="block text-h2 font-normal tracking-normal text-ink-2 sm:text-[26px]">
-              {ISLAND_LABEL[island].split(" · ").slice(1).join(" · ")}
-            </span>
-          )}
-        </h1>
+      ) : !offline && <Skeleton />}
 
-        <nav aria-label="Island" className="no-scrollbar -mx-5 mt-5 flex gap-2 overflow-x-auto px-5">
-          {ISLANDS.map((i) => {
-            const on = i === island;
-            return (
-              <button
-                key={i}
-                onClick={() => setIsland(i)}
-                aria-pressed={on}
-                className={`shrink-0 rounded-full border px-4 py-2 text-label font-medium transition-colors ${
-                  on ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-ink-2"
-                }`}
-              >
-                {ISLAND_LABEL[i].split(" · ")[0]}
-              </button>
-            );
-          })}
-        </nav>
-      </header>
+      {island !== "state" && storms.length > 0 && <StormCard storms={storms} place={place} />}
 
-      <StatusLine gen={gen} checkedAt={now} offline={offline} source={slow ? "slow connection" : undefined} right={srcTotal > 0 ? `${srcOk}/${srcTotal} sources` : undefined} />
-
-      {/* Banners */}
-      {offline && (
-        <Banner sev={4} icon={Radio} title="No connection">Showing the last copy saved on this phone. For emergencies call 911; Civil Defense messages air on AM/FM radio.</Banner>
-      )}
-      {!offline && slow && (
-        <Banner sev={2} icon={Gauge} title="Weak connection">Showing saved details plus the newest headlines; full text loads when the link improves. Alerts you turned on still arrive in full.</Banner>
-      )}
-      {!offline && !slow && stale && (
-        <Banner sev={2} icon={TriangleAlert} title={`Feed updates paused for ${ago(gen, now)}`}>Treat everything below as possibly out of date.</Banner>
-      )}
-      {watch && (
-        <Banner sev={4} icon={Siren} title="Hurricane, tropical storm or tsunami watch/warning in effect">Follow your county&apos;s alerts. Details are in the items below and on the Storms page.</Banner>
-      )}
-
-      {island !== "state" && <StormCard island={island} />}
-
-      {/* Headlines the full snapshot hasn't caught up with (weak link) */}
-      {headlinesOnly.length > 0 && (
-        <section className="card mt-s4 border-l-[3px] border-l-sev2" aria-label="Latest headlines">
-          <p className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Newest headlines · {ess?.data && fmtTime(ess.data.gen)} HST</p>
-          <ul className="mt-2 space-y-1.5">
+      {/* Warnings + headlines the snapshot hasn't caught up with */}
+      {(alerts.length > 0 || headlinesOnly.length > 0) && (
+        <section className="mt-10" aria-label="Alerts">
+          <h2 className="h2-display">Alerts</h2>
+          <ul className="mt-s2 divide-y divide-line">
             {headlinesOnly.map((a) => {
               const Icon = ICON[a.type] ?? Megaphone;
-              return <li key={a.h} className="flex items-start gap-2 text-body leading-snug"><Icon className={`mt-0.5 size-4 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}</span></li>;
+              return <li key={a.h} className="flex items-start gap-s3 py-s3 text-body leading-snug"><Icon className={`mt-0.5 size-5 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}<span className="block text-label text-muted">Title only until the connection improves</span></span></li>;
+            })}
+            {alerts.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
+          </ul>
+        </section>
+      )}
+
+      {/* Everything else: one line per kind, tap to open */}
+      {loaded && (
+        <section className="mt-10" aria-label="Around the island">
+          <h2 className="h2-display">{island === "state" ? "Around the state" : `Around ${ISLAND_LABEL[island].split(" · ")[0]}`}</h2>
+          <ul className="mt-s2 divide-y divide-line">
+            {island !== "state" && mode !== "low" && !offline && <WeatherRow island={island} />}
+            {groups.map((g) => {
+              const hasFocus = !!focusKey && g.items.some((i) => i.key === focusKey);
+              return (
+                <li key={g.key}>
+                  <details className="group" open={hasFocus || undefined}>
+                    <summary className="flex min-h-14 cursor-pointer list-none items-center gap-s3 py-s2 [&::-webkit-details-marker]:hidden">
+                      <g.icon className="size-6 shrink-0 text-ink-2" strokeWidth={1.75} aria-hidden />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-body font-medium">{g.label}</span>
+                        {g.summary && <span className="block truncate text-label text-muted">{g.summary}</span>}
+                      </span>
+                      <ChevronDown className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+                    </summary>
+                    <div className="pb-s3 pl-9">
+                      {g.items.length > 0 && <ul className="divide-y divide-line border-t border-line">{g.items.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} compact />)}</ul>}
+                      {g.key === "community" && g.items.length === 0 && <p className="py-s2 text-label text-muted">Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
+                      {g.href && <Link href={g.href} className="mt-s2 inline-flex items-center gap-1 text-label font-medium text-brand">{g.key === "community" ? "Report something" : `Open ${g.label.toLowerCase()}`} <ChevronRight className="size-4" /></Link>}
+                    </div>
+                  </details>
+                </li>
+              );
             })}
           </ul>
-          <p className="mt-2 text-micro text-muted">Titles only for now; details arrive with the next successful update.</p>
-        </section>
-      )}
-
-      {/* Situation summary */}
-      {(snap?.data || ess?.data) && (
-        <section className="mt-5" aria-label="Situation summary">
-          {items.length === 0 && headlinesOnly.length === 0 ? (
-            <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-4">
-              <CircleCheck className="size-6 shrink-0 text-emerald-600" />
-              <div>
-                <p className="font-semibold">All quiet on {ISLAND_LABEL[island].split(" · ")[0]}</p>
-                <p className="text-label text-muted">No active alerts, closures or shelters from the sources we track.</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-lead text-ink-2">
-              <span className={`font-semibold ${SEV_TEXT[topSev]}`}>{topSev >= 4 ? "Life-safety alerts active. " : topSev === 3 ? "Warnings in effect. " : ""}</span>
-              {situation.map((s, i) => (
-                <span key={s}>{i > 0 && <span className="mx-1.5 text-muted">·</span>}{s}</span>
-              ))}
-            </p>
-          )}
-        </section>
-      )}
-      {!snap?.data && !ess?.data && !offline && <Skeleton />}
-
-      {/* Items */}
-      {sections.map(({ sev, items }) => (
-        <section key={sev} className="mt-s6">
-          <h2 className="flex items-baseline gap-s2 border-b border-line pb-s2">
-            <span className={`inline-block size-2.5 shrink-0 self-center rounded-full ${{ 4: "bg-sev4", 3: "bg-sev3", 2: "bg-sev2", 1: "bg-sev1" }[sev]}`} aria-hidden />
-            <span className="h2-display">{SEV_SECTION[sev]}</span>
-            <span className="text-label text-muted num">{items.length}</span>
-          </h2>
-          <ul className="divide-y divide-line">
-            {items.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-          </ul>
-        </section>
-      ))}
-
-      {/* Neighbour reports: always below official items, never interleaved */}
-      {(community.length > 0 || island !== "state") && (
-        <section className="mt-s6">
-          <h2 className="flex items-baseline gap-s2 border-b border-line pb-s2">
-            <span className="h2-display">Neighbour reports</span>
-            <span className="text-label text-muted num">{community.length}</span>
-            <Link href="/report/" className="ml-auto text-label font-medium text-brand">Report something</Link>
-          </h2>
-          {community.length ? <ul className="divide-y divide-line">{community.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>
-            : <p className="py-3 text-label text-muted">Nothing from neighbours right now. Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
         </section>
       )}
 
       {island !== "state" && <AlertsCard island={island} />}
 
-      {/* County alerts */}
       {island !== "state" && (
-        <section className="mt-10 rounded-card bg-surface-2 p-5">
-          <p className="display text-lead font-semibold">Get your county&apos;s own alerts</p>
-          <p className="mt-1 text-label text-ink-2">
-            This page collects official information; it doesn&apos;t replace the county&apos;s emergency messages. {COUNTY_ALERTS[island].label}:
-          </p>
+        <section className="mt-s4 card">
+          <p className="text-body font-semibold">Get your county&apos;s own alerts</p>
+          <p className="mt-1 text-label text-ink-2">Kilo collects official information; it doesn&apos;t replace the county&apos;s emergency messages.</p>
           <p className="mt-2 text-body font-semibold">{COUNTY_ALERTS[island].how}</p>
-          <a className="mt-3 inline-flex items-center gap-1 text-label font-medium text-brand underline-offset-4 hover:underline" href={COUNTY_ALERTS[island].url} target="_blank" rel="noreferrer">
-            Sign-up page <ExternalLink className="size-3.5" />
-          </a>
+          <a className="mt-2 inline-flex items-center gap-1 text-label font-medium text-brand" href={COUNTY_ALERTS[island].url} target="_blank" rel="noreferrer">{COUNTY_ALERTS[island].label} <ExternalLink className="size-3.5" /></a>
         </section>
       )}
 
-      <footer className="mt-8 text-center text-micro leading-relaxed text-muted">
+      <footer className="mt-10 text-center text-micro leading-relaxed text-muted">
         Compiled from official sources every two minutes. Information only — not an emergency service.
         <br />Free, no ads, no account. <Link className="underline underline-offset-4" href="/sources/">How this works</Link>
       </footer>
@@ -202,36 +194,50 @@ export default function Home() {
   );
 }
 
-/** "1 shelter open · 19 road closures · 2 schools closed · Kīlauea: Advisory" */
+/** One line of weather for the island's first town; the Weather page has the rest. */
+function WeatherRow({ island }: { island: Exclude<Island, "state"> }) {
+  const w = useJson<Weather>(`v1/${island}/weather.json`);
+  const town = w?.data?.towns[0];
+  if (!town?.hourly) return null;
+  const h = town.hourly;
+  const temp = town.obs?.f ?? h.t[0];
+  return (
+    <li>
+      <Link href="/weather/" className="flex min-h-14 items-center gap-s3 py-s2">
+        <ConditionIcon code={h.c[0]} night={!!h.n[0]} size={24} />
+        <span className="min-w-0 flex-1">
+          <span className="block text-body font-medium num">{town.name} {temp != null ? `${temp}°` : ""} <span className="font-normal text-ink-2">{condWord(h.c[0])}</span></span>
+          <span className="block truncate text-label text-muted">{weatherSentence(h)}</span>
+        </span>
+        <ChevronRight className="size-5 shrink-0 text-muted" aria-hidden />
+      </Link>
+    </li>
+  );
+}
+
+/** "1 shelter open · 19 road closures · 2 schools closed · Kīlauea: Advisory" — most urgent first. */
 function summarize(items: Item[]): string[] {
   const n = (f: (i: Item) => boolean) => items.filter(f).length;
-  const plural = (c: number, one: string, many: string) => `${c} ${c === 1 ? one : many}`;
   const out: string[] = [];
-  const evac = n((i) => i.type === "evac"); if (evac) out.push(plural(evac, "evacuation order", "evacuation orders"));
-  const weather = n((i) => i.type === "advisory" || i.type === "storm"); if (weather) out.push(plural(weather, "weather alert", "weather alerts"));
-  const tsu = n((i) => i.type === "tsunami"); if (tsu) out.push(plural(tsu, "tsunami bulletin", "tsunami bulletins"));
+  const evac = n((i) => i.type === "evac"); if (evac) out.push(plural(evac, "evacuation order"));
+  const tsu = n((i) => i.type === "tsunami" && i.sev >= 3); if (tsu) out.push(plural(tsu, "tsunami alert"));
+  const weather = n((i) => i.type === "advisory" || i.type === "storm"); if (weather) out.push(plural(weather, "weather alert"));
   const shelters = n((i) => i.type === "shelter"); if (shelters) out.push(plural(shelters, "shelter open", "shelters open"));
-  const roads = n((i) => i.type === "road_closure" && !i.source.startsWith("hdot")); if (roads) out.push(plural(roads, "road closure", "road closures"));
-  const lanes = n((i) => i.source === "hdot"); if (lanes) out.push(plural(lanes, "highway lane closure", "highway lane closures"));
+  const roads = n((i) => i.type === "road_closure" && !i.source.startsWith("hdot")); if (roads) out.push(plural(roads, "road closed", "roads closed"));
   const schools = n((i) => i.type === "school"); if (schools) out.push(plural(schools, "school closed", "schools closed"));
-  const hazards = n((i) => i.type === "hazard"); if (hazards) out.push(plural(hazards, "hazard", "hazards"));
-  const signals = n((i) => i.type === "traffic" && i.status === "signal"); if (signals) out.push(plural(signals, "traffic signal problem", "traffic signal problems"));
-  const traffic = n((i) => i.type === "traffic" && i.status !== "signal"); if (traffic) out.push(plural(traffic, "traffic incident", "traffic incidents"));
+  const hazards = n((i) => i.type === "hazard"); if (hazards) out.push(plural(hazards, "hazard"));
+  const traffic = n((i) => i.type === "traffic"); if (traffic) out.push(plural(traffic, "traffic incident"));
   for (const v of items.filter((i) => i.type === "volcano")) out.push(v.title.replace(/\s*\/.*$/, "").replace(/:\s*(\w+)/, (_, l: string) => `: ${l[0]}${l.slice(1).toLowerCase()}`));
-  const quakes = n((i) => i.type === "quake"); if (quakes) out.push(plural(quakes, "earthquake this week", "earthquakes this week"));
-  const notices = n((i) => i.type === "notice"); if (notices) out.push(plural(notices, "state notice", "state notices"));
+  const lanes = n((i) => i.source === "hdot"); if (lanes) out.push(plural(lanes, "lane closure"));
+  const quakes = n((i) => i.type === "quake"); if (quakes) out.push(plural(quakes, "quake this week", "quakes this week"));
   return out;
 }
 
 function Skeleton() {
   return (
-    <div className="mt-6 space-y-4" aria-hidden>
-      {[0, 1, 2].map((k) => (
-        <div key={k} className="flex gap-3">
-          <div className="size-9 rounded-full bg-surface-2" />
-          <div className="flex-1 space-y-2 pt-1"><div className="h-3 w-1/3 rounded bg-surface-2" /><div className="h-4 w-3/4 rounded bg-surface-2" /></div>
-        </div>
-      ))}
+    <div className="mt-s3 flex gap-s4" aria-hidden>
+      <div className="size-14 rounded-full bg-surface-2" />
+      <div className="flex-1 space-y-2 pt-1"><div className="h-6 w-2/3 rounded bg-surface-2" /><div className="h-4 w-full rounded bg-surface-2" /><div className="h-3 w-1/3 rounded bg-surface-2" /></div>
     </div>
   );
 }

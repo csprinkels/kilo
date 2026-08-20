@@ -1,5 +1,6 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import TopBar from "@/components/TopBar";
+import SectionNav from "@/components/SectionNav";
+
 import { APP_NAME } from "@/lib/brand";
 
 const RULES: [string, string][] = [
@@ -14,9 +15,10 @@ const RULES: [string, string][] = [
 
 export default function Guidelines() {
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 pt-s5 md:pb-20 text-body leading-relaxed text-ink-2">
-      <Link href="/report/" className="inline-flex items-center gap-1 text-label font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
-      <h1 className="display mt-s4 text-display text-ink">Community guidelines</h1>
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20 text-body leading-relaxed text-ink-2">
+      <TopBar />
+      <SectionNav />
+      <h1 className="h2-display mt-s6">Community guidelines</h1>
       <p className="mt-4">The neighbour reports on {APP_NAME} work because people keep them honest and boring. Seven rules:</p>
       <ol className="mt-5 space-y-4">
         {RULES.map(([h, b], i) => (
