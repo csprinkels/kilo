@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { ISLANDS } from "../lib/types.ts";
 import type { Quakes, Tsunami, Volcano, Weather } from "../lib/pages.ts";
 import { BUOYS, TOWNS } from "../lib/towns.ts";
-import { compactQuakes, parseAirNow, parseCap, parseForecast, parseHans, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf } from "./parsers/pages.ts";
+import { compactQuakes, parseAirNow, parseCap, parseForecast, parseHans, parseHourly, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf } from "./parsers/pages.ts";
 import { UA, publishToR2, putSnapshot } from "./ingest.ts";
 
 const MIN = 60_000;
@@ -108,9 +108,12 @@ export const run = internalAction({
           const prevTown = prev?.towns.find((x) => x.id === t.id);
           const obsJson = await settle(get(`https://api.weather.gov/stations/${t.stn}/observations?limit=3`), null);
           const needFc = stale(prevTown?.fcAt, 55, now) || !prevTown?.fc.length;
-          const fcJson = needFc ? await settle(get(`https://api.weather.gov/gridpoints/${t.grid}/forecast`), null) : null;
+          const [fcJson, hrJson] = needFc
+            ? await Promise.all([settle(get(`https://api.weather.gov/gridpoints/${t.grid}/forecast`), null), settle(get(`https://api.weather.gov/gridpoints/${t.grid}/forecast/hourly`, false, 30_000), null)])
+            : [null, null];
           const fc = fcJson ? parseForecast(fcJson as never) : null;
-          return { id: t.id, name: t.name, obs: (obsJson && parseObs(obsJson as never)) || prevTown?.obs, fc: fc?.fc ?? prevTown?.fc ?? [], fcAt: fc ? now : prevTown?.fcAt };
+          const hourly = hrJson ? parseHourly(hrJson as never, 36, now) : undefined;
+          return { id: t.id, name: t.name, obs: (obsJson && parseObs(obsJson as never)) || prevTown?.obs, fc: fc?.fc ?? prevTown?.fc ?? [], fcAt: fc ? now : prevTown?.fcAt, hourly: hourly ?? prevTown?.hourly };
         }));
         const weather: Weather = {
           upd: now, island, towns,

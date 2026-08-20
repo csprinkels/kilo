@@ -61,3 +61,16 @@ test("volcano: Mauna Loa at NORMAL comes from its monthly notice when absent fro
   assert.ok(ml, "fallback produced a status");
   assert.equal(ml!.level, "NORMAL"); assert.equal(ml!.color, "GREEN"); assert.equal(ml!.erupting, false);
 });
+
+test("hourly: 36 parallel arrays under 1 KB, condition codes from icon paths", async () => {
+  const { parseHourly, conditionCode } = await import("../convex/parsers/pages.ts");
+  const h = parseHourly(fx("nws-hourly-hilo.json"), 36, Date.parse("2026-08-20T17:30:00Z"))!;
+  assert.equal(h.t.length, 36); assert.equal(h.p.length, 36); assert.equal(h.c.length, 36);
+  assert.ok(Buffer.byteLength(JSON.stringify(h)) < 1000, `${Buffer.byteLength(JSON.stringify(h))} B`);
+  assert.ok(h.t.every((t) => t > 50 && t < 100) && h.p.every((p) => p >= 0 && p <= 100));
+  assert.equal(conditionCode("https://api.weather.gov/icons/land/day/rain_showers,20?size=medium"), 5);
+  assert.equal(conditionCode("https://api.weather.gov/icons/land/night/tsra_sct,40?size=medium"), 7);
+  assert.equal(conditionCode("https://api.weather.gov/icons/land/day/skc?size=medium"), 0);
+  assert.equal(conditionCode("https://api.weather.gov/icons/land/day/bkn?size=medium"), 3);
+  assert.equal(conditionCode("", "Partly Cloudy"), 3);
+});

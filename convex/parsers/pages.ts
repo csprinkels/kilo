@@ -1,7 +1,8 @@
 // Parsers for page-only JSON (weather, quakes, volcano, tsunami). Pure functions; fixtures in fixtures/.
 import { XMLParser } from "fast-xml-parser";
 import { clip } from "../../lib/types.ts";
-import type { Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
+import type { Hourly, Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
+import { COMPASS } from "../../lib/storm.ts";
 
 const cToF = (c: number) => Math.round((c * 9) / 5 + 32);
 const kmhToMph = (k: number) => Math.round(k / 1.609);
@@ -38,6 +39,31 @@ export function parseForecast(json: { properties?: { updateTime?: string; period
   return {
     at: json.properties?.updateTime ? Date.parse(json.properties.updateTime) : undefined,
     fc: periods.map((p) => ({ n: p.name, day: p.isDaytime, t: p.temperature, pop: p.probabilityOfPrecipitation?.value ?? 0, wind: `${p.windDirection} ${p.windSpeed}`.trim(), s: clip(p.shortForecast, 40) })),
+  };
+}
+
+// ---------- NWS hourly forecast → compact parallel arrays (36 h ≈ 600 B) ----------
+type HourPeriod = { startTime: string; isDaytime: boolean; temperature: number; probabilityOfPrecipitation?: { value: number | null }; relativeHumidity?: { value: number | null }; windSpeed: string; windDirection: string; icon?: string; shortForecast?: string };
+const ICON_CODE: [RegExp, number][] = [
+  [/hurricane|tropical_storm/, 10], [/tsra/, 7], [/rain_showers|showers/, 5], [/rain|sleet|snow/, 6], [/fog|haze|smoke/, 8], [/wind/, 9],
+  [/ovc/, 4], [/bkn/, 3], [/sct/, 2], [/few/, 1], [/skc|hot|cold/, 0],
+];
+export function conditionCode(iconUrl = "", shortForecast = ""): number {
+  const key = (iconUrl.split("/").slice(-1)[0] ?? "").split("?")[0] || shortForecast.toLowerCase().replace(/ /g, "_");
+  return ICON_CODE.find(([re]) => re.test(key))?.[1] ?? (/thunder/i.test(shortForecast) ? 7 : /shower/i.test(shortForecast) ? 5 : /rain/i.test(shortForecast) ? 6 : /cloud/i.test(shortForecast) ? 3 : 0);
+}
+export function parseHourly(json: { properties?: { periods?: HourPeriod[] } }, hours = 36, now = Date.now()): Hourly | undefined {
+  const ps = (json.properties?.periods ?? []).filter((p) => Date.parse(p.startTime) >= now - 3_600_000).slice(0, hours);
+  if (!ps.length) return undefined;
+  return {
+    t0: Date.parse(ps[0].startTime),
+    t: ps.map((p) => p.temperature),
+    p: ps.map((p) => p.probabilityOfPrecipitation?.value ?? 0),
+    w: ps.map((p) => parseInt(p.windSpeed) || 0),
+    wd: ps.map((p) => Math.max(0, COMPASS.indexOf(p.windDirection))),
+    c: ps.map((p) => conditionCode(p.icon, p.shortForecast)),
+    n: ps.map((p) => (p.isDaytime ? 0 : 1)),
+    rh: ps.map((p) => p.relativeHumidity?.value ?? 0),
   };
 }
 
