@@ -17,7 +17,7 @@ const MAX_ITEMS_PER_SNAPSHOT = 200;
 // One entry per upstream feed. `source` groups items so a failed fetch never deactivates its own rows.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Parse = (body: any, now: number) => Item[];
-type Source = { id: string; url: string; parse: Parse; text?: true; browserUA?: true }; // browserUA: WordPress hosts that 403 bots
+type Source = { id: string; url: string; parse: Parse; text?: true; browserUA?: true; timeoutMs?: number }; // browserUA: WordPress hosts that 403 bots
 export const SOURCES: Source[] = [
   { id: "nws", url: NWS_URL, parse: parseNws },
   ...(Object.keys(HCCDA_LAYERS) as HccdaLayer[]).map((layer) => ({
@@ -31,13 +31,13 @@ export const SOURCES: Source[] = [
   { id: "hiema", url: HIEMA_URL, parse: parseHiema, text: true },
   { id: "hpd", url: HPD_URL, parse: (rss, now) => parseHpd(rss, now, (t) => { const d = districtFor(t); return d ? [d] : []; }), text: true, browserUA: true },
   { id: "ptwc", url: PTWC_URL, parse: parsePtwc, text: true },
-  { id: "hnl", url: HNL_TRAFFIC_URL, parse: parseHnlTraffic },
+  { id: "hnl", url: HNL_TRAFFIC_URL, parse: parseHnlTraffic, timeoutMs: 20_000 }, // Socrata is slow some minutes
 ];
 
 async function fetchBody(s: Source) {
   const res = await fetch(s.url, {
     headers: { "User-Agent": s.browserUA ? BROWSER_UA : UA, Accept: s.text ? "application/rss+xml, application/atom+xml, application/xml, text/xml" : "application/geo+json, application/json" },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    signal: AbortSignal.timeout(s.timeoutMs ?? FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return s.text ? res.text() : res.json();
