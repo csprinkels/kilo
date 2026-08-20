@@ -7,7 +7,7 @@ type Roads = { lines: RoadLine[] };
 type IslandId = "hawaii" | "maui" | "oahu" | "kauai";
 
 /** A road that is closed (county, red, solid), partly closed (roadwork, orange dashes) or a single trouble spot (dot). */
-export type Segment = { key: string; kind: "closed" | "lane" | "spot"; path?: LatLon[]; lat?: number; lon?: number };
+export type Segment = { key: string; kind: "closed" | "lane" | "spot"; path?: LatLon[]; lat?: number; lon?: number; approx?: boolean };
 
 // One fetch per file per session; the service worker keeps them for offline.
 const cache = new Map<string, unknown>();
@@ -84,7 +84,9 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
         {lines.filter((g) => g.kind === "lane").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--warn)" strokeWidth={focus ? 7 : 5} strokeDasharray="12 9" strokeLinecap="round" strokeLinejoin="round" />)}
         {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
-        {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); return <circle key={g.key} cx={x} cy={y} r={9} fill={g.kind === "lane" ? "var(--warn)" : "var(--danger)"} stroke="var(--surface)" strokeWidth={3} />; })}
+        {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); const c = g.kind === "lane" ? "var(--warn)" : "var(--danger)"; return g.approx
+          ? <circle key={g.key} cx={x} cy={y} r={16} fill={c} fillOpacity={0.25} stroke={c} strokeWidth={2} strokeDasharray="4 4" />  /* "about here": neighborhood only */
+          : <circle key={g.key} cx={x} cy={y} r={9} fill={c} stroke="var(--surface)" strokeWidth={3} />; })}
         {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4} fill="var(--ink)" />; })}
         {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return <g><circle cx={x} cy={y} r={14} fill="var(--brand)" fillOpacity={0.2} /><circle cx={x} cy={y} r={7} fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} /></g>; })()}
       </svg>

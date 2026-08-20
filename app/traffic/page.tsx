@@ -11,7 +11,7 @@ import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
-import { LEVEL_WORD, plainAlert, type Plain } from "@/lib/plain";
+import { LEVEL_WORD, lastUpdated, plainAlert, staleLine, type Plain } from "@/lib/plain";
 import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
 
 type IslandId = Exclude<Island, "state">;
@@ -81,11 +81,19 @@ export default function RoadsPage() {
   const loaded = !!snap?.data;
   const offline = !!snap?.offline && !!ess?.offline;
 
-  const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon }] : []; });
+  const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon, approx: i.fields?.approx === "area" }] : []; });
   const drawn = { closed: segments.filter((g) => g.kind === "closed").length, lane: segments.filter((g) => g.kind === "lane").length, spot: segments.filter((g) => g.kind === "spot" && g.lat != null && g.lon != null).length };
-  const legend = [drawn.closed && "Red: closed.", drawn.lane && "Orange: one lane or roadwork.", drawn.spot && "Dots: crashes or lights out."].filter(Boolean).join(" ");
-  const nearCount = you ? official.filter((i) => (milesFrom(i) ?? 1e9) <= NEAR_MILES).length : 0;
-  const rows = showAll ? official : official.slice(0, you ? Math.max(3, nearCount) : 3);
+  const anyApprox = segments.some((g) => g.approx);
+  const legend = [drawn.closed && "Red: closed.", drawn.lane && "Orange: one lane or roadwork.", drawn.spot && (anyApprox ? "Dotted circles: crashes or lights out, by neighborhood." : "Dots: crashes or lights out.")].filter(Boolean).join(" ");
+  // The county sometimes enters one road three times (one row per stretch). One row per road + status; the map still draws every stretch.
+  const grouped: { key: string; item: Item; also: Item[] }[] = [];
+  for (const i of official) {
+    const key = `${roadName(i).toLowerCase()}|${(i.status ?? "").toLowerCase()}|${i.source.split(":")[0]}`;
+    const g = grouped.find((x) => x.key === key);
+    if (g) g.also.push(i); else grouped.push({ key, item: i, also: [] });
+  }
+  const nearCount = you ? grouped.filter((g) => (milesFrom(g.item) ?? 1e9) <= NEAR_MILES).length : 0;
+  const rows = showAll ? grouped : grouped.slice(0, you ? Math.max(3, nearCount) : 3);
   const w = WAZE[island];
 
   const locate = () => {
@@ -130,11 +138,11 @@ export default function RoadsPage() {
 
           <Section title="Closed or blocked">
             {official.length ? (
-              <ul className="mt-s2 divide-y divide-line">{rows.map((i) => <RoadRow key={i.key} item={i} island={island} now={now} plain={plain.get(i.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(i)} you={you ?? undefined} />)}</ul>
+              <ul className="mt-s2 divide-y divide-line">{rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} />)}</ul>
             ) : (
               <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
             )}
-            {official.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {official.length - rows.length} more <ChevronDown className="size-5" aria-hidden /></button>}
+            {grouped.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <ChevronDown className="size-5" aria-hidden /></button>}
           </Section>
 
           {island === "hawaii" && (
@@ -189,7 +197,7 @@ function roadName(item: Item) {
  * A closure or crash row, like ItemRow but with the closed stretch drawn when you open it.
  * Headline and action come from plainAlert so the words match the rest of the app.
  */
-function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Item; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon }) {
+function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you }: { item: Item; also?: Item[]; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon }) {
   const [open, setOpen] = useState(false);
   const alt = item.fields?.alternate?.trim();
   const detour = useMemo(() => (open && alt ? matchDetour(alt, roads) : []), [open, alt, roads]);
@@ -198,9 +206,12 @@ function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Ite
   const [copied, setCopied] = useState(false);
   const Icon = item.type === "traffic" ? CarFront : TrafficCone;
   const path: LatLon[] | undefined = item.path && item.path.length >= 2 ? item.path : undefined;
+  const stretches = [item, ...also].filter((i) => i.path && i.path.length >= 2);
+  const allPoints: LatLon[] = stretches.flatMap((i) => i.path!);
   const mid = path ? pathMidpoint(path) : item.lat != null && item.lon != null ? ([item.lat, item.lon] as LatLon) : undefined;
   const verb = item.type === "traffic" ? "" : /one lane|partial/i.test(item.status ?? "") ? "down to one lane" : isClosed(item) ? "closed" : "";
-  const caption = path && verb ? `${roadName(item)} ${verb} ${endsWord(path, island)} · ${milesWord(pathMiles(path))}` : path ? `${roadName(item)} ${endsWord(path, island)} · ${milesWord(pathMiles(path))}` : "";
+  const totalMiles = stretches.reduce((n, i) => n + pathMiles(i.path!), 0);
+  const caption = path && verb ? `${roadName(item)} ${verb} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}${also.length ? ` in ${also.length + 1} stretches` : ""}` : path ? `${roadName(item)} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}` : "";
   const share = async () => {
     const text = smsText(item);
     try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); setCopied(true); } } catch { /* cancelled */ }
@@ -211,9 +222,10 @@ function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Ite
         <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
         <span className="min-w-0 flex-1">
           {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
-          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
+          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
           {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{miles != null ? `${milesWord(miles)} from you · ` : ""}{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>
+          <span className="mt-1 block text-small text-ink-2 num">{miles != null ? `${milesWord(miles)} from you · ` : ""}{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(lastUpdated(item, now).at, now)}</span>
+          {staleLine(item, now) && <span className="mt-1 block text-small font-semibold text-ink">{staleLine(item, now)}</span>}
         </span>
         <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
@@ -221,7 +233,7 @@ function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Ite
         <div className="fade-up mb-s4 pl-9">
           {path && (
             <>
-              <div className="picture"><RoadMap island={island} segments={[{ key: item.key, kind: segmentKind(item) ?? "lane", path }]} focus={path} detour={detour} you={you} label={caption} /></div>
+              <div className="picture"><RoadMap island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
               <p className="mt-s3 text-small text-ink-2">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
             </>
           )}
@@ -241,7 +253,7 @@ function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Ite
           {item.body && !path && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
           {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
           <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
-            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={`https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><MapPin className="size-4" aria-hidden /> Open in Maps</a>}
+            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.fields?.approx === "area" ? `https://maps.apple.com/?q=${encodeURIComponent(`${item.title.split(/:|—/).slice(1).join(" ").trim()}, Oahu`)}` : `https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><MapPin className="size-4" aria-hidden /> Open in Maps</a>}
             {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" aria-hidden /> Read it on their site</a>}
             <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Share2 className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
           </p>

@@ -37,7 +37,7 @@ export function parseObs(json: { features?: ObsFeature[] }): Obs | undefined {
 // ---------- NWS forecast periods ----------
 type FcPeriod = { name: string; isDaytime: boolean; temperature: number; probabilityOfPrecipitation?: { value: number | null }; windSpeed: string; windDirection: string; shortForecast: string };
 export function parseForecast(json: { properties?: { updateTime?: string; periods?: FcPeriod[] } }): { at?: number; fc: Period[] } {
-  const periods = (json.properties?.periods ?? []).slice(0, 4);
+  const periods = (json.properties?.periods ?? []).slice(0, 14); // 7 days + nights
   return {
     at: json.properties?.updateTime ? Date.parse(json.properties.updateTime) : undefined,
     fc: periods.map((p) => ({ n: p.name, day: p.isDaytime, t: p.temperature, pop: p.probabilityOfPrecipitation?.value ?? 0, wind: `${p.windDirection} ${p.windSpeed}`.trim(), s: clip(p.shortForecast, 40) })),

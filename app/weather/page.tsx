@@ -12,7 +12,7 @@ import type { Hourly, Period, TownWx, Weather } from "@/lib/pages";
 import type { Island } from "@/lib/types";
 import { useFeed, useJson, useStoredIsland } from "@/lib/data";
 import { TOWNS } from "@/lib/towns";
-import { clock, condWord, conditionCode, feelsLike, summarize, sunTimes } from "@/lib/summary";
+import { clock, condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { dirWord, plainAlert, stormLine } from "@/lib/plain";
 import { ISLAND_POINTS, type StormsSnapshot } from "@/lib/storm";
 import { ISLAND_LABEL, fmtTime } from "@/lib/brand";
@@ -128,7 +128,7 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
           <p className="text-body font-semibold text-ink">{town.name} · {condWord(code)}</p>
         </div>
       </div>
-      <p className="mt-s3 max-w-[36rem] text-body text-ink-2 num">{summarize(h)}{wind}{sun ? ` ${sun.k} at ${fmtTime(sun.at)}.` : ""}</p>
+      <p className="mt-s3 max-w-[36rem] text-body text-ink-2 num">{nowAndLater(obsFresh ? code : undefined, h)}{wind}{sun ? ` ${sun.k} at ${fmtTime(sun.at)}.` : ""}</p>
     </section>
   );
 }

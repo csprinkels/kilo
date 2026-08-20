@@ -24,6 +24,14 @@ const bucket = (ms: number, t0: number) => {
 const COND_WORD: Record<number, string> = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Mostly cloudy", 4: "Overcast", 5: "Showers", 6: "Rain", 7: "Thunderstorms", 8: "Fog", 9: "Windy", 10: "Tropical weather" };
 
 /** One plain sentence for the next `window` hours. Present tense, hedged by probability, clock times on the hour. */
+/** The day's sentence, led by "Clear right now." when the station disagrees with the forecast's first hour. */
+export function nowAndLater(obsCode: number | undefined, h: Hourly, window = 24): string {
+  const later = summarize(h, window);
+  if (obsCode == null || condWord(obsCode) === condWord(h.c[0])) return later;
+  const dry = obsCode <= 4, wetSoon = WET.has(h.c[0]) || h.p[0] >= 40;
+  return dry && wetSoon ? `${condWord(obsCode)} right now. ${later}` : later;
+}
+
 export function summarize(h: Hourly, window = 24): string {
   const n = Math.min(window, h.t.length);
   const at = (i: number) => h.t0 + i * 3_600_000;

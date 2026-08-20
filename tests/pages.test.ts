@@ -13,7 +13,7 @@ test("weather parsers: obs (with METAR fallback), forecast periods, SRF zones, N
   assert.equal(metar.f, 75); assert.equal(metar.wDir, 240); assert.equal(metar.wMph, 3); assert.ok(metar.rh! > 80);
 
   const fc = parseForecast(fx("nws-forecast-hilo.json"));
-  assert.equal(fc.fc.length, 4); assert.ok(fc.fc[0].n && fc.fc[0].s.length <= 40 && fc.fc[0].wind);
+  assert.equal(fc.fc.length, 14, "7 days + nights"); assert.ok(fc.fc[0].n && fc.fc[0].s.length <= 40 && fc.fc[0].wind);
 
   const srf = parseSrf(txt("srf-hfo.txt"));
   assert.deepEqual(Object.keys(srf.zones), ["Kauai", "Oahu", "Maui", "Big Island Windward and Southeast", "Big Island Leeward"]);

@@ -2,7 +2,8 @@
 // The official wording stays in item.title/body and is shown only behind "Official wording".
 // Rules: ≤ 20 words a sentence, 6th-grade words, clock times only, no acronyms, never invent a fact the feed didn't give.
 import type { Island, Item } from "./types.ts";
-import { ISLAND_LABEL, fmtDayTime } from "./brand.ts";
+import { ISLAND_LABEL, fmtDateTime, fmtDayTime, fmtTime } from "./brand.ts";
+import type { Quake, Quakes } from "./pages.ts";
 import { bearingDeg, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "./storm.ts";
 
 export type Level = 0 | 1 | 2 | 3 | 4;
@@ -120,7 +121,16 @@ function road(item: Item, now: number): Plain {
     const route = highway(item.title.split(":")[0].replace(/_.*$/, "").trim());
     const what = /shoulder/i.test(item.title) ? "Shoulder closed" : /ramp/i.test(item.title) ? "Ramp closed" : /road closure/i.test(item.title) ? "Road closed" : "One lane";
     const near = item.body.split("→")[0].split(".")[0].trim();
-    return { headline: `${what} on ${route}${near ? ` near ${near}` : ""}`, action: what === "Road closed" ? "Find another way." : "Expect a wait.", level: 1, until, source: sourceName(item.source), official: item.title };
+    // HDOT gives a category, not a clock: Overnight / Daily / 24Hrs. Say the usual window and whether that is now.
+    const hours = (item.fields?.hours ?? "").toLowerCase();
+    const hstHour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", hour: "numeric", hour12: false }).format(now)) % 24;
+    const weekday = !/Sat|Sun/.test(new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "short" }).format(now));
+    const win = hours.includes("overnight") ? { text: "Overnight work, usually after 7 PM.", on: hstHour >= 19 || hstHour < 5 }
+      : hours.includes("daily") || hours.includes("day") ? { text: "Daytime work, usually 8:30 AM to 3:30 PM on weekdays.", on: weekday && hstHour >= 8 && hstHour < 16 }
+      : hours.includes("24") ? { text: "Around the clock.", on: true } : { text: "", on: false };
+    const base = what === "Road closed" ? "Find another way." : "Expect a wait.";
+    const action = win.text ? `${win.text} ${win.on ? base.replace(".", " right now.") : "Probably clear right now."}` : base;
+    return { headline: `${what} on ${route}${near ? ` near ${near}` : ""}`, action, level: 1, until, source: sourceName(item.source), official: item.title };
   }
   if (item.tier === "community") {
     const kind = item.status === "road_flooded" || /flood/i.test(item.title) ? "Road flooded" : "Road blocked";
@@ -215,6 +225,31 @@ export function plainAlert(item: Item, now = Date.now(), island?: Island): Plain
   }
 }
 
+// ---------- earthquakes (shared by Now and the Earthquakes page so they never disagree) ----------
+const MMI_WORD = ["", "", "Weak", "Weak", "Light", "Moderate", "Strong", "Very strong"];
+const MMI_VERB: Record<string, string> = { Weak: "was barely felt", Light: "shook lightly", Moderate: "shook", Strong: "shook hard", "Very strong": "shook very hard" };
+/** "16 km SSE of Honaunau-Napoopoo" → "Honaunau-Napoopoo". Never prints km or compass letters. */
+export const quakePlace = (p: string) => /\bof\s+(.+)$/.exec(p)?.[1]?.trim() || p;
+export const feltWord = (e: Quake) => (e.mmi ? MMI_WORD[Math.min(7, Math.max(2, Math.round(e.mmi)))] : shakingWord(e.m));
+export const feltVerb = (e: Quake) => (e.mmi ? MMI_VERB[feltWord(e)] : shakingVerb(e.m));
+/** The biggest quake people could feel this week, if any. */
+export const heroQuake = (d: Quakes) => d.q.filter((e) => e.m >= 3).sort((a, b) => b.m - a.m || b.t - a.t)[0];
+const DAY = 86_400_000;
+export function quakeSentence(d: Quakes, now: number): string {
+  const hero = heroQuake(d);
+  if (!hero) {
+    const n = d.q.length;
+    if (!n) return "No earthquakes big enough to register this week.";
+    return `Nothing big enough to feel this week. ${d.more ? "More than " : ""}${n} small quake${n === 1 ? "" : "s"}, which is normal for Kīlauea.`;
+  }
+  const at = hero.t * 1000, age = now - at;
+  const head = `A ${hero.m.toFixed(1)} near ${quakePlace(hero.p)}`;
+  const tail = hero.m >= 6 ? "If it was hard to stand near the coast, go uphill now." : age < 3_600_000 ? "No tsunami expected." : "No tsunami.";
+  if (age < 3_600_000 && hero.m >= 4) return `${head} just shook, ${fmtTime(at)}. ${tail}`;
+  const when = age > 6 * DAY ? `on ${fmtDateTime(at)}` : age > DAY ? `on ${new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long" }).format(at)} at ${fmtTime(at)}` : `at ${fmtTime(at)}`;
+  return `${head} ${feltVerb(hero)} ${when}. ${tail}`;
+}
+
 // ---------- storms ----------
 const CLS: Record<string, string> = { HU: "Hurricane", TS: "Tropical Storm", TD: "Tropical Depression", PTC: "Potential Tropical Cyclone" };
 const DIR = ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"];
@@ -233,6 +268,22 @@ export function stormLine(s: Storm, place: { lat: number; lon: number; label: st
   return { text: `${name} is ${mi} miles to the ${dir}, heading this way. Closest ${fmtDayTime(o.closest.at)}. Too early to know if it will matter here.`, short: `${s.name} is ${mi} miles ${dir}, closest ${fmtDayTime(o.closest.at)}.`, approaching: true, level: 1 };
 }
 export const windsLine = (s: Storm) => `Winds around ${Math.round(ktToMph(s.windKt) / 5) * 5} mph`;
+
+/**
+ * When the agency last touched this record, and whether that is long enough ago to say "check before you go".
+ * Only the county GIS carries an edit time; NWS/USGS records are events, not lists, so they are never "stale" this way.
+ */
+export function lastUpdated(item: Item, now = Date.now()): { at: number; stale: boolean } {
+  const edited = Number(item.fields?.editDate) || 0;
+  const at = edited > 0 && edited < now + 3_600_000 ? edited : item.issuedAt;
+  const limit = item.type === "shelter" ? 12 * 3_600_000 : 24 * 3_600_000;
+  return { at, stale: item.source.startsWith("hccda") && now - at > limit };
+}
+export const staleLine = (item: Item, now = Date.now()) => {
+  const u = lastUpdated(item, now);
+  return u.stale ? `Civil Defense has not updated this since ${fmtClockLong(u.at, now)}. Check before you go.` : undefined;
+};
+const fmtClockLong = (ms: number, now: number) => (now - ms > 6 * 86_400_000 ? fmtDateTime(ms) : new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long", hour: "numeric", minute: "2-digit" }).format(ms));
 
 /** One line for a community post: always says "Neighbor report" and never carries a level word. */
 export const neighborLine = (item: Item) => `Neighbor report: ${plainAlert(item).headline}`;

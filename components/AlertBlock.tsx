@@ -2,7 +2,7 @@
 import { Siren, TriangleAlert } from "lucide-react";
 import OfficialWording from "./OfficialWording";
 import type { Item } from "@/lib/types";
-import { LEVEL_WORD, plainAlert } from "@/lib/plain";
+import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 
 /**
@@ -19,7 +19,8 @@ export default function AlertBlock({ item, now, children }: { item: Item; now: n
       <p className={`flex items-center gap-s2 font-display text-title font-bold ${danger ? "text-danger" : "text-warn"}`}><Icon className="size-6" aria-hidden /> {p.word ?? LEVEL_WORD[p.level] ?? "Heads up"}</p>
       <h2 className="mt-s2 text-display font-display font-bold leading-tight text-ink">{p.headline}</h2>
       {p.action && <p className="mt-s2 text-body font-semibold text-ink">{p.action}</p>}
-      <p className="mt-s2 text-small text-ink-2 num">{p.until ? `${p.until[0].toUpperCase()}${p.until.slice(1)}. ` : ""}From {p.source}, {fmtClock(item.issuedAt, now)}.</p>
+      <p className="mt-s2 text-small text-ink-2 num">{p.until ? `${p.until[0].toUpperCase()}${p.until.slice(1)}. ` : ""}From {p.source}, {fmtClock(lastUpdated(item, now).at, now)}.</p>
+      {staleLine(item, now) && <p className="mt-s2 text-body font-semibold text-ink">{staleLine(item, now)}</p>}
       {children}
       <OfficialWording title={item.title} body={item.body} />
     </section>

@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { OAHU_AREAS } from "../../lib/oahuAreas.ts";
 import { clip, hashOf, type Island, type Item } from "../../lib/types.ts";
 import { geoJsonPath, simplifyPath } from "../../lib/roads.ts";
 
@@ -175,16 +176,19 @@ export function parseHnlTraffic(rows: HnlRow[], now = Date.now()): Item[] {
     const at = hstToEpoch(r.date, r.time);
     if (!Number.isFinite(at) || now - at > kind.ttlH * 3_600_000) continue;
     const where = [r.address, r.location && r.location !== r.address ? `(${titleCase(r.location)})` : ""].filter(Boolean).join(" ");
+    // Dispatch gives no coordinates; the neighborhood name does, roughly. fields.approx says so to the UI.
+    const area = OAHU_AREAS[(r.area ?? "").trim()];
     out.push({
       key: `hnl:${hashOf(r.date, r.time, r.type, r.address)}`, source: "hnl", type: "traffic", tier: "official",
       sev: kind.sev, islands: ["oahu"], districts: r.area ? [r.area] : [],
+      lat: area?.[0], lon: area?.[1],
       status: kind.status,
       title: clip(`${kind.label}: ${where || r.area || "Oʻahu"}`, 120),
       body: clip(`Reported to Honolulu 911 dispatch at ${new Date(at).toLocaleTimeString("en-US", { timeZone: "Pacific/Honolulu", hour: "numeric", minute: "2-digit" })}${r.area ? `, ${r.area} area` : ""}. Dispatch category: ${r.type}. Clears automatically.`, 600),
       srcUrl: "https://data.honolulu.gov/Public-Safety/Traffic-Incidents/ykb6-n5th",
-      fields: { category: r.type, area: r.area ?? "" },
+      fields: { category: r.type, area: r.area ?? "", approx: area ? "area" : "" },
       issuedAt: at, lastConfirmedAt: now, expiresAt: at + kind.ttlH * 3_600_000,
-      hash: hashOf(r.type, r.address, r.location),
+      hash: hashOf(r.type, r.address, r.location, area ? "geo" : ""),
     });
   }
   return out;

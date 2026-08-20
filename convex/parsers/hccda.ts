@@ -71,8 +71,8 @@ export function parseHccda(layer: HccdaLayer, fc: FC, now = Date.now()): Item[] 
         ...b, type: "shelter", sev: 3, status,
         title: clip(`Shelter ${status.toUpperCase()}: ${str(p.Name)}`, 120),
         body: clip(notes, 600),
-        fields: { address: str(p.Address), city: str(p.City), zip: str(p.Zip_Code), animals: str(p.Animals), capacity: str(p.Capacity) },
-        hash: hashOf(status, p.Notes, p.Capacity, p.Occupancy),
+        fields: { address: str(p.Address), city: str(p.City), zip: str(p.Zip_Code), animals: str(p.Animals), capacity: str(p.Capacity), editDate: str(p.EditDate) },
+        hash: hashOf(status, p.Notes, p.Capacity, p.Occupancy, p.EditDate),
       });
     } else if (layer === "roads") {
       if (!active || !str(p.Name)) continue; // county data has the odd blank row

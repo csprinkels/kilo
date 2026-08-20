@@ -14,11 +14,11 @@ import type { DigestItem, Island, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
 import { ISLAND_POINTS } from "@/lib/storm";
-import type { Weather } from "@/lib/pages";
+import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
-import { condWord, feelsLike, summarize as weatherSentence, sunTimes } from "@/lib/summary";
+import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
-import { plainAlert, shakingVerb, stormLine, type Plain } from "@/lib/plain";
+import { plainAlert, quakeSentence, stormLine, type Plain } from "@/lib/plain";
 import { APP_NAME, fmtClock, fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
@@ -61,6 +61,8 @@ function FirstRun({ onPick }: { onPick: (i: Island) => void }) {
 function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">; setIsland: (i: Island) => void; focusKey: string | null }) {
   const { ess, snap, digest, mode } = useFeed(island);
   const stormsSnap = useJson<StormsSnapshot>("v1/storms.json");
+  // The same 7-day quake file the Earthquakes page reads, so the row and the page never disagree (5.7 KB).
+  const quakesFile = useJson<Quakes>("v1/quakes.json");
   const now = ess?.fetchedAt || snap?.fetchedAt || 0;
   const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
   const offline = !!ess?.offline && !!snap?.offline;
@@ -95,7 +97,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const stormLines = storms.map((s) => ({ s, ...stormLine(s, place) })).sort((a, b) => Number(b.approaching) - Number(a.approaching) || b.level - a.level);
   const mainStorm = stormLines.find((x) => x.approaching);
 
-  const rows = topicRows(items, plain, island, now, stormLines.map((x) => x.short), !!(lead && lead.type === "tsunami"));
+  const rows = topicRows(items, plain, island, now, stormLines.map((x) => x.short), !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
 
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
@@ -165,7 +167,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 }
 
 type Row = { key: string; label: string; icon: Topic; text: string; href: string };
-function topicRows(items: Item[], plain: Map<string, Plain>, island: Exclude<Island, "state">, now: number, stormTexts: string[], tsunamiAbove: boolean): Row[] {
+function topicRows(items: Item[], plain: Map<string, Plain>, island: Exclude<Island, "state">, now: number, stormTexts: string[], tsunamiAbove: boolean, quakeText?: string): Row[] {
   const of = (f: (i: Item) => boolean) => items.filter((i) => i.tier !== "community" && f(i));
   const roads = of((i) => i.type === "road_closure" && i.source !== "hdot");
   const traffic = of((i) => i.type === "traffic");
@@ -182,13 +184,12 @@ function topicRows(items: Item[], plain: Map<string, Plain>, island: Exclude<Isl
     roadsText = `${first}.${more ? ` ${more} more.` : ""}`;
   } else if (roadwork) roadsText = `No crashes or closures reported. ${plural(roadwork, "roadwork site")} today.`;
 
-  let quakeText = "Nothing big enough to feel this week.";
-  const biggest = quakes.reduce<Item | undefined>((a, b) => (!a || Number(b.fields?.mag) > Number(a.fields?.mag) ? b : a), undefined);
-  const mag = Number(biggest?.fields?.mag) || 0;
-  if (biggest && mag >= 3) {
-    const where = /\bof\s+([^,]+)/.exec(biggest.title)?.[1]?.trim() ?? "here";
-    quakeText = `A ${mag.toFixed(1)} near ${where} ${shakingVerb(mag)} ${fmtClock(biggest.issuedAt, now)}. No tsunami.`;
-  } else if (quakes.length >= 5) quakeText = `Nothing big enough to feel this week. ${quakes.length} small ones, which is normal for Kīlauea.`;
+  // Fallback when the quake file has not loaded: the island snapshot only keeps 3 days, so say less rather than wrong.
+  if (!quakeText) {
+    const biggest = quakes.reduce<Item | undefined>((a, b) => (!a || Number(b.fields?.mag) > Number(a.fields?.mag) ? b : a), undefined);
+    const mag = Number(biggest?.fields?.mag) || 0;
+    quakeText = biggest && mag >= 3 ? `A ${mag.toFixed(1)} near ${/\bof\s+([^,]+)/.exec(biggest.title)?.[1]?.trim() ?? "here"} ${fmtClock(biggest.issuedAt, now)}. No tsunami.` : "Nothing big in the last few days.";
+  }
 
   const volcanoText = volcano.length ? volcano.map((v) => plain.get(v.key)!.headline).join(". ") + "." : "Kīlauea is quiet.";
   const tsunamiText = tsunamiAbove ? "See the warning above." : tsunami.some((t) => plain.get(t.key)!.level >= 3) ? plain.get(tsunami[0].key)!.headline : "No danger.";
@@ -215,7 +216,7 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   if (!town?.hourly) return <p className="mt-s2 text-body text-ink-2">Weather is not available right now.</p>;
   const h = town.hourly;
   const obsFresh = town.obs && w.fetchedAt - town.obs.at < 2 * 3_600_000;
-  const code = h.c[0], night = !!h.n[0];
+  const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0], night = !!h.n[0];
   const temp = (obsFresh ? town.obs?.f : undefined) ?? h.t[0];
   const fl = obsFresh && town.obs?.f != null && town.obs.rh != null ? feelsLike(town.obs.f, town.obs.rh) : undefined;
   const hi = town.fc.find((p) => p.day)?.t, lo = town.fc.find((p) => !p.day)?.t;
@@ -232,7 +233,7 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
           <p className="text-body font-semibold text-ink">{town.name} · {condWord(code)}</p>
         </div>
       </div>
-      <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{weatherSentence(h)}{nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}</p>
+      <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{nowAndLater(obsFresh ? code : undefined, h)}{nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}</p>
     </Link>
   );
 }

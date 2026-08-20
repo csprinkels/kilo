@@ -8,7 +8,7 @@ import OfficialWording from "./OfficialWording";
 import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
-import { LEVEL_WORD, plainAlert } from "@/lib/plain";
+import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 
 export const ICON: Record<ItemType, LucideIcon> = {
@@ -48,6 +48,7 @@ export default function ItemRow({ item, now, focus }: { item: Item; now: number;
 function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
   const [open, setOpen] = useState(!!focus);
   const p = plainAlert(item, now);
+  const stale = staleLine(item, now);
   const Icon = ICON[item.type] ?? Megaphone;
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   return (
@@ -58,7 +59,8 @@ function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: bo
           {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>
+          <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(lastUpdated(item, now).at, now)}</span>
+          {stale && <span className="mt-1 block text-small font-semibold text-ink">{stale}</span>}
         </span>
         <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
