@@ -1,35 +1,37 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import type { Island, Manifest, Snapshot } from "./types";
+import type { Digest, Essentials, Island, Snapshot } from "./types";
 
-// Where the JSON lives. Prod: the R2/CDN domain. Dev: the Convex HTTP endpoint serving the same bytes.
+// Where the JSON lives. Prod: the R2/CDN domain (same origin as the app). Dev: the Convex HTTP endpoint serving the same bytes.
 export const DATA_URL = (process.env.NEXT_PUBLIC_DATA_URL ?? process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "").replace(/\/$/, "");
 
-const POLL_MS = 120_000;
+// Bad-signal policy: fetch the ~1 KB essentials FIRST with a patient timeout; the 30 KB snapshot only when the link is healthy.
+const T_ESS = 30_000, T_SNAP = 60_000;
+const POLL_NORMAL = 120_000, POLL_LOW = 300_000, BACKOFF_MAX = 600_000;
+const SLOW_MS = 5_000, FAST_MS = 1_500;
 
-export type Loaded<T> = { data: T | null; fetchedAt: number; offline: boolean; etag?: string };
+export type Mode = "normal" | "low";
+export type Loaded<T> = { data: T | null; fetchedAt: number; offline: boolean; etag?: string; ms?: number };
 
 const lsKey = (path: string) => `snap:${path}`;
-
-function readCache<T>(path: string): Loaded<T> | null {
-  try {
-    const raw = localStorage.getItem(lsKey(path));
-    return raw ? (JSON.parse(raw) as Loaded<T>) : null;
-  } catch { return null; }
-}
+const readCache = <T,>(path: string): Loaded<T> | null => {
+  try { const raw = localStorage.getItem(lsKey(path)); return raw ? (JSON.parse(raw) as Loaded<T>) : null; } catch { return null; }
+};
 
 /** Fetch with ETag; on any failure return the cached copy flagged offline. Never throws. */
-export async function load<T>(path: string): Promise<Loaded<T>> {
+export async function load<T>(path: string, timeoutMs = T_SNAP): Promise<Loaded<T>> {
   const cached = readCache<T>(path);
+  const t0 = performance.now();
   try {
     const res = await fetch(`${DATA_URL}/${path}`, {
       headers: cached?.etag ? { "If-None-Match": cached.etag } : {},
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     });
-    if (res.status === 304 && cached) return { ...cached, fetchedAt: Date.now(), offline: false };
+    const ms = performance.now() - t0;
+    if (res.status === 304 && cached) return { ...cached, fetchedAt: Date.now(), offline: false, ms };
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const out: Loaded<T> = { data: (await res.json()) as T, fetchedAt: Date.now(), offline: false, etag: res.headers.get("etag") ?? undefined };
+    const out: Loaded<T> = { data: (await res.json()) as T, fetchedAt: Date.now(), offline: false, etag: res.headers.get("etag") ?? undefined, ms };
     try { localStorage.setItem(lsKey(path), JSON.stringify(out)); } catch { /* storage full: still return live data */ }
     return out;
   } catch {
@@ -38,55 +40,102 @@ export async function load<T>(path: string): Promise<Loaded<T>> {
   }
 }
 
-/** Snapshot for one island + the manifest, refreshed on an interval and whenever the tab comes back. */
-export function useFeed(island: Island) {
-  // Start empty so the prerendered HTML matches; cached data arrives in the effect (no hydration mismatch).
-  const [snap, setSnap] = useState<Loaded<Snapshot> | null>(null);
-  const [manifest, setManifest] = useState<Loaded<Manifest> | null>(null);
+/** Latest push digest for an island, written by the service worker into Cache Storage when a push lands. */
+export async function readDigest(island: Island): Promise<Digest | null> {
+  try {
+    if (!("caches" in window)) return null;
+    const c = await caches.open("alerts");
+    const r = await c.match(`/alerts/${island}`);
+    return r ? ((await r.json()) as Digest) : null;
+  } catch { return null; }
+}
+
+export type Feed = {
+  ess: Loaded<Essentials> | null;
+  snap: Loaded<Snapshot> | null;
+  digest: Digest | null;
+  mode: Mode;
+  lastOkAt: number;     // last successful essentials fetch
+};
+
+/** Essentials-first polling with link-quality detection, backoff with jitter, and immediate re-poll when connectivity returns. */
+export function useFeed(island: Island): Feed {
+  const [feed, setFeed] = useState<Feed>({ ess: null, snap: null, digest: null, mode: "normal", lastOkAt: 0 });
 
   useEffect(() => {
-    let alive = true;
-    const tick = async () => {
-      const [s, m] = await Promise.all([load<Snapshot>(`v1/${island}.json`), load<Manifest>("v1/manifest.json")]);
-      if (!alive) return;
-      setSnap(s); setManifest(m);
+    let alive = true, timer: ReturnType<typeof setTimeout> | undefined, backoff = 0, inFlight = false;
+    let mode: Mode = (localStorage.getItem("mode") as Mode) || "normal";
+    let lastOkAt = Number(localStorage.getItem("lastOkAt")) || 0;
+    const essPath = `v1/${island}/essentials.json`, snapPath = `v1/${island}.json`;
+
+    const schedule = (ms: number) => {
+      clearTimeout(timer);
+      const jitter = ms * (0.8 + Math.random() * 0.4);
+      timer = setTimeout(tick, backoff ? Math.min(backoff, BACKOFF_MAX) : jitter);
     };
-    // Show the saved copy immediately, then refresh. (Async so the prerendered HTML hydrates first.)
-    void Promise.resolve().then(() => {
+
+    const tick = async () => {
+      if (!alive || inFlight) return;
+      inFlight = true;
+      const ess = await load<Essentials>(essPath, T_ESS);
       if (!alive) return;
-      setSnap(readCache<Snapshot>(`v1/${island}.json`));
-      setManifest(readCache<Manifest>("v1/manifest.json"));
+      if (!ess.offline && ess.ms != null) {
+        lastOkAt = Date.now(); localStorage.setItem("lastOkAt", String(lastOkAt));
+        if (ess.ms > SLOW_MS) mode = "low"; else if (ess.ms < FAST_MS) mode = "normal";
+        localStorage.setItem("mode", mode);
+        backoff = 0;
+      } else {
+        backoff = Math.min((backoff || 15_000) * 2, BACKOFF_MAX);
+      }
+      let snap = readCache<Snapshot>(snapPath);
+      const needSnap = !ess.offline && mode === "normal" && (!snap?.data || (ess.data?.gen ?? 0) > snap.data.gen);
+      if (needSnap) { snap = await load<Snapshot>(snapPath, T_SNAP); if (!alive) return; }
+      else if (snap) snap = { ...snap, offline: ess.offline };
+      setFeed({ ess, snap, digest: await readDigest(island), mode, lastOkAt });
+      inFlight = false;
+      schedule(mode === "low" ? POLL_LOW : POLL_NORMAL);
+    };
+
+    // Stored data first (async so prerendered HTML hydrates), then the network.
+    void Promise.resolve().then(async () => {
+      if (!alive) return;
+      setFeed({ ess: readCache<Essentials>(essPath), snap: readCache<Snapshot>(snapPath), digest: await readDigest(island), mode, lastOkAt });
       return tick();
     });
-    const id = setInterval(tick, POLL_MS);
+
+    // Bars flicker: the moment the OS says we're back, grab the 1 KB file.
+    const now = () => { backoff = 0; clearTimeout(timer); timer = setTimeout(tick, 1_000); };
+    const onVisible = () => document.visibilityState === "visible" && now();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", now);
+    window.addEventListener("focus", now);
+    window.addEventListener("pageshow", now);
+    return () => { alive = false; clearTimeout(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", now); window.removeEventListener("focus", now); window.removeEventListener("pageshow", now); };
+  }, [island]);
+
+  return feed;
+}
+
+/** Any other published JSON file (e.g. v1/storms.json), same cache + patient-timeout behaviour. */
+export function useJson<T>(path: string) {
+  const [state, setState] = useState<Loaded<T> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => { const r = await load<T>(path, T_SNAP); if (alive) setState(r); };
+    void Promise.resolve().then(() => { if (alive) setState(readCache<T>(path)); return tick(); });
+    const id = setInterval(tick, POLL_NORMAL);
     const onVisible = () => document.visibilityState === "visible" && void tick();
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onVisible);
     return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", onVisible); };
-  }, [island]);
-
-  return { snap, manifest };
+  }, [path]);
+  return state;
 }
 
 // localStorage-backed island choice; server snapshot is the default so prerendered HTML matches.
 const islandListeners = new Set<() => void>();
 const subscribeIsland = (cb: () => void) => { islandListeners.add(cb); return () => { islandListeners.delete(cb); }; };
 const getIsland = () => (localStorage.getItem("island") as Island | null) ?? "hawaii";
-/** Any other published JSON file (e.g. v1/storms.json), same cache + poll behaviour. */
-export function useJson<T>(path: string) {
-  const [state, setState] = useState<Loaded<T> | null>(null);
-  useEffect(() => {
-    let alive = true;
-    const tick = async () => { const r = await load<T>(path); if (alive) setState(r); };
-    void Promise.resolve().then(() => { if (alive) setState(readCache<T>(path)); return tick(); });
-    const id = setInterval(tick, POLL_MS);
-    const onVisible = () => document.visibilityState === "visible" && void tick();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
-  }, [path]);
-  return state;
-}
-
 export function useStoredIsland(): [Island, (i: Island) => void] {
   const island = useSyncExternalStore(subscribeIsland, getIsland, () => "hawaii" as Island);
   return [island, (i) => { localStorage.setItem("island", i); islandListeners.forEach((cb) => cb()); }];

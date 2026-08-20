@@ -2,7 +2,7 @@ import { internalAction, internalMutation, internalQuery, type MutationCtx } fro
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { AwsClient } from "aws4fetch";
-import { ISLANDS, hashOf, type Island, type Item, type Manifest, type Snapshot, type SourceHealth } from "../lib/types.ts";
+import { ISLANDS, buildEssentials, hashOf, type Island, type Item, type Manifest, type Snapshot, type SourceHealth } from "../lib/types.ts";
 import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
 import { HDOT_URL, HIEMA_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
@@ -72,14 +72,15 @@ export const commit = internalMutation({
     now: v.number(),
   },
   handler: async (ctx, { batches, health, now }) => {
+    const fresh = new Set<string>(); // keys that are new (or came back) this run: push triggers
     for (const { source, items } of batches) {
       const existing = await ctx.db.query("items").withIndex("by_source_active", (q) => q.eq("source", source).eq("active", true)).collect();
       const seen = new Set<string>();
       for (const item of items as Item[]) {
         seen.add(item.key);
         const row = await ctx.db.query("items").withIndex("by_key", (q) => q.eq("key", item.key)).unique();
-        if (!row) await ctx.db.insert("items", { ...item, active: true });
-        else if (row.hash !== item.hash || !row.active) await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true });
+        if (!row) { await ctx.db.insert("items", { ...item, active: true }); fresh.add(item.key); }
+        else if (row.hash !== item.hash || !row.active) { await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true }); if (!row.active) fresh.add(item.key); }
         else await ctx.db.patch(row._id, { lastConfirmedAt: now, expiresAt: item.expiresAt });
       }
       for (const row of existing) if (!seen.has(row.key)) await ctx.db.patch(row._id, { active: false });
@@ -91,9 +92,12 @@ export const commit = internalMutation({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const toItem = ({ _id, _creationTime, active: _a, ...rest }: (typeof active)[number]) => rest as Item;
     const mode: Manifest["mode"] = active.some((r) => WATCH_EVENTS.test(r.fields?.event ?? "")) ? "watch" : "normal";
+    const okCount = Object.values(health as Record<string, SourceHealth>).filter((h) => h.ok).length;
+    const srcTotal = Object.keys(health as object).length;
 
     const out: { path: string; body: string }[] = [];
     const vmap = {} as Record<Island, number>;
+    const triggers: { island: Island; key: string }[] = [];
     for (const island of [...ISLANDS, "state" as const]) {
       const items = active
         .filter((r) => island === "state" || r.islands.includes(island) || r.islands.includes("state"))
@@ -103,7 +107,12 @@ export const commit = internalMutation({
       const snap: Snapshot = { gen: now, island, items };
       vmap[island] = now;
       out.push({ path: `v1/${island}.json`, body: JSON.stringify(snap) });
+      out.push({ path: `v1/${island}/essentials.json`, body: JSON.stringify(buildEssentials(island, items, now, mode, [okCount, srcTotal])) });
+      // A new sev>=3 item on this island is worth a push digest (the highest one if several).
+      const lead = items.find((i) => i.sev >= 3 && fresh.has(i.key));
+      if (lead && island !== "state") triggers.push({ island, key: lead.key });
     }
+    for (const t of triggers) await ctx.scheduler.runAfter(0, internal.push.sendDigest, { island: t.island, trigger: t.key });
     const manifest: Manifest = { gen: now, mode, v: vmap, sources: health };
     out.push({ path: "v1/manifest.json", body: JSON.stringify(manifest) });
 

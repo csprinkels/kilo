@@ -1,14 +1,15 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
-  Activity, ChevronDown, CircleCheck, CloudRainWind, ExternalLink, MapPin, Megaphone, Mountain, Radio, School,
+  Activity, ChevronDown, CircleCheck, CloudRainWind, ExternalLink, Gauge, MapPin, Megaphone, Mountain, Radio, School,
   Share2, Siren, Tent, TrafficCone, TriangleAlert, Waves, WifiOff, Wind, ZapOff, type LucideIcon,
 } from "lucide-react";
-import type { Item, ItemType } from "@/lib/types";
-import { ISLANDS } from "@/lib/types";
+import type { DigestItem, Item, ItemType } from "@/lib/types";
+import { ISLANDS, hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import StormCard from "@/components/StormCard";
+import AlertsCard from "@/components/AlertsCard";
 import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, SOURCE_LABEL, TYPE_LABEL, ago, fmtDateTime, fmtTime, okina } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
@@ -20,12 +21,32 @@ const ICON: Record<ItemType, LucideIcon> = {
 const SEV_TEXT: Record<number, string> = { 4: "text-sev4", 3: "text-sev3", 2: "text-sev2", 1: "text-sev1" };
 const SEV_CHIP: Record<number, string> = { 4: "bg-sev4-bg text-sev4", 3: "bg-sev3-bg text-sev3", 2: "bg-sev2-bg text-sev2", 1: "bg-surface-2 text-ink-2" };
 
+/** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
+const fromDigest = (d: DigestItem, at: number): Item => ({
+  ...d, source: "digest", tier: "official", islands: [], lastConfirmedAt: at, hash: "",
+});
+
 export default function Home() {
   const [island, setIsland] = useStoredIsland();
-  const { snap, manifest } = useFeed(island);
-  const now = snap?.fetchedAt || 0;
-  const gen = snap?.data?.gen ?? 0;
-  const items = useMemo(() => snap?.data?.items ?? [], [snap]);
+  const { ess, snap, digest, mode } = useFeed(island);
+  const now = ess?.fetchedAt || snap?.fetchedAt || 0;
+  const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
+  // Deep link from a notification: /?island=hawaii&item=<key> (read once; static export has no server-side params)
+  const focusKey = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("item"), () => null);
+  useEffect(() => {
+    const i = new URLSearchParams(window.location.search).get("island");
+    if (i && ISLANDS.includes(i as never) && i !== island) queueMicrotask(() => setIsland(i as never));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const items = useMemo(() => {
+    const base = snap?.data?.items ?? [];
+    // A push digest newer than the stored snapshot fills in what the snapshot can't (the phone never got it).
+    if (digest && digest.island === island && digest.gen > (snap?.data?.gen ?? 0)) {
+      const have = new Set(base.map((i) => i.key));
+      return [...digest.top.filter((d) => !have.has(d.key)).map((d) => fromDigest(d, digest.gen)), ...base].sort((a, b) => b.sev - a.sev || b.issuedAt - a.issuedAt);
+    }
+    return base;
+  }, [snap, digest, island]);
   const sections = useMemo(() => {
     const by: Record<number, Item[]> = { 4: [], 3: [], 2: [], 1: [] };
     for (const i of items) by[i.sev].push(i);
@@ -33,13 +54,14 @@ export default function Home() {
   }, [items]);
   const situation = useMemo(() => summarize(items), [items]);
 
-  const offline = !!snap?.offline;
+  const offline = !!ess?.offline && !!snap?.offline;
   const stale = gen > 0 && now - gen > STALE_MS;
-  const watch = manifest?.data?.mode === "watch";
-  const sources = manifest?.data?.sources ?? {};
-  const srcTotal = Object.keys(sources).length;
-  const srcOk = Object.values(sources).filter((s) => s.ok).length;
+  const slow = mode === "low" && !offline;
+  const watch = ess?.data?.mode === "watch";
+  const [srcOk, srcTotal] = ess?.data?.ok ?? [0, 0];
   const topSev = items[0]?.sev ?? 0;
+  // Headlines the essentials file knows about but the (older or missing) snapshot doesn't: show titles now, details when the link allows.
+  const headlinesOnly = ess?.data && ess.data.gen > (snap?.data?.gen ?? 0) ? ess.data.alerts.filter((a) => !items.some((i) => i.key && hashOf(i.key) === a.h)) : [];
 
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20">
@@ -84,12 +106,12 @@ export default function Home() {
             <><WifiOff className="size-3.5 text-sev4" /> <span className="font-medium text-sev4">Offline</span><span>· saved {gen ? fmtDateTime(gen) : "—"}</span></>
           ) : gen ? (
             <>
-              <span className={`inline-block size-2 rounded-full ${stale ? "bg-sev2" : "bg-emerald-500"}`} />
-              <span>Updated {fmtTime(gen)} HST · {ago(gen, now)}</span>
+              {slow ? <Gauge className="size-3.5 text-sev2" /> : <span className={`inline-block size-2 rounded-full ${stale ? "bg-sev2" : "bg-emerald-500"}`} />}
+              <span>Updated {fmtTime(gen)} HST · {ago(gen, now)}{slow ? " · slow connection" : ""}</span>
               {srcTotal > 0 && <span className="ml-auto tabular-nums">{srcOk}/{srcTotal} sources</span>}
             </>
           ) : (
-            <span>{snap === null ? "Loading…" : "No data yet"}</span>
+            <span>{ess === null && snap === null ? "Loading…" : "No data yet"}</span>
           )}
         </div>
       </div>
@@ -100,7 +122,10 @@ export default function Home() {
           No connection. Showing the last copy saved on this phone. For emergencies call 911; Civil Defense messages air on AM/FM radio.
         </Banner>
       )}
-      {!offline && stale && (
+      {!offline && slow && (
+        <Banner tone="amber" icon={Gauge}>Weak connection. Showing the last saved details plus the newest headlines; full text loads when the link improves. Alerts you turned on still arrive in full.</Banner>
+      )}
+      {!offline && !slow && stale && (
         <Banner tone="amber" icon={TriangleAlert}>Feed updates paused for {ago(gen, now)}. Treat everything below as possibly out of date.</Banner>
       )}
       {watch && (
@@ -109,10 +134,24 @@ export default function Home() {
 
       {island !== "state" && <StormCard island={island} />}
 
+      {/* Headlines the full snapshot hasn't caught up with (weak link) */}
+      {headlinesOnly.length > 0 && (
+        <section className="mt-5 rounded-2xl border border-sev2 bg-sev2-bg/60 p-3" aria-label="Latest headlines">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sev2">Newest headlines · {ess?.data && fmtTime(ess.data.gen)} HST</p>
+          <ul className="mt-2 space-y-1.5">
+            {headlinesOnly.map((a) => {
+              const Icon = ICON[a.type] ?? Megaphone;
+              return <li key={a.h} className="flex items-start gap-2 text-[15px] leading-snug"><Icon className={`mt-0.5 size-4 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}</span></li>;
+            })}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Titles only for now; details arrive with the next successful update.</p>
+        </section>
+      )}
+
       {/* Situation summary */}
-      {snap?.data && (
+      {(snap?.data || ess?.data) && (
         <section className="mt-5" aria-label="Situation summary">
-          {items.length === 0 ? (
+          {items.length === 0 && headlinesOnly.length === 0 ? (
             <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-4">
               <CircleCheck className="size-6 shrink-0 text-emerald-600" />
               <div>
@@ -130,7 +169,7 @@ export default function Home() {
           )}
         </section>
       )}
-      {!snap?.data && !offline && <Skeleton />}
+      {!snap?.data && !ess?.data && !offline && <Skeleton />}
 
       {/* Items */}
       {sections.map(({ sev, items }) => (
@@ -140,10 +179,12 @@ export default function Home() {
             <span className="text-xs tabular-nums text-muted">{items.length}</span>
           </h2>
           <ul className="divide-y divide-line">
-            {items.map((i) => <Row key={i.key} item={i} now={now} />)}
+            {items.map((i) => <Row key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
           </ul>
         </section>
       ))}
+
+      {island !== "state" && <AlertsCard island={island} />}
 
       {/* County alerts */}
       {island !== "state" && (
@@ -209,19 +250,21 @@ function Skeleton() {
   );
 }
 
-function Row({ item, now }: { item: Item; now: number }) {
-  const [open, setOpen] = useState(false);
+function Row({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
+  const [open, setOpen] = useState(!!focus);
   const Icon = ICON[item.type] ?? Megaphone;
-  const src = SOURCE_LABEL[item.source.split(":")[0]] ?? item.source;
+  const src = item.source === "digest" ? "From your latest alert" : SOURCE_LABEL[item.source.split(":")[0]] ?? item.source;
+  useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
+  // One GSM-7 SMS segment: a person WITH signal can text this to someone without, no link to load.
   const share = async () => {
-    const text = `${item.title}\n${item.body.slice(0, 300)}\nSource: ${src}, ${fmtDateTime(item.lastConfirmedAt)} HST\n${item.srcUrl}`.slice(0, 480);
+    const text = smsText(item);
     try {
       if (navigator.share) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); alert("Copied to clipboard"); }
     } catch { /* cancelled */ }
   };
   return (
-    <li className="fade-up">
+    <li id={`item-${hashOf(item.key)}`} className={`fade-up ${focus ? "-mx-2 rounded-xl bg-surface px-2 ring-1 ring-ink/20" : ""}`}>
       <button className="flex w-full items-start gap-3 py-3.5 text-left" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ${SEV_CHIP[item.sev]}`}>
           <Icon className="size-[18px]" strokeWidth={2} />

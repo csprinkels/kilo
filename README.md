@@ -33,6 +33,15 @@ npx convex run ingest:run # trigger one ingest by hand
 
 Sources live: NWS alerts, Hawaiʻi County Civil Defense ArcGIS (shelters, roads, evacuations, hazards, schools), HDOT lane closures, HI-EMA RSS, USGS quakes (HI bbox, M2.5+), HVO volcano status, PTWC tsunami bulletins.
 
+## Bad-signal delivery (why the app behaves the way it does on one bar)
+
+Never put the decision behind a fetch. Signaling survives a congested cell (push sockets, SMS); cold data fetches mostly don't.
+- `v1/{island}/essentials.json` (≤1.5 KB, CI-gated) is fetched first with a 30 s timeout; the 30 KB snapshot only when that was fast. A slow first fetch flips the client to low-bandwidth mode (essentials only, 5-min polls, banner). Re-polls immediately on `online` / focus / visible.
+- Web Push sends the island **digest** (≤3.5 KB, CI-gated): lead item with full body + up to 4 headlines. APNs/FCM keep only one stored notification per app while a phone is unreachable, so per-item pushes would lose history. The service worker stores the digest in Cache Storage; the page renders it offline and `/?island=x&item=key` opens the item. Declarative Web Push JSON (`web_push: 8030`) so Safari 18.4+ Home Screen apps show it without running the SW.
+- VAPID keys live in Convex env (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); optional `SITE_URL` makes notification links absolute. Subscriptions: `POST /v1/push/subscribe`.
+- Share = one GSM-7 SMS segment (`smsText`), so a person with signal can text an alert to someone without.
+- SMS as a channel is **on hold** (cost). Capacitor/APNs digests reuse the same payload later.
+
 ## Production setup (one-time, needs your Cloudflare account)
 
 1. **R2 bucket** (e.g. `hi-status`) → Settings → connect a custom domain (e.g. `data.yourdomain`). Create an R2 API token (Object Read & Write).

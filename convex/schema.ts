@@ -49,6 +49,19 @@ export default defineSchema({
     cls: v.string(),
   }).index("by_storm_adv", ["stormId", "adv"]),
 
+  // Web Push subscriptions (one row per browser/device), scoped to an island.
+  pushSubs: defineTable({
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    island: v.string(),
+    minSev: v.number(),
+    createdAt: v.number(),
+    lastOkAt: v.optional(v.number()),
+    failures: v.number(),
+  }).index("by_endpoint", ["endpoint"]).index("by_island", ["island"]),
+  pushLog: defineTable({ island: v.string(), at: v.number(), trigger: v.string(), sent: v.number(), failed: v.number() }).index("by_island", ["island"]),
+
   // Published JSON: served by http.ts (dev / fallback) and mirrored to R2 (prod).
   snapshots: defineTable({
     path: v.string(), // "v1/hawaii.json", "v1/manifest.json"
