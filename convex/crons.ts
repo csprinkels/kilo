@@ -6,4 +6,5 @@ const crons = cronJobs();
 crons.interval("ingest feeds", { minutes: 2 }, internal.ingest.run, {});
 crons.interval("tropical cyclones", { minutes: 2 }, internal.storms.refresh, {});
 crons.interval("expire community reports", { minutes: 5 }, internal.reports.expire, {});
+crons.interval("page data (weather, quakes, volcano, tsunami)", { minutes: 5 }, internal.pages.run, {});
 export default crons;

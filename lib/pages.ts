@@ -1,0 +1,31 @@
+// Page-only JSON shapes (not feed Items): v1/{island}/weather.json, v1/quakes.json, v1/volcano.json, v1/tsunami.json
+import type { Island } from "./types";
+
+export type Obs = { at: number; f?: number; rh?: number; wMph?: number; wDir?: number; gMph?: number; sky?: string };
+export type Period = { n: string; day: boolean; t: number; pop: number; wind: string; s: string };
+export type TownWx = { id: string; name: string; obs?: Obs; fc: Period[]; fcAt?: number };
+export type Weather = {
+  upd: number; island: Island;
+  towns: TownWx[];
+  surf?: { at: number; zones: Record<string, Record<string, [string, string]>>; uv?: string }; // zone -> shore -> [today, tomorrow] feet
+  buoys: { id: string; name: string; at: number; hFt: number; perS: number; dir: number }[];
+  air: { name: string; pm25: number; cat: string; at: number }[];
+};
+
+export type Quake = { i: string; m: number; t: number; p: string; ll: [number, number]; d: number; f?: number; mmi?: number; r?: 1 };
+export type Quakes = { upd: number; notable: Quake[]; q: Quake[]; more: boolean };
+
+export type VolcanoStatus = { vnum: string; name: string; level: string; color: string; erupting: boolean; where: string; levelSince?: number; prevLevel?: string; noticeAt: number; sms: string; sections: Record<string, string>; noticeUrl: string };
+export type Volcano = {
+  upd: number;
+  kilauea?: VolcanoStatus; maunaloa?: VolcanoStatus;
+  air: { name: string; so2?: number; pm25?: number; aqi?: number; at: number; stale?: boolean }[];
+  cams: { id: string; name: string; kb?: number; mod?: number }[];
+};
+
+export type TsunamiLevel = "none" | "info" | "watch" | "advisory" | "warning";
+export type Tsunami = {
+  upd: number;
+  status: { level: TsunamiLevel; event?: string; headline?: string; issued?: number; expires?: number; url: string };
+  sirens: { upd: number; total: number; bad: { id: string; loc: string; st: string; ll: [number, number] }[] };
+};

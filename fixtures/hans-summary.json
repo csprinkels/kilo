@@ -1,0 +1,72 @@
+[
+    {
+        "noticeId": "DOI-USGS-AVO-2026-08-19T20:16:12+00:00",
+        "vName": "Great Sitkin",
+        "vnum": "311120",
+        "synopsis": "Slow eruption of lava within the summit crater continues. ",
+        "alertLevel": "WATCH",
+        "colorCode": "ORANGE",
+        "sentUnixtime": 1787171073,
+        "sentRFC": "Wed, 19 Aug 26 20:24:33 +0000",
+        "statusUnixtime": 1627079155,
+        "statusRFC": "Fri, 23 Jul 21 22:25:55 +0000",
+        "prevAlertLevel": "ADVISORY",
+        "prevColorCode": "YELLOW"
+    },
+    {
+        "noticeId": "DOI-USGS-AVO-2026-08-19T20:16:12+00:00",
+        "vName": "Kupreanof",
+        "vnum": "312060",
+        "synopsis": "Low-level seismic activity continued over the past day.",
+        "alertLevel": "ADVISORY",
+        "colorCode": "YELLOW",
+        "sentUnixtime": 1787171073,
+        "sentRFC": "Wed, 19 Aug 26 20:24:33 +0000",
+        "statusUnixtime": 1778605277,
+        "statusRFC": "Tue, 12 May 26 17:01:17 +0000",
+        "prevAlertLevel": "UNASSIGNED",
+        "prevColorCode": "UNASSIGNED"
+    },
+    {
+        "noticeId": "DOI-USGS-AVO-2026-08-19T20:16:12+00:00",
+        "vName": "Shishaldin",
+        "vnum": "311360",
+        "synopsis": "Low-level seismic unrest continues.",
+        "alertLevel": "ADVISORY",
+        "colorCode": "YELLOW",
+        "sentUnixtime": 1787171073,
+        "sentRFC": "Wed, 19 Aug 26 20:24:33 +0000",
+        "statusUnixtime": 1756151315,
+        "statusRFC": "Mon, 25 Aug 25 19:48:35 +0000",
+        "prevAlertLevel": "NORMAL",
+        "prevColorCode": "GREEN"
+    },
+    {
+        "noticeId": "DOI-USGS-HVO-2026-08-19T17:20:44+00:00",
+        "vName": "Kilauea",
+        "vnum": "332010",
+        "synopsis": "K\u012blauea volcano is not erupting; the summit eruption in Halema\u02bbuma\u02bbu is paused. Preliminary data indicate the onset of the next fountaining episode is likely between August 21 and August 27.",
+        "alertLevel": "ADVISORY",
+        "colorCode": "YELLOW",
+        "sentUnixtime": 1787167220,
+        "sentRFC": "Wed, 19 Aug 26 19:20:20 +0000",
+        "statusUnixtime": 1786620406,
+        "statusRFC": "Thu, 13 Aug 26 11:26:46 +0000",
+        "prevAlertLevel": "WATCH",
+        "prevColorCode": "ORANGE"
+    },
+    {
+        "noticeId": "DOI-USGS-NMI-2026-08-13T23:51:15+00:00",
+        "vName": "Ahyi Seamount",
+        "vnum": "284141",
+        "synopsis": "No signs of unrest in satellite images or distal geophysical data this past week.",
+        "alertLevel": "ADVISORY",
+        "colorCode": "YELLOW",
+        "sentUnixtime": 1786665740,
+        "sentRFC": "Fri, 14 Aug 26 00:02:20 +0000",
+        "statusUnixtime": 1784160830,
+        "statusRFC": "Thu, 16 Jul 26 00:13:50 +0000",
+        "prevAlertLevel": "UNASSIGNED",
+        "prevColorCode": "UNASSIGNED"
+    }
+]

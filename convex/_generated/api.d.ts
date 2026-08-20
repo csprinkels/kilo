@@ -11,9 +11,11 @@
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as ingest from "../ingest.js";
+import type * as pages from "../pages.js";
 import type * as parsers_feeds from "../parsers/feeds.js";
 import type * as parsers_hccda from "../parsers/hccda.js";
 import type * as parsers_nws from "../parsers/nws.js";
+import type * as parsers_pages from "../parsers/pages.js";
 import type * as parsers_storms from "../parsers/storms.js";
 import type * as push from "../push.js";
 import type * as pushStore from "../pushStore.js";
@@ -30,9 +32,11 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   http: typeof http;
   ingest: typeof ingest;
+  pages: typeof pages;
   "parsers/feeds": typeof parsers_feeds;
   "parsers/hccda": typeof parsers_hccda;
   "parsers/nws": typeof parsers_nws;
+  "parsers/pages": typeof parsers_pages;
   "parsers/storms": typeof parsers_storms;
   push: typeof push;
   pushStore: typeof pushStore;
