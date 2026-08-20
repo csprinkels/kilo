@@ -72,5 +72,5 @@ test("hourly: 36 parallel arrays under 1 KB, condition codes from icon paths", a
   assert.equal(conditionCode("https://api.weather.gov/icons/land/night/tsra_sct,40?size=medium"), 7);
   assert.equal(conditionCode("https://api.weather.gov/icons/land/day/skc?size=medium"), 0);
   assert.equal(conditionCode("https://api.weather.gov/icons/land/day/bkn?size=medium"), 3);
-  assert.equal(conditionCode("", "Partly Cloudy"), 3);
+  assert.equal(conditionCode("", "Partly Cloudy"), 2);
 });

@@ -3,6 +3,8 @@ import { XMLParser } from "fast-xml-parser";
 import { clip } from "../../lib/types.ts";
 import type { Hourly, Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
 import { COMPASS } from "../../lib/storm.ts";
+import { conditionCode } from "../../lib/summary.ts";
+export { conditionCode };
 
 const cToF = (c: number) => Math.round((c * 9) / 5 + 32);
 const kmhToMph = (k: number) => Math.round(k / 1.609);
@@ -44,14 +46,6 @@ export function parseForecast(json: { properties?: { updateTime?: string; period
 
 // ---------- NWS hourly forecast → compact parallel arrays (36 h ≈ 600 B) ----------
 type HourPeriod = { startTime: string; isDaytime: boolean; temperature: number; probabilityOfPrecipitation?: { value: number | null }; relativeHumidity?: { value: number | null }; windSpeed: string; windDirection: string; icon?: string; shortForecast?: string };
-const ICON_CODE: [RegExp, number][] = [
-  [/hurricane|tropical_storm/, 10], [/tsra/, 7], [/rain_showers|showers/, 5], [/rain|sleet|snow/, 6], [/fog|haze|smoke/, 8], [/wind/, 9],
-  [/ovc/, 4], [/bkn/, 3], [/sct/, 2], [/few/, 1], [/skc|hot|cold/, 0],
-];
-export function conditionCode(iconUrl = "", shortForecast = ""): number {
-  const key = (iconUrl.split("/").slice(-1)[0] ?? "").split("?")[0] || shortForecast.toLowerCase().replace(/ /g, "_");
-  return ICON_CODE.find(([re]) => re.test(key))?.[1] ?? (/thunder/i.test(shortForecast) ? 7 : /shower/i.test(shortForecast) ? 5 : /rain/i.test(shortForecast) ? 6 : /cloud/i.test(shortForecast) ? 3 : 0);
-}
 export function parseHourly(json: { properties?: { periods?: HourPeriod[] } }, hours = 36, now = Date.now()): Hourly | undefined {
   const ps = (json.properties?.periods ?? []).filter((p) => Date.parse(p.startTime) >= now - 3_600_000).slice(0, hours);
   if (!ps.length) return undefined;
