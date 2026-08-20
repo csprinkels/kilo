@@ -27,22 +27,22 @@ export default function TrafficPage() {
 
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20 pt-6">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
+      <Link href="/" className="inline-flex items-center gap-1 text-label font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
       <SectionNav />
-      <h1 className="display mt-4 text-[34px] font-medium leading-[1] tracking-[-0.02em] text-ink">Traffic</h1>
-      <p className="mt-2 text-[14px] text-muted">Crashes, stalled vehicles, signal problems and closures from official dispatch and roadwork feeds{snap?.data ? ` · updated ${ago(snap.data.gen, now)}` : ""}.</p>
+      <h1 className="display mt-4 text-display font-medium leading-[1] tracking-[-0.02em] text-ink">Traffic</h1>
+      <p className="mt-2 text-label text-muted">Crashes, stalled vehicles, signal problems and closures from official dispatch and roadwork feeds{snap?.data ? ` · updated ${ago(snap.data.gen, now)}` : ""}.</p>
 
       <nav aria-label="Island" className="no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5">
         {ISLANDS.map((i) => (
           <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${i === island ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink-2"}`}>
+            className={`shrink-0 rounded-full border px-4 py-2 text-label font-medium transition-colors ${i === island ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink-2"}`}>
             {ISLAND_LABEL[i].split(" · ")[0]}
           </button>
         ))}
       </nav>
 
       {/* Live map, tap to load */}
-      <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
+      <section className="mt-5 overflow-hidden rounded-card border border-line bg-surface">
         {showMap ? (
           <iframe title={`Waze live traffic map for ${ISLAND_LABEL[island]}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`}
             className="block h-[420px] w-full" loading="lazy" allow="geolocation" />
@@ -51,7 +51,7 @@ export default function TrafficPage() {
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2"><Map className="size-5" /></span>
             <span>
               <span className="block font-semibold">Show live traffic map</span>
-              <span className="block text-[13px] text-muted">Congestion and driver reports from Waze. Uses data; skip it on a weak connection.</span>
+              <span className="block text-micro text-muted">Congestion and driver reports from Waze. Uses data; skip it on a weak connection.</span>
             </span>
           </button>
         )}
@@ -59,21 +59,21 @@ export default function TrafficPage() {
 
       {/* Incidents */}
       <section className="mt-6">
-        <h2 className="flex items-baseline gap-2 border-b border-line pb-2"><span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-sev2">Right now</span><span className="text-xs text-muted">{live.length}</span></h2>
+        <h2 className="flex items-baseline gap-2 border-b border-line pb-2"><span className="text-micro font-semibold uppercase tracking-[0.12em] text-sev2">Right now</span><span className="text-micro text-muted">{live.length}</span></h2>
         {live.length ? <ul className="divide-y divide-line">{live.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
-          : <div className="flex items-center gap-3 py-4 text-[14px] text-muted">
+          : <div className="flex items-center gap-3 py-4 text-label text-muted">
               <CircleCheck className="size-5 text-emerald-600" />
               {island === "oahu" ? "No active incidents from Honolulu dispatch." : `No live dispatch feed exists for ${okina(ISLAND_LABEL[island].split(" · ")[0])} yet — this is where neighbours' reports will show.`}
             </div>}
       </section>
       <section className="mt-6">
-        <h2 className="flex items-baseline gap-2 border-b border-line pb-2"><span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">Closures &amp; roadwork</span><span className="text-xs text-muted">{closures.length}</span></h2>
-        {closures.length ? <ul className="divide-y divide-line">{closures.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul> : <p className="py-4 text-[14px] text-muted">None listed.</p>}
+        <h2 className="flex items-baseline gap-2 border-b border-line pb-2"><span className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Closures &amp; roadwork</span><span className="text-micro text-muted">{closures.length}</span></h2>
+        {closures.length ? <ul className="divide-y divide-line">{closures.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul> : <p className="py-4 text-label text-muted">None listed.</p>}
       </section>
 
-      <Link href="/report/" className="mt-8 flex items-center gap-3 rounded-2xl bg-surface-2 p-4">
+      <Link href="/report/" className="mt-8 flex items-center gap-3 rounded-card bg-surface-2 p-4">
         <Megaphone className="size-5 text-brand" />
-        <span><span className="block font-semibold">See something? Report it</span><span className="block text-[13px] text-ink-2">Crash, signal out, road flooded. Shown to neighbours as unverified until others confirm.</span></span>
+        <span><span className="block font-semibold">See something? Report it</span><span className="block text-micro text-ink-2">Crash, signal out, road flooded. Shown to neighbours as unverified until others confirm.</span></span>
       </Link>
     </main>
   );

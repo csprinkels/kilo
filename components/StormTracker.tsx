@@ -29,12 +29,12 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       {/* Header */}
       <header>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full px-3 py-1 text-sm font-semibold text-white" style={{ background: catColor(storm.windKt, storm.cls) }}>{cat.label}</span>
-          <span className="text-sm text-muted">Advisory {storm.advNum} · {fmtTime(storm.issuedAt)} HST{storm.nextAdvisoryAt ? ` · next ${fmtTime(storm.nextAdvisoryAt)}` : ""}</span>
+          <span className="rounded-full px-3 py-1 text-label font-semibold text-white" style={{ background: catColor(storm.windKt, storm.cls) }}>{cat.label}</span>
+          <span className="text-label text-muted">Advisory {storm.advNum} · {fmtTime(storm.issuedAt)} HST{storm.nextAdvisoryAt ? ` · next ${fmtTime(storm.nextAdvisoryAt)}` : ""}</span>
         </div>
-        <h2 className="display mt-2 text-[40px] font-medium leading-[1] tracking-[-0.02em] text-ink">{storm.cls === "HU" ? "Hurricane" : storm.cls === "TS" ? "Tropical Storm" : ""} {storm.name}</h2>
-        {storm.headline && <p className="mt-2 text-[17px] leading-snug text-ink">{storm.headline}.</p>}
-        <p className="mt-2 text-[15px] text-ink-2">
+        <h2 className="display mt-2 text-display font-medium leading-[1] tracking-[-0.02em] text-ink">{storm.cls === "HU" ? "Hurricane" : storm.cls === "TS" ? "Tropical Storm" : ""} {storm.name}</h2>
+        {storm.headline && <p className="mt-2 text-body leading-snug text-ink">{storm.headline}.</p>}
+        <p className="mt-2 text-body text-ink-2">
           Winds <strong className="text-ink">{ktToMph(storm.windKt)} mph</strong>, gusts {ktToMph(storm.gustKt)} mph
           {storm.moveDirDeg != null && storm.moveKt != null && <> · moving <strong className="text-ink">{compass(storm.moveDirDeg)}</strong> at {ktToMph(storm.moveKt)} mph</>}
           {storm.pressureMb && <> · {storm.pressureMb} mb</>}
@@ -42,13 +42,13 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       </header>
 
       {/* What it means */}
-      <section className="mt-5 rounded-2xl border border-line bg-surface p-4" aria-label={`What this means for ${place.label}`}>
-        <h3 className="display text-[20px] font-medium">For {okina(place.label)}</h3>
-        <p className="mt-2 text-[15px] leading-relaxed">
+      <section className="mt-5 card" aria-label={`What this means for ${place.label}`}>
+        <h3 className="display text-h2 font-medium">For {okina(place.label)}</h3>
+        <p className="mt-2 text-body leading-relaxed">
           The center is <strong>{fmtMi(distNow)} mi {dirNow}</strong> of {okina(place.label)} right now
           {outlook.movingAway ? <> and <strong className="text-emerald-700 dark:text-emerald-400">moving away</strong>.</> : <> and <strong className="text-sev3">getting closer</strong>.</>}
         </p>
-        <ul className="mt-3 space-y-2 text-[15px] leading-relaxed">
+        <ul className="mt-3 space-y-2 text-body leading-relaxed">
           <li className="flex gap-2"><Dot color="var(--ink)" />
             <span>
               {closestIsNow
@@ -69,21 +69,21 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
         </ul>
         {storm.warnings.length > 0 && (
           <div className="mt-4 border-t border-line pt-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Watches &amp; warnings in effect</p>
-            <ul className="mt-1.5 space-y-1 text-[14px] leading-snug">
+            <p className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Watches &amp; warnings in effect</p>
+            <ul className="mt-1.5 space-y-1 text-label leading-snug">
               {storm.warnings.map((w) => <li key={w} className={/Hurricane Warning/i.test(w) ? "font-semibold text-sev4" : /Warning/i.test(w) ? "font-semibold text-sev3" : "text-ink-2"}>{w}</li>)}
             </ul>
           </div>
         )}
-        <p className="mt-3 text-xs leading-relaxed text-muted">
+        <p className="mt-3 text-micro leading-relaxed text-muted">
           Computed from the official forecast track and wind field. Forecast position errors average ~{Math.round(nmToMi(78))} mi at day 3 and ~{nmToMi(138)} mi at day 5; weather arrives hours before the center does. Your county&apos;s watches and warnings are the call to act.
         </p>
       </section>
 
       {/* Map */}
-      <section className="mt-5 overflow-hidden rounded-2xl border border-line">
+      <section className="mt-5 overflow-hidden rounded-card border border-line">
         <StormMap storm={storm} place={place} selected={sel} onSelect={setSel} />
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-[12px] text-muted">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-micro text-muted">
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-3 w-5 rounded-sm border border-dashed border-brand bg-brand/15" /> Where the center will likely go</span>
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 border-t-2 border-dashed border-muted" /> Past track</span>
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 bg-ink" /> Forecast</span>
@@ -93,7 +93,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
 
       {/* Timeline */}
       <section className="mt-5" aria-label="Forecast timeline">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Forecast timeline · tap a step</h3>
+        <h3 className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Forecast timeline · tap a step</h3>
         <div ref={timelineRef} className="no-scrollbar -mx-5 mt-2 flex snap-x gap-2 overflow-x-auto px-5 pb-2">
           {points.map((p, i) => {
             const d = distanceNm(p.lat, p.lon, place.lat, place.lon);
@@ -101,12 +101,12 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
             const on = i === sel;
             return (
               <button key={i} onClick={() => setSel(i)} aria-pressed={on}
-                className={`w-[150px] shrink-0 snap-center rounded-2xl border p-3 text-left transition-colors ${on ? "border-ink bg-surface" : "border-line bg-surface/60"}`}>
-                <div className="text-[13px] font-semibold text-ink">{i === 0 ? "Now" : fmtDayTime(p.at)}</div>
-                <div className="mt-0.5 text-[11px] text-muted">{i === 0 ? fmtTime(p.at) + " HST" : fmtDateTime(p.at).replace(/^\w+ \d+, /, "")}{p.outlook ? " · outlook" : ""}</div>
-                <div className="mt-2 flex items-center gap-1.5"><span className="inline-block size-3 rounded-full" style={{ background: catColor(p.windKt, i === 0 ? storm.cls : undefined) }} /><span className="text-[13px] font-medium">{c.level > 0 ? `Cat ${c.level}` : c.label}</span></div>
-                <div className="text-[13px] text-ink-2">{ktToMph(p.windKt)} mph winds</div>
-                <div className="mt-1 text-[12px] text-muted">{fmtMi(d)} mi {compass(bearingDeg(place.lat, place.lon, p.lat, p.lon))} of {okina(place.label.split(" ")[0])}</div>
+                className={`w-[150px] shrink-0 snap-center rounded-card border p-3 text-left transition-colors ${on ? "border-ink bg-surface" : "border-line bg-surface/60"}`}>
+                <div className="text-micro font-semibold text-ink">{i === 0 ? "Now" : fmtDayTime(p.at)}</div>
+                <div className="mt-0.5 text-micro text-muted">{i === 0 ? fmtTime(p.at) + " HST" : fmtDateTime(p.at).replace(/^\w+ \d+, /, "")}{p.outlook ? " · outlook" : ""}</div>
+                <div className="mt-2 flex items-center gap-1.5"><span className="inline-block size-3 rounded-full" style={{ background: catColor(p.windKt, i === 0 ? storm.cls : undefined) }} /><span className="text-micro font-medium">{c.level > 0 ? `Cat ${c.level}` : c.label}</span></div>
+                <div className="text-micro text-ink-2">{ktToMph(p.windKt)} mph winds</div>
+                <div className="mt-1 text-micro text-muted">{fmtMi(d)} mi {compass(bearingDeg(place.lat, place.lon, p.lat, p.lon))} of {okina(place.label.split(" ")[0])}</div>
               </button>
             );
           })}
@@ -114,7 +114,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       </section>
 
       {/* Explainers */}
-      <section className="mt-6 divide-y divide-line rounded-2xl border border-line bg-surface">
+      <section className="mt-6 divide-y divide-line rounded-card border border-line bg-surface">
         <Explain q="What does the cone mean?">
           The shaded cone is where the <em>center</em> of the storm will probably travel — about 2 times out of 3 it stays inside. It is <strong>not the size of the storm</strong>: damaging wind, rain, surf and flooding reach far outside the cone, and being just outside it is not safe.
         </Explain>
@@ -130,7 +130,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       </section>
 
       {/* Official + imagery */}
-      <section className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
+      <section className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-label">
         {storm.links.public && <a className="inline-flex items-center gap-1 font-medium text-brand" href={storm.links.public} target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Official advisory</a>}
         {storm.links.graphics && <a className="inline-flex items-center gap-1 font-medium text-brand" href={storm.links.graphics} target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Official graphics</a>}
         {storm.links.discussion && <a className="inline-flex items-center gap-1 font-medium text-brand" href={storm.links.discussion} target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Forecaster discussion</a>}
@@ -147,10 +147,10 @@ function Dot({ color }: { color: string }) {
 function Explain({ q, children }: { q: string; children: React.ReactNode }) {
   return (
     <details className="group px-4 py-3">
-      <summary className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between text-body font-semibold [&::-webkit-details-marker]:hidden">
         {q} <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" />
       </summary>
-      <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{children}</p>
+      <p className="mt-2 text-label leading-relaxed text-ink-2">{children}</p>
     </details>
   );
 }
@@ -163,15 +163,15 @@ function Imagery({ id }: { id: string }) {
   return (
     <section className="mt-4">
       {stamp === null ? (
-        <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-[14px] font-medium">
+        <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-label font-medium">
           <Satellite className="size-4" /> Show live satellite (uses data)
         </button>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <figure><img src={`${floater}?t=${stamp}`} alt="GOES-West satellite view centered on the storm" className="w-full rounded-xl border border-line" loading="lazy" /><figcaption className="mt-1 text-xs text-muted">Storm close-up · GOES-West, NOAA</figcaption></figure>
+          <figure><img src={`${floater}?t=${stamp}`} alt="GOES-West satellite view centered on the storm" className="w-full rounded-card border border-line" loading="lazy" /><figcaption className="mt-1 text-micro text-muted">Storm close-up · GOES-West, NOAA</figcaption></figure>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <figure><img src={`${sector}?t=${stamp}`} alt="GOES-West satellite view of the Hawaiian Islands" className="w-full rounded-xl border border-line" loading="lazy" /><figcaption className="mt-1 text-xs text-muted">Hawaiʻi sector · GOES-West, NOAA</figcaption></figure>
+          <figure><img src={`${sector}?t=${stamp}`} alt="GOES-West satellite view of the Hawaiian Islands" className="w-full rounded-card border border-line" loading="lazy" /><figcaption className="mt-1 text-micro text-muted">Hawaiʻi sector · GOES-West, NOAA</figcaption></figure>
         </div>
       )}
     </section>

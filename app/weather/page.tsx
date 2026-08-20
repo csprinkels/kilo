@@ -42,7 +42,7 @@ export default function WeatherPage() {
   const soonSun = nextSun && nextSun.at - (w?.fetchedAt ?? 0) < 2 * 3_600_000 ? nextSun : undefined;
 
   return (
-    <PageShell title="Weather" blurb="NWS Honolulu · NOAA buoys · DOH air monitors" island={island} onIsland={(i) => { setIsland(i); setTownId(null); }} fetchedAt={w?.fetchedAt} offline={w?.offline}>
+    <PageShell title="Weather" island={island} onIsland={(i) => { setIsland(i); setTownId(null); }} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="NWS Honolulu">
       {!d && <HeroSkeleton />}
       {d && (
         <>

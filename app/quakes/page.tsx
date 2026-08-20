@@ -23,7 +23,7 @@ export default function QuakesPage() {
   const selected = d?.q.find((e) => e.i === sel);
 
   return (
-    <PageShell title="Earthquakes" blurb="USGS, magnitude 2.0+ in Hawaiian waters, last 7 days" fetchedAt={q?.fetchedAt} offline={q?.offline}>
+    <PageShell title="Earthquakes" blurb={d ? `${d.q.length}${d.more ? "+" : ""} quakes of magnitude 2 or more in the last week${d.notable.length ? `, ${d.notable.length} notable this month` : ""}.` : undefined} fetchedAt={q?.fetchedAt} gen={d?.upd} offline={q?.offline} source="USGS">
       {!d && <p className="py-10 text-center text-muted">{q === null ? "Loading…" : "No earthquake data saved yet."}</p>}
       {d && (
         <>
@@ -36,9 +36,9 @@ export default function QuakesPage() {
             </>
           )}
 
-          <section className="mt-6 overflow-hidden rounded-2xl border border-line">
+          <section className="mt-6 overflow-hidden rounded-card border border-line">
             <DotMap dots={dots} selected={sel ?? undefined} onSelect={setSel} />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-[12px] text-muted">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-micro text-muted">
               {[["M2", "#7c8796"], ["M3", "#d9a400"], ["M4", "#e4632a"], ["M5+", "#b3261e"]].map(([l, c]) => <span key={l} className="inline-flex items-center gap-1"><span className="inline-block size-2.5 rounded-full" style={{ background: c }} />{l}</span>)}
               <span>· faded = older</span>
               {selected && <span className="ml-auto font-medium text-ink">M{selected.m.toFixed(1)} {selected.p} · {ago(selected.t * 1000, now)}</span>}
@@ -49,23 +49,23 @@ export default function QuakesPage() {
           <ul className="divide-y divide-line">
             {d.q.map((e) => (
               <li key={e.i} id={`q-${e.i}`} className={`flex items-center gap-3 py-2.5 ${e.i === sel ? "-mx-2 rounded-lg bg-surface px-2" : ""}`} onClick={() => setSel(e.i)}>
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white tabular-nums" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full text-label font-bold text-white num" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium">{e.p}</span>
-                  <span className="block text-[12px] text-muted">{fmtDateTime(e.t * 1000)} HST · {e.d} km deep{e.f ? ` · ${e.f} felt reports` : ""}{e.r ? " · reviewed" : ""}</span>
+                  <span className="block truncate text-body font-medium">{e.p}</span>
+                  <span className="block text-micro text-muted">{fmtDateTime(e.t * 1000)} HST · {e.d} km deep{e.f ? ` · ${e.f} felt reports` : ""}{e.r ? " · reviewed" : ""}</span>
                 </span>
                 <a className="shrink-0 text-muted" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${e.i}`} target="_blank" rel="noreferrer" aria-label="USGS event page"><ExternalLink className="size-4" /></a>
               </li>
             ))}
           </ul>
-          <a className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-brand" href="https://earthquake.usgs.gov/earthquakes/eventpage/unknown/tellus" target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Felt one that isn&apos;t listed? Tell USGS</a>
+          <a className="mt-3 inline-flex items-center gap-1 text-label font-medium text-brand" href="https://earthquake.usgs.gov/earthquakes/eventpage/unknown/tellus" target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Felt one that isn&apos;t listed? Tell USGS</a>
 
-          <section className="mt-6 divide-y divide-line rounded-2xl border border-line bg-surface">
+          <section className="mt-6 divide-y divide-line rounded-card border border-line bg-surface">
             <Explain q="What does the magnitude mean for me?">People usually start feeling earthquakes around magnitude 3. A quake has one magnitude (energy at the source) but many intensities — how hard it shook where you were depends on distance and depth. Kīlauea produces dozens of small quakes a week; the south side of Hawaiʻi Island has the highest hazard in the state.</Explain>
             <Explain q="Is there early warning here?">No. ShakeAlert covers only California, Oregon and Washington. When shaking starts: drop, cover, hold on. Some Android phones get a crowd-sourced alert for M4.5+; iPhones get none.</Explain>
             <Explain q="Earthquake near the coast?">Strong or long shaking near the shore is your tsunami warning — a local tsunami can arrive in minutes, before any siren. Move inland or uphill on foot right away; don&apos;t wait for an official message. See the Tsunami page for your evacuation zone.</Explain>
           </section>
-          <p className="mt-4 text-xs text-muted">Magnitudes and locations can change after USGS review. Data: earthquake.usgs.gov.</p>
+          <p className="mt-4 text-micro text-muted">Magnitudes and locations can change after USGS review. Data: earthquake.usgs.gov.</p>
         </>
       )}
     </PageShell>
@@ -74,12 +74,12 @@ export default function QuakesPage() {
 
 function QuakeCard({ e, now }: { e: Quake; now: number }) {
   return (
-    <li className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-3">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-[15px] font-bold text-white tabular-nums" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
+    <li className="flex items-start gap-3 card">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-body font-bold text-white num" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
       <span className="min-w-0">
-        <span className="block text-[15px] font-semibold leading-snug">{e.p}</span>
-        <span className="block text-[12px] text-muted">{ago(e.t * 1000, now)} · {e.d} km deep{e.f ? ` · ${e.f} felt it` : ""}{e.mmi ? ` · shaking ${e.mmi}` : ""}</span>
-        <a className="mt-1 inline-flex items-center gap-1 text-[12px] font-medium text-brand" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${e.i}/tellus`} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /> Did you feel it?</a>
+        <span className="block text-body font-semibold leading-snug">{e.p}</span>
+        <span className="block text-micro text-muted">{ago(e.t * 1000, now)} · {e.d} km deep{e.f ? ` · ${e.f} felt it` : ""}{e.mmi ? ` · shaking ${e.mmi}` : ""}</span>
+        <a className="mt-1 inline-flex items-center gap-1 text-micro font-medium text-brand" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${e.i}/tellus`} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /> Did you feel it?</a>
       </span>
     </li>
   );
@@ -88,8 +88,8 @@ function QuakeCard({ e, now }: { e: Quake; now: number }) {
 function Explain({ q, children }: { q: string; children: React.ReactNode }) {
   return (
     <details className="group px-4 py-3">
-      <summary className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold [&::-webkit-details-marker]:hidden">{q} <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" /></summary>
-      <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{children}</p>
+      <summary className="flex cursor-pointer list-none items-center justify-between text-body font-semibold [&::-webkit-details-marker]:hidden">{q} <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" /></summary>
+      <p className="mt-2 text-label leading-relaxed text-ink-2">{children}</p>
     </details>
   );
 }

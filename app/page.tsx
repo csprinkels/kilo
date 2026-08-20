@@ -1,15 +1,17 @@
 "use client";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { CircleCheck, ExternalLink, Gauge, Megaphone, Radio, Siren, TriangleAlert, WifiOff, type LucideIcon } from "lucide-react";
+import { CircleCheck, ExternalLink, Gauge, Megaphone, Radio, Siren, TriangleAlert } from "lucide-react";
 import ItemRow, { ICON, SEV_TEXT } from "@/components/ItemRow";
+import Banner from "@/components/Banner";
+import StatusLine from "@/components/StatusLine";
 import type { DigestItem, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
 import SectionNav from "@/components/SectionNav";
-import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtDateTime, fmtTime, okina } from "@/lib/brand";
+import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtTime, okina } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
 
@@ -58,18 +60,18 @@ export default function Home() {
   const headlinesOnly = ess?.data && ess.data.gen > (snap?.data?.gen ?? 0) ? ess.data.alerts.filter((a) => !items.some((i) => i.key && hashOf(i.key) === a.h)) : [];
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
       {/* Masthead */}
       <header className="pt-6">
         <div className="flex items-baseline justify-between">
-          <span className="display text-[17px] font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {okina(TAGLINE)}</span></span>
-          <Link href="/sources/" className="text-xs font-medium text-muted underline-offset-4 hover:underline">Sources &amp; about</Link>
+          <span className="display text-body font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {okina(TAGLINE)}</span></span>
+          <Link href="/sources/" className="text-micro font-medium text-muted underline-offset-4 hover:underline">Sources &amp; about</Link>
         </div>
         <SectionNav />
-        <h1 className="display mt-4 text-[44px] font-medium leading-[0.95] tracking-[-0.02em] text-ink sm:text-[56px]">
+        <h1 className="display mt-4 text-display font-medium leading-[0.95] tracking-[-0.02em] text-ink sm:text-[56px]">
           {okina(ISLAND_LABEL[island].split(" · ")[0])}
           {ISLAND_LABEL[island].includes(" · ") && (
-            <span className="block text-[22px] font-normal tracking-normal text-ink-2 sm:text-[26px]">
+            <span className="block text-h2 font-normal tracking-normal text-ink-2 sm:text-[26px]">
               {okina(ISLAND_LABEL[island].split(" · ").slice(1).join(" · "))}
             </span>
           )}
@@ -83,7 +85,7 @@ export default function Home() {
                 key={i}
                 onClick={() => setIsland(i)}
                 aria-pressed={on}
-                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                className={`shrink-0 rounded-full border px-4 py-2 text-label font-medium transition-colors ${
                   on ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-ink-2"
                 }`}
               >
@@ -94,52 +96,35 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Status line (sticky) */}
-      <div className="sticky top-0 z-10 -mx-5 mt-5 border-y border-line bg-bg/90 px-5 py-2 text-[13px] backdrop-blur supports-[backdrop-filter]:bg-bg/75">
-        <div className="flex items-center gap-2 text-muted">
-          {offline ? (
-            <><WifiOff className="size-3.5 text-sev4" /> <span className="font-medium text-sev4">Offline</span><span>· saved {gen ? fmtDateTime(gen) : "—"}</span></>
-          ) : gen ? (
-            <>
-              {slow ? <Gauge className="size-3.5 text-sev2" /> : <span className={`inline-block size-2 rounded-full ${stale ? "bg-sev2" : "bg-emerald-500"}`} />}
-              <span>Updated {fmtTime(gen)} HST · {ago(gen, now)}{slow ? " · slow connection" : ""}</span>
-              {srcTotal > 0 && <span className="ml-auto tabular-nums">{srcOk}/{srcTotal} sources</span>}
-            </>
-          ) : (
-            <span>{ess === null && snap === null ? "Loading…" : "No data yet"}</span>
-          )}
-        </div>
-      </div>
+      <StatusLine gen={gen} checkedAt={now} offline={offline} source={slow ? "slow connection" : undefined} right={srcTotal > 0 ? `${srcOk}/${srcTotal} sources` : undefined} />
 
       {/* Banners */}
       {offline && (
-        <Banner tone="red" icon={Radio}>
-          No connection. Showing the last copy saved on this phone. For emergencies call 911; Civil Defense messages air on AM/FM radio.
-        </Banner>
+        <Banner sev={4} icon={Radio} title="No connection">Showing the last copy saved on this phone. For emergencies call 911; Civil Defense messages air on AM/FM radio.</Banner>
       )}
       {!offline && slow && (
-        <Banner tone="amber" icon={Gauge}>Weak connection. Showing the last saved details plus the newest headlines; full text loads when the link improves. Alerts you turned on still arrive in full.</Banner>
+        <Banner sev={2} icon={Gauge} title="Weak connection">Showing saved details plus the newest headlines; full text loads when the link improves. Alerts you turned on still arrive in full.</Banner>
       )}
       {!offline && !slow && stale && (
-        <Banner tone="amber" icon={TriangleAlert}>Feed updates paused for {ago(gen, now)}. Treat everything below as possibly out of date.</Banner>
+        <Banner sev={2} icon={TriangleAlert} title={`Feed updates paused for ${ago(gen, now)}`}>Treat everything below as possibly out of date.</Banner>
       )}
       {watch && (
-        <Banner tone="red" icon={Siren}>A hurricane, tropical storm or tsunami watch/warning is in effect for Hawaiʻi. Follow your county&apos;s alerts.</Banner>
+        <Banner sev={4} icon={Siren} title="Hurricane, tropical storm or tsunami watch/warning in effect">Follow your county&apos;s alerts. Details are in the items below and on the Storms page.</Banner>
       )}
 
       {island !== "state" && <StormCard island={island} />}
 
       {/* Headlines the full snapshot hasn't caught up with (weak link) */}
       {headlinesOnly.length > 0 && (
-        <section className="mt-5 rounded-2xl border border-sev2 bg-sev2-bg/60 p-3" aria-label="Latest headlines">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sev2">Newest headlines · {ess?.data && fmtTime(ess.data.gen)} HST</p>
+        <section className="card mt-s4 border-l-[3px] border-l-sev2" aria-label="Latest headlines">
+          <p className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Newest headlines · {ess?.data && fmtTime(ess.data.gen)} HST</p>
           <ul className="mt-2 space-y-1.5">
             {headlinesOnly.map((a) => {
               const Icon = ICON[a.type] ?? Megaphone;
-              return <li key={a.h} className="flex items-start gap-2 text-[15px] leading-snug"><Icon className={`mt-0.5 size-4 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}</span></li>;
+              return <li key={a.h} className="flex items-start gap-2 text-body leading-snug"><Icon className={`mt-0.5 size-4 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}</span></li>;
             })}
           </ul>
-          <p className="mt-2 text-xs text-muted">Titles only for now; details arrive with the next successful update.</p>
+          <p className="mt-2 text-micro text-muted">Titles only for now; details arrive with the next successful update.</p>
         </section>
       )}
 
@@ -147,15 +132,15 @@ export default function Home() {
       {(snap?.data || ess?.data) && (
         <section className="mt-5" aria-label="Situation summary">
           {items.length === 0 && headlinesOnly.length === 0 ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-4">
+            <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-4">
               <CircleCheck className="size-6 shrink-0 text-emerald-600" />
               <div>
                 <p className="font-semibold">All quiet on {ISLAND_LABEL[island].split(" · ")[0]}</p>
-                <p className="text-sm text-muted">No active alerts, closures or shelters from the sources we track.</p>
+                <p className="text-label text-muted">No active alerts, closures or shelters from the sources we track.</p>
               </div>
             </div>
           ) : (
-            <p className="text-[15px] leading-relaxed text-ink-2">
+            <p className="text-lead text-ink-2">
               <span className={`font-semibold ${SEV_TEXT[topSev]}`}>{topSev >= 4 ? "Life-safety alerts active. " : topSev === 3 ? "Warnings in effect. " : ""}</span>
               {situation.map((s, i) => (
                 <span key={s}>{i > 0 && <span className="mx-1.5 text-muted">·</span>}{s}</span>
@@ -168,10 +153,11 @@ export default function Home() {
 
       {/* Items */}
       {sections.map(({ sev, items }) => (
-        <section key={sev} className="mt-7">
-          <h2 className="flex items-baseline gap-2 border-b border-line pb-2">
-            <span className={`text-[13px] font-semibold uppercase tracking-[0.12em] ${SEV_TEXT[sev]}`}>{SEV_SECTION[sev]}</span>
-            <span className="text-xs tabular-nums text-muted">{items.length}</span>
+        <section key={sev} className="mt-s6">
+          <h2 className="flex items-baseline gap-s2 border-b border-line pb-s2">
+            <span className={`inline-block size-2.5 shrink-0 self-center rounded-full ${{ 4: "bg-sev4", 3: "bg-sev3", 2: "bg-sev2", 1: "bg-sev1" }[sev]}`} aria-hidden />
+            <span className="h2-display">{SEV_SECTION[sev]}</span>
+            <span className="text-label text-muted num">{items.length}</span>
           </h2>
           <ul className="divide-y divide-line">
             {items.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
@@ -181,14 +167,14 @@ export default function Home() {
 
       {/* Neighbour reports: always below official items, never interleaved */}
       {(community.length > 0 || island !== "state") && (
-        <section className="mt-7">
-          <h2 className="flex items-baseline gap-2 border-b border-line pb-2">
-            <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-2">Neighbour reports</span>
-            <span className="text-xs tabular-nums text-muted">{community.length}</span>
-            <Link href="/report/" className="ml-auto text-[13px] font-medium text-brand">Report something</Link>
+        <section className="mt-s6">
+          <h2 className="flex items-baseline gap-s2 border-b border-line pb-s2">
+            <span className="h2-display">Neighbour reports</span>
+            <span className="text-label text-muted num">{community.length}</span>
+            <Link href="/report/" className="ml-auto text-label font-medium text-brand">Report something</Link>
           </h2>
           {community.length ? <ul className="divide-y divide-line">{community.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>
-            : <p className="py-3 text-[14px] text-muted">Nothing from neighbours right now. Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
+            : <p className="py-3 text-label text-muted">Nothing from neighbours right now. Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
         </section>
       )}
 
@@ -196,19 +182,19 @@ export default function Home() {
 
       {/* County alerts */}
       {island !== "state" && (
-        <section className="mt-10 rounded-2xl bg-surface-2 p-5">
-          <p className="display text-lg font-semibold">Get your county&apos;s own alerts</p>
-          <p className="mt-1 text-sm text-ink-2">
+        <section className="mt-10 rounded-card bg-surface-2 p-5">
+          <p className="display text-lead font-semibold">Get your county&apos;s own alerts</p>
+          <p className="mt-1 text-label text-ink-2">
             This page collects official information; it doesn&apos;t replace the county&apos;s emergency messages. {COUNTY_ALERTS[island].label}:
           </p>
-          <p className="mt-2 text-base font-semibold">{COUNTY_ALERTS[island].how}</p>
-          <a className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-brand underline-offset-4 hover:underline" href={COUNTY_ALERTS[island].url} target="_blank" rel="noreferrer">
+          <p className="mt-2 text-body font-semibold">{COUNTY_ALERTS[island].how}</p>
+          <a className="mt-3 inline-flex items-center gap-1 text-label font-medium text-brand underline-offset-4 hover:underline" href={COUNTY_ALERTS[island].url} target="_blank" rel="noreferrer">
             Sign-up page <ExternalLink className="size-3.5" />
           </a>
         </section>
       )}
 
-      <footer className="mt-8 text-center text-xs leading-relaxed text-muted">
+      <footer className="mt-8 text-center text-micro leading-relaxed text-muted">
         Compiled from official sources every two minutes. Information only — not an emergency service.
         <br />Free, no ads, no account. <Link className="underline underline-offset-4" href="/sources/">How this works</Link>
       </footer>
@@ -235,16 +221,6 @@ function summarize(items: Item[]): string[] {
   const quakes = n((i) => i.type === "quake"); if (quakes) out.push(plural(quakes, "earthquake this week", "earthquakes this week"));
   const notices = n((i) => i.type === "notice"); if (notices) out.push(plural(notices, "state notice", "state notices"));
   return out;
-}
-
-function Banner({ tone, icon: Icon, children }: { tone: "red" | "amber"; icon: LucideIcon; children: React.ReactNode }) {
-  const cls = tone === "red" ? "bg-sev4 text-white" : "bg-sev2 text-white";
-  return (
-    <div role="status" className={`fade-up mt-4 flex items-start gap-3 rounded-xl px-4 py-3 text-sm font-medium leading-snug ${cls}`}>
-      <Icon className="mt-0.5 size-4 shrink-0" />
-      <span>{children}</span>
-    </div>
-  );
 }
 
 function Skeleton() {

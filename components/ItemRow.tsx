@@ -43,25 +43,25 @@ export default function ItemRow({ item, now, focus }: { item: Item; now: number;
     } catch { /* cancelled */ }
   };
   return (
-    <li id={`item-${hashOf(item.key)}`} className={`fade-up ${focus ? "-mx-2 rounded-xl bg-surface px-2 ring-1 ring-ink/20" : ""}`}>
-      <button className="flex w-full items-start gap-3 py-3.5 text-left" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ${SEV_CHIP[item.sev]}`}>
-          <Icon className="size-[18px]" strokeWidth={2} />
+    <li id={`item-${hashOf(item.key)}`} className={`fade-up ${focus ? "-mx-2 rounded-card bg-surface px-2 ring-1 ring-ink/20" : ""}`}>
+      <button className="flex min-h-14 w-full items-start gap-s3 py-s3 text-left" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full ${SEV_CHIP[item.sev]}`}>
+          <Icon className="size-5" strokeWidth={2} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-xs text-muted">
+          <span className="flex items-center gap-1.5 text-label text-muted num">
             {community && <span className="rounded bg-surface-2 px-1.5 py-0.5 font-semibold uppercase tracking-wide text-ink-2">Unverified</span>}
             <span className="font-medium text-ink-2">{TYPE_LABEL[item.type]}</span>
             {item.districts[0] && <><span>·</span><span>{item.districts[0]}</span></>}
-            <span className="ml-auto shrink-0 tabular-nums">{ago(item.issuedAt, now)}</span>
+            <span className="ml-auto shrink-0 num">{ago(item.issuedAt, now)}</span>
           </span>
-          <span className="mt-0.5 block text-[16px] font-semibold leading-snug text-ink">{item.title}</span>
-          {item.body && <span className={`mt-1 block text-[14px] leading-relaxed text-ink-2 ${open ? "" : "line-clamp-2"}`}>{item.body}</span>}
+          <span className="mt-0.5 block text-body font-semibold leading-snug text-ink">{item.title}</span>
+          {item.body && <span className={`mt-1 block text-body leading-snug text-ink-2 ${open ? "" : "line-clamp-2"}`}>{item.body}</span>}
         </span>
         <ChevronDown className={`mt-1 size-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="fade-up mb-4 ml-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
+        <div className="fade-up mb-4 ml-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-micro">
           <span className="text-muted">
             {src} · {community ? <><Users className="inline size-3.5 align-text-bottom" /> {confirms + 1} {confirms ? "say still there" : "reported"} · last {fmtTime(item.lastConfirmedAt)}</> : <>confirmed {fmtTime(item.lastConfirmedAt)}</>}{item.expiresAt ? ` · until ${fmtDateTime(item.expiresAt)}` : ""}
           </span>
@@ -74,7 +74,7 @@ export default function ItemRow({ item, now, focus }: { item: Item; now: number;
                   <button className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-medium text-muted" onClick={() => cast("flag")}><Flag className="size-3.5" /> Report</button>
                 </>
               )}
-              <span className="basis-full text-[12px] text-muted">Unverified neighbour report. Call 911 for emergencies.</span>
+              <span className="basis-full text-micro text-muted">Unverified neighbour report. Call 911 for emergencies.</span>
             </span>
           )}
           <span className="flex gap-4">
