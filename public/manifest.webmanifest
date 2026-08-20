@@ -1,0 +1,14 @@
+{
+  "name": "Hawaiʻi Status",
+  "short_name": "HI Status",
+  "description": "Official Hawaiʻi alerts, shelters, road closures and county notices in one place. Works offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f5",
+  "theme_color": "#f7f7f5",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

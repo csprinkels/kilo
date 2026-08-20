@@ -1,69 +1,130 @@
-import Image from "next/image";
+"use client";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import type { Island, Item } from "@/lib/types";
+import { ISLANDS } from "@/lib/types";
+import { useFeed, useStoredIsland } from "@/lib/data";
+import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, SOURCE_LABEL, TYPE_LABEL, ago, fmtDateTime, fmtTime } from "@/lib/brand";
+
+const STALE_MS = 30 * 60_000;
+
+const SEV_STYLE: Record<number, string> = {
+  4: "border-red-600 bg-red-50 dark:bg-red-950/40",
+  3: "border-orange-500 bg-orange-50 dark:bg-orange-950/40",
+  2: "border-amber-400 bg-card",
+  1: "border-border bg-card",
+};
 
 export default function Home() {
+  const [island, setIsland] = useStoredIsland();
+  const { snap, manifest } = useFeed(island);
+  const now = Date.now();
+  const items = snap?.data?.items ?? [];
+  const gen = snap?.data?.gen ?? 0;
+  const sections = useMemo(() => {
+    const by: Record<number, Item[]> = { 4: [], 3: [], 2: [], 1: [] };
+    for (const i of items) by[i.sev].push(i);
+    return ([4, 3, 2, 1] as const).filter((s) => by[s].length).map((s) => ({ sev: s, items: by[s] }));
+  }, [items]);
+
+  const offline = !!snap?.offline;
+  const stale = gen > 0 && now - gen > STALE_MS;
+  const watch = manifest?.data?.mode === "watch";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="mx-auto w-full max-w-2xl px-4 pb-16">
+      <header className="sticky top-0 z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl font-bold tracking-tight">{APP_NAME}</h1>
+          <select
+            aria-label="Island"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-base"
+            value={island}
+            onChange={(e) => setIsland(e.target.value as Island)}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
+          </select>
         </div>
-      </main>
-    </div>
+        <p className="mt-1 text-sm text-muted">
+          {gen ? <>Updated {fmtTime(gen)} HST · {ago(gen, now)}</> : snap === null ? "Loading…" : "No data yet"}
+        </p>
+      </header>
+
+      {offline && (
+        <Banner tone="red">
+          Offline — showing saved data{gen ? ` from ${fmtDateTime(gen)} HST` : ""}. Call 911 for emergencies; tune to AM/FM radio for Civil Defense messages.
+        </Banner>
+      )}
+      {!offline && stale && (
+        <Banner tone="amber">Feed updates paused — last update {ago(gen, now)}. Treat everything below as possibly out of date.</Banner>
+      )}
+      {watch && (
+        <Banner tone="red">A hurricane, tropical storm, or tsunami watch/warning is in effect for Hawaiʻi. Check your county alerts and the items below.</Banner>
+      )}
+
+      {!snap?.data && !offline && <p className="py-10 text-center text-muted">Loading…</p>}
+      {snap?.data && items.length === 0 && (
+        <p className="py-10 text-center text-muted">Nothing active for {ISLAND_LABEL[island]} right now.</p>
+      )}
+
+      {sections.map(({ sev, items }) => (
+        <section key={sev} className="mt-5">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{SEV_SECTION[sev]} · {items.length}</h2>
+          <ul className="space-y-3">{items.map((i) => <ItemCard key={i.key} item={i} now={now} />)}</ul>
+        </section>
+      ))}
+
+      {island !== "state" && (
+        <section className="mt-8 rounded-xl border border-border bg-card p-4 text-sm">
+          <p className="font-semibold">Get your county&apos;s official alerts</p>
+          <p className="mt-1 text-muted">{COUNTY_ALERTS[island].label}: <strong className="text-foreground">{COUNTY_ALERTS[island].how}</strong></p>
+          <a className="mt-2 inline-block underline" href={COUNTY_ALERTS[island].url} target="_blank" rel="noreferrer">Sign-up page ↗</a>
+        </section>
+      )}
+
+      <footer className="mt-8 text-center text-xs text-muted">
+        Information only, compiled from official sources. Not an emergency service. <Link className="underline" href="/sources/">Sources &amp; about</Link>
+      </footer>
+    </main>
+  );
+}
+
+function Banner({ tone, children }: { tone: "red" | "amber"; children: React.ReactNode }) {
+  const cls = tone === "red" ? "bg-red-600 text-white" : "bg-amber-400 text-black";
+  return <div role="status" className={`mt-3 rounded-lg px-3 py-2 text-sm font-medium ${cls}`}>{children}</div>;
+}
+
+function ItemCard({ item, now }: { item: Item; now: number }) {
+  const [open, setOpen] = useState(false);
+  const src = SOURCE_LABEL[item.source.split(":")[0]] ?? item.source;
+  const share = async () => {
+    const text = `${item.title}\n${item.body.slice(0, 300)}\nSource: ${src} ${fmtDateTime(item.lastConfirmedAt)} HST\n${item.srcUrl}`.slice(0, 480);
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else { await navigator.clipboard.writeText(text); alert("Copied"); }
+    } catch { /* user cancelled */ }
+  };
+  return (
+    <li className={`rounded-xl border-l-4 p-3 shadow-sm ${SEV_STYLE[item.sev]}`}>
+      <button className="w-full text-left" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+          <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-medium text-foreground">{TYPE_LABEL[item.type] ?? item.type}</span>
+          {item.districts.map((d) => <span key={d}>{d}</span>)}
+          <span className="ml-auto">{ago(item.issuedAt, now)}</span>
+        </div>
+        <p className="mt-1 text-base font-semibold leading-snug">{item.title}</p>
+        {item.body && <p className={`mt-1 text-sm text-foreground/80 ${open ? "" : "line-clamp-2"}`}>{item.body}</p>}
+      </button>
+      {open && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2 text-xs text-muted">
+          <span>{src} · confirmed {fmtTime(item.lastConfirmedAt)}{item.expiresAt ? ` · until ${fmtDateTime(item.expiresAt)}` : ""}</span>
+          {item.lat && item.lon && (
+            <a className="underline" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer">Map ↗</a>
+          )}
+          <a className="underline" href={item.srcUrl} target="_blank" rel="noreferrer">Official page ↗</a>
+          <button className="underline" onClick={share}>Share</button>
+        </div>
+      )}
+    </li>
   );
 }
