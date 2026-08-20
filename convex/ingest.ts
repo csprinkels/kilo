@@ -7,6 +7,7 @@ import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
 import { HDOT_URL, HIEMA_URL, HNL_TRAFFIC_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHnlTraffic, parseHpd, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
 import { districtFor } from "../lib/places.ts";
+import { plainAlert } from "../lib/plain.ts";
 import { reportToItem } from "../lib/reportRules.ts";
 
 export const UA = "Kilo/0.1 (kilohawaii.app; aloha@csprinkels.com)";
@@ -105,7 +106,7 @@ export const commit = internalMutation({
 
     const out: { path: string; body: string }[] = [];
     const vmap = {} as Record<Island, number>;
-    const triggers: { island: Island; key: string }[] = [];
+    const triggers: { island: Island; key: string; level: number }[] = [];
     for (const island of [...ISLANDS, "state" as const]) {
       const items = [
         ...active.filter((r) => island === "state" || r.islands.includes(island) || r.islands.includes("state")).map(toItem),
@@ -117,11 +118,21 @@ export const commit = internalMutation({
       vmap[island] = now;
       out.push({ path: `v1/${island}.json`, body: JSON.stringify(snap) });
       out.push({ path: `v1/${island}/essentials.json`, body: JSON.stringify(buildEssentials(island, items, now, mode, [okCount, srcTotal])) });
-      // A new sev>=3 item on this island is worth a push digest (the highest one if several).
-      const lead = items.find((i) => i.sev >= 3 && fresh.has(i.key));
-      if (lead && island !== "state") triggers.push({ island, key: lead.key });
+      // A new item the Now page would show as a warning is worth a push (the highest one if several).
+      // Rank on plainAlert().level, the same number the page ranks on — never on the feed's own `sev`.
+      // They disagree (a M5 quake and an erupting volcano are sev 3 but level 2 and 1), and when push
+      // used `sev` a notification could point at an item the page then refused to render.
+      if (island !== "state") {
+        // Wrapped because this whole mutation is one transaction: a template that throws must cost us the
+        // notification, never the snapshot. Same reason each source's fetch is isolated up in `run`.
+        const levelOf = (i: Item) => {
+          try { return plainAlert(i, now, island).level; } catch (e) { console.error(`[ingest] plainAlert ${i.key}:`, e); return 0; }
+        };
+        const lead = items.find((i) => fresh.has(i.key) && levelOf(i) >= 3);
+        if (lead) triggers.push({ island, key: lead.key, level: levelOf(lead) });
+      }
     }
-    for (const t of triggers) await ctx.scheduler.runAfter(0, internal.push.sendDigest, { island: t.island, trigger: t.key });
+    for (const t of triggers) await ctx.scheduler.runAfter(0, internal.push.sendDigest, { island: t.island, trigger: t.key, level: t.level });
     const manifest: Manifest = { gen: now, mode, v: vmap, sources: health };
     out.push({ path: "v1/manifest.json", body: JSON.stringify(manifest) });
 

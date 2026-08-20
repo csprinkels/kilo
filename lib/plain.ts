@@ -88,15 +88,78 @@ const NWS: Record<string, { h: T; a: string; level?: Level }> = {
   "Tsunami Advisory": { h: () => "Dangerous waves at the shore", a: "Stay out of the water and off the beach.", level: 3 },
   "Tsunami Watch": { h: () => "A tsunami may be coming", a: "Get ready to leave the coast. Keep your phone on.", level: 2 },
   "Special Weather Statement": { h: (p) => `Weather note ${p}`, a: "", level: 1 },
+  // The rest of what NWS Honolulu actually issues. tests/plain.test.ts pins this list, so a new event
+  // type shows up as a failing test instead of the agency's own label leaking onto the screen.
+  "Beach Hazards Statement": { h: (p) => `Dangerous water at beaches ${p}`, a: "Stay out of the water and off wet rocks.", level: 2 },
+  "Rip Current Statement": { h: (p) => `Strong ocean currents ${p}`, a: "Swim only where a lifeguard can see you.", level: 2 },
+  "Coastal Flood Advisory": { h: (p, u) => `Salt water on coast roads ${p} ${u}`.trim(), a: "Do not drive through water on the road.", level: 2 },
+  "Coastal Flood Warning": { h: (p, u) => `Flooding along the coast ${p} ${u}`.trim(), a: "Move away from low ground near the shore.", level: 3 },
+  "Coastal Flood Statement": { h: (p) => `High water along the coast ${p}`, a: "Move things off low ground near the shore.", level: 1 },
+  "Dense Fog Advisory": { h: (p) => `Thick fog ${p}`, a: "Slow down. Use low beams, not high beams.", level: 2 },
+  "Air Quality Alert": { h: (p) => `Hazy air ${p}`, a: "Stay inside if breathing is hard. Keep windows shut.", level: 2 },
+  "Ashfall Advisory": { h: (p) => `Ash falling ${p}`, a: "Stay inside. Cover your nose and mouth if you go out.", level: 2 },
+  "Volcanic Ashfall Advisory": { h: (p) => `Ash falling ${p}`, a: "Stay inside. Cover your nose and mouth if you go out.", level: 2 },
+  "Ashfall Warning": { h: (p) => `Heavy ash falling ${p}`, a: "Stay inside. Keep windows shut. Do not drive.", level: 3 },
+  "Fire Weather Watch": { h: (p) => `Fire danger builds ${p}`, a: "No outdoor burning. Know how you would leave.", level: 2 },
+  "Frost Advisory": { h: () => "Frost on the summits tonight", a: "Cover plants up high. Dress warm on the mountain.", level: 1 },
+  "Extreme Heat Warning": { h: (p) => `Dangerous heat ${p}`, a: "Drink water. Stay in the shade or inside. Check on kūpuna and pets.", level: 3 },
+  "Extreme Heat Watch": { h: (p) => `Dangerous heat possible ${p}`, a: "Plan indoor time. Check on kūpuna and pets.", level: 2 },
+  "High Wind Watch": { h: (p) => `Dangerous wind possible ${p}`, a: "Tie down anything loose today.", level: 2 },
+  "Extreme Wind Warning": { h: (p) => `Violent wind arriving ${p}`, a: "Move to an inside room now. Stay away from windows.", level: 4 },
+  "Tornado Warning": { h: (p) => `Tornado possible right now ${p}`, a: "Go to an inside room on the lowest floor now.", level: 4 },
+  "Severe Thunderstorm Warning": { h: (p, u) => `Damaging thunderstorm ${p} ${u}`.trim(), a: "Stay inside and away from windows.", level: 3 },
+  "Flood Statement": { h: (p, u) => `Flooding update ${p} ${u}`.trim(), a: "Do not drive through water on the road.", level: 2 },
+  "Flash Flood Statement": { h: (p, u) => `Flooding update ${p} ${u}`.trim(), a: "Do not drive through water on the road.", level: 3 },
+  "Hydrologic Outlook": { h: (p) => `Heavy rain may come later ${p}`, a: "", level: 1 },
+  "Hurricane Local Statement": { h: (p) => `Storm update ${p}`, a: "", level: 1 },
+  "Tropical Cyclone Statement": { h: (p) => `Storm update ${p}`, a: "", level: 1 },
+  "Blizzard Warning": { h: () => "Heavy snow and wind on the summits", a: "Summit roads will close.", level: 1 },
+  "Storm Warning": { h: () => "Very dangerous seas for boats", a: "Stay in port.", level: 2 },
+  "Hurricane Force Wind Warning": { h: () => "Hurricane-force wind at sea", a: "Stay in port.", level: 2 },
+  "Hazardous Seas Warning": { h: () => "Dangerous seas for boats", a: "Stay in port.", level: 1 },
+  "Gale Watch": { h: () => "Rough seas coming for boats", a: "", level: 1 },
+  "Special Marine Warning": { h: () => "Sudden dangerous wind on the water", a: "Get off the water now.", level: 3 },
+  "Marine Weather Statement": { h: () => "Weather note for boats", a: "", level: 1 },
 };
 
+// NWS adds event types faster than anyone writes words for them. An unmapped event still has to be safe:
+// no agency label in the headline, an urgency read off the event's own last word, and something to do.
+const NWS_KIND: { re: RegExp; level: Level; action: string }[] = [
+  { re: /\b(Warning|Emergency)$/, level: 3, action: "Read the agency's own message and follow it." },
+  { re: /\bWatch$/, level: 2, action: "Nothing to do yet. Keep an eye on it today." },
+  { re: /\b(Advisory|Alert)$/, level: 2, action: "Take care outside today. Read the agency's own message." },
+  { re: /\b(Statement|Outlook)$/, level: 1, action: "" },
+];
+const NWS_SUFFIX = /\s*\b(Warning|Watch|Advisory|Statement|Alert|Outlook|Emergency)$/;
+const NWS_UNKNOWN = { level: 2 as Level, action: "Read the agency's own message." };
+
 // ---------- per type ----------
-function nws(item: Item, now: number, island?: Island): Plain | undefined {
+/** The words we wrote for this event, or undefined if we never wrote any. */
+function nwsTemplate(item: Item, now: number, island?: Island): Plain | undefined {
   const ev = item.fields?.event;
   const t = ev ? NWS[ev] : undefined;
   if (!t) return undefined;
   const until = fmtUntil(item.expiresAt, now);
   return { headline: t.h(placeOf(item, island), until ?? ""), action: t.a, level: t.level ?? item.sev, until, source: sourceName(item.source), official: item.title };
+}
+
+/** Words for an event with no template: keep the subject, drop the agency's label, always leave an action. */
+function nwsGeneric(item: Item, event: string, place: string, until: string | undefined): Plain {
+  const kind = NWS_KIND.find((k) => k.re.test(event)) ?? NWS_UNKNOWN;
+  const subject = event.replace(NWS_SUFFIX, "").trim();
+  const head = subject ? cap(`${subject} ${place}`.trim()) : `Weather notice ${place}`;
+  return {
+    // Last line of defence: an event whose own name carries a word we never print falls back to a plain one.
+    headline: BANNED.some((re) => re.test(head)) ? `Weather notice ${place}` : head,
+    action: kind.action, level: kind.level, until, source: sourceName(item.source), official: item.title,
+  };
+}
+
+/** Any NWS item: our words when we have them, safe generic words when we don't. */
+function nws(item: Item, now: number, island?: Island): Plain | undefined {
+  const ev = item.fields?.event;
+  if (!ev) return undefined;
+  return nwsTemplate(item, now, island) ?? nwsGeneric(item, ev, placeOf(item, island), fmtUntil(item.expiresAt, now));
 }
 
 function shelter(item: Item): Plain {
@@ -206,7 +269,9 @@ export function plainAlert(item: Item, now = Date.now(), island?: Island): Plain
   const fallback = (action: string, level: Level = item.sev): Plain => ({ headline: cap(item.title), action, level, until: fmtUntil(item.expiresAt, now), source: src, official: item.title });
   switch (item.type) {
     case "advisory": case "storm": return nws(item, now, island) ?? fallback("");
-    case "tsunami": return item.source.startsWith("nws") ? (nws(item, now, island) ?? tsunami(item, now)) : tsunami(item, now);
+    // Tsunami keeps its own words when NWS uses an event we never wrote a template for: tsunami() reads the
+    // title and says something true about the danger, which beats anything generic.
+    case "tsunami": return (item.source.startsWith("nws") ? nwsTemplate(item, now, island) : undefined) ?? tsunami(item, now);
     case "shelter": return shelter(item);
     case "school": return school(item, now);
     case "road_closure": return road(item, now);

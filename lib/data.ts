@@ -136,9 +136,19 @@ export function useJson<T>(path: string) {
 const islandListeners = new Set<() => void>();
 const subscribeIsland = (cb: () => void) => { islandListeners.add(cb); return () => { islandListeners.delete(cb); }; };
 const getIsland = () => (localStorage.getItem("island") as Island | null) ?? "hawaii";
+/**
+ * The evacuation-zone pack (38–130 KB) is the one file that has to already be on the phone when the signal
+ * goes. Pull it the moment someone picks an island — that is when they still have bars, and it is a deliberate
+ * tap, not a background poll. The service worker files it under a cache that survives app updates.
+ */
+const warmZones = (i: Island) => { if (i !== "state") void fetch(`/zones/${i}.json`).catch(() => {}); };
 export function useStoredIsland(): [Island, (i: Island) => void] {
   const island = useSyncExternalStore(subscribeIsland, getIsland, () => "hawaii" as Island);
-  return [island, (i) => { localStorage.setItem("island", i); islandListeners.forEach((cb) => cb()); }];
+  return [island, (i) => {
+    try { localStorage.setItem("island", i); } catch { /* storage off: the choice still holds for this visit */ }
+    warmZones(i);
+    islandListeners.forEach((cb) => cb());
+  }];
 }
 /** Has this phone ever picked an island? Drives the one-screen first run. ("state" counts as not chosen.) */
 const getChosen = () => { const v = localStorage.getItem("island"); return !!v && v !== "state"; };
