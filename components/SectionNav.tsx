@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, CloudSun, Home, Megaphone, Mountain, Waves, Wind } from "lucide-react";
+import { Activity, CarFront, CloudSun, Home, Megaphone, Mountain, Waves, Wind } from "lucide-react";
 
 const SECTIONS = [
   { href: "/", label: "Now", icon: Home },
   { href: "/storms/", label: "Storms", icon: Wind },
+  { href: "/traffic/", label: "Traffic", icon: CarFront },
   { href: "/weather/", label: "Weather", icon: CloudSun },
   { href: "/quakes/", label: "Quakes", icon: Activity },
   { href: "/volcano/", label: "Volcano", icon: Mountain },

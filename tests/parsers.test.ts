@@ -139,3 +139,21 @@ test("HPD media releases: keyword severity and district tagging", async () => {
   assert.equal(districtFor("Kailua-Kona water main break"), "North Kona");
   assert.equal(districtFor("Hawaii Island police are investigating"), undefined);
 });
+
+test("Honolulu CAD traffic: kinds, HST timestamps, short TTLs", async () => {
+  const { parseHnlTraffic } = await import("../convex/parsers/feeds.ts");
+  const rows = fx("hnl-traffic.json");
+  const newest = rows[0]; // "08/20/2026" "12:06:59 AM"
+  const now = Date.UTC(2026, 7, 20, 10, 30); // 00:30 HST Aug 20
+  const items = parseHnlTraffic(rows, now);
+  assert.ok(items.length > 0 && items.length < rows.length);
+  assert.ok(items.every((i) => i.type === "traffic" && i.islands[0] === "oahu" && i.expiresAt! > i.issuedAt));
+  assert.ok(!items.some((i) => i.fields?.category === "Traffic Complaint"), "complaints filtered out");
+  const signal = items.find((i) => i.status === "signal");
+  if (signal) assert.equal(signal.sev, 2);
+  const first = items.find((i) => i.fields?.category === newest.type);
+  if (first && newest.type in { MVC: 1, "Stalled/Hazard Veh": 1, "Traffic Incident": 1, "MVC Veh Towed": 1, "Traffic Control Device": 1 }) {
+    assert.equal(first.issuedAt, Date.UTC(2026, 7, 20, 10, 6, 59), "12:06:59 AM HST = 10:06:59Z");
+  }
+  assert.equal(parseHnlTraffic(rows, now + 48 * 3_600_000).length, 0, "everything expires within hours");
+});

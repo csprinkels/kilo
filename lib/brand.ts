@@ -13,7 +13,7 @@ export const ISLAND_LABEL: Record<Island, string> = {
 export const TYPE_LABEL: Record<ItemType, string> = {
   advisory: "Weather", storm: "Tropical cyclone", tsunami: "Tsunami", quake: "Earthquake", volcano: "Volcano",
   notice: "Notice", shelter: "Shelter", road_closure: "Road", evac: "Evacuation", hazard: "Hazard",
-  school: "School", outage: "Outage",
+  school: "School", outage: "Outage", traffic: "Traffic",
 };
 
 export const SOURCE_LABEL: Record<string, string> = {
@@ -22,6 +22,7 @@ export const SOURCE_LABEL: Record<string, string> = {
   hdot: "Hawaiʻi DOT Highways",
   hiema: "HI-EMA",
   hpd: "Hawaiʻi Police Department",
+  hnl: "Honolulu Police (911 dispatch)",
   usgs: "USGS",
   hvo: "USGS Hawaiian Volcano Observatory",
   ptwc: "Pacific Tsunami Warning Center",

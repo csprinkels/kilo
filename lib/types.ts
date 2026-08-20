@@ -4,7 +4,7 @@ export const ISLANDS: Exclude<Island, "state">[] = ["hawaii", "maui", "oahu", "k
 
 export type ItemType =
   | "advisory" | "storm" | "tsunami" | "quake" | "volcano" | "notice"
-  | "shelter" | "road_closure" | "evac" | "hazard" | "school" | "outage";
+  | "shelter" | "road_closure" | "evac" | "hazard" | "school" | "outage" | "traffic";
 
 export type Item = {
   key: string;                       // `${source}:${externalId}` — idempotent upsert

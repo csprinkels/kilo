@@ -154,3 +154,44 @@ export function parsePtwc(atom: string, now = Date.now()): Item[] {
       };
     });
 }
+
+// ---------- Honolulu Police CAD traffic incidents (Socrata, last 24 h, ~5-min updates; address + area, no coordinates) ----------
+export const HNL_TRAFFIC_URL = "https://data.honolulu.gov/resource/ykb6-n5th.json?$limit=300&$order=date%20DESC,time%20DESC";
+type HnlRow = { date: string; time: string; type: string; address?: string; location?: string; area?: string };
+const HNL_KIND: Record<string, { label: string; sev: Item["sev"]; status: string; ttlH: number } | undefined> = {
+  "Traffic Control Device": { label: "Traffic signal problem", sev: 2, status: "signal", ttlH: 6 },
+  "MVC": { label: "Crash", sev: 1, status: "crash", ttlH: 2 },
+  "MVC Veh Towed": { label: "Crash, vehicle towed", sev: 1, status: "crash", ttlH: 2 },
+  "Stalled/Hazard Veh": { label: "Stalled or hazardous vehicle", sev: 1, status: "hazard", ttlH: 1 },
+  "Traffic Incident": { label: "Traffic incident", sev: 1, status: "incident", ttlH: 2 },
+  // "Hazardous Driver" and "Traffic Complaint" are noise for a status board
+};
+export function parseHnlTraffic(rows: HnlRow[], now = Date.now()): Item[] {
+  const out: Item[] = [];
+  for (const r of rows ?? []) {
+    const kind = HNL_KIND[r.type];
+    if (!kind) continue;
+    const at = hstToEpoch(r.date, r.time);
+    if (!Number.isFinite(at) || now - at > kind.ttlH * 3_600_000) continue;
+    const where = [r.address, r.location && r.location !== r.address ? `(${titleCase(r.location)})` : ""].filter(Boolean).join(" ");
+    out.push({
+      key: `hnl:${hashOf(r.date, r.time, r.type, r.address)}`, source: "hnl", type: "traffic", tier: "official",
+      sev: kind.sev, islands: ["oahu"], districts: r.area ? [r.area] : [],
+      status: kind.status,
+      title: clip(`${kind.label}: ${where || r.area || "Oʻahu"}`, 120),
+      body: clip(`Reported to Honolulu 911 dispatch at ${new Date(at).toLocaleTimeString("en-US", { timeZone: "Pacific/Honolulu", hour: "numeric", minute: "2-digit" })}${r.area ? `, ${r.area} area` : ""}. Dispatch category: ${r.type}. Clears automatically.`, 600),
+      srcUrl: "https://data.honolulu.gov/Public-Safety/Traffic-Incidents/ykb6-n5th",
+      fields: { category: r.type, area: r.area ?? "" },
+      issuedAt: at, lastConfirmedAt: now, expiresAt: at + kind.ttlH * 3_600_000,
+      hash: hashOf(r.type, r.address, r.location),
+    });
+  }
+  return out;
+}
+function hstToEpoch(date: string, time: string) {
+  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(date), t = /(\d{1,2}):(\d{2}):(\d{2}) (AM|PM)/.exec(time);
+  if (!m || !t) return NaN;
+  let h = Number(t[1]) % 12; if (t[4] === "PM") h += 12;
+  return Date.UTC(Number(m[3]), Number(m[1]) - 1, Number(m[2]), h + 10, Number(t[2]), Number(t[3])); // HST = UTC-10, no DST
+}
+const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());

@@ -5,7 +5,7 @@ import { AwsClient } from "aws4fetch";
 import { ISLANDS, buildEssentials, hashOf, type Island, type Item, type Manifest, type Snapshot, type SourceHealth } from "../lib/types.ts";
 import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
-import { HDOT_URL, HIEMA_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHpd, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
+import { HDOT_URL, HIEMA_URL, HNL_TRAFFIC_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHnlTraffic, parseHpd, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
 import { districtFor } from "../lib/places.ts";
 
 export const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
@@ -30,6 +30,7 @@ export const SOURCES: Source[] = [
   { id: "hiema", url: HIEMA_URL, parse: parseHiema, text: true },
   { id: "hpd", url: HPD_URL, parse: (rss, now) => parseHpd(rss, now, (t) => { const d = districtFor(t); return d ? [d] : []; }), text: true, browserUA: true },
   { id: "ptwc", url: PTWC_URL, parse: parsePtwc, text: true },
+  { id: "hnl", url: HNL_TRAFFIC_URL, parse: parseHnlTraffic },
 ];
 
 async function fetchBody(s: Source) {
