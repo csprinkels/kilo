@@ -5,6 +5,7 @@ import { AwsClient } from "aws4fetch";
 import { ISLANDS, hashOf, type Island, type Item, type Manifest, type Snapshot, type SourceHealth } from "../lib/types.ts";
 import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
+import { HDOT_URL, HIEMA_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
 
 const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
 const FETCH_TIMEOUT_MS = 8_000;
@@ -12,24 +13,29 @@ const MAX_ITEMS_PER_SNAPSHOT = 200;
 
 // One entry per upstream feed. `source` groups items so a failed fetch never deactivates its own rows.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Parse = (json: any, now: number) => Item[];
-const SOURCES: { id: string; source: string; url: string; parse: Parse }[] = [
-  { id: "nws", source: "nws", url: NWS_URL, parse: parseNws },
+type Parse = (body: any, now: number) => Item[];
+type Source = { id: string; url: string; parse: Parse; text?: true };
+export const SOURCES: Source[] = [
+  { id: "nws", url: NWS_URL, parse: parseNws },
   ...(Object.keys(HCCDA_LAYERS) as HccdaLayer[]).map((layer) => ({
     id: `hccda:${layer}`,
-    source: `hccda:${layer}`,
     url: HCCDA_LAYERS[layer],
     parse: ((json, now) => parseHccda(layer, json, now)) as Parse,
   })),
+  { id: "usgs", url: USGS_URL, parse: parseUsgs },
+  { id: "hvo", url: HVO_URL, parse: parseHvo },
+  { id: "hdot", url: HDOT_URL, parse: parseHdot },
+  { id: "hiema", url: HIEMA_URL, parse: parseHiema, text: true },
+  { id: "ptwc", url: PTWC_URL, parse: parsePtwc, text: true },
 ];
 
-async function fetchJson(url: string) {
-  const res = await fetch(url, {
-    headers: { "User-Agent": UA, Accept: "application/geo+json, application/json" },
+async function fetchBody(s: Source) {
+  const res = await fetch(s.url, {
+    headers: { "User-Agent": UA, Accept: s.text ? "application/rss+xml, application/atom+xml, application/xml, text/xml" : "application/geo+json, application/json" },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return s.text ? res.text() : res.json();
 }
 
 /** Cron entry point: fetch every source, upsert, rebuild snapshots, mirror to R2. */
@@ -38,7 +44,7 @@ export const run = internalAction({
   handler: async (ctx) => {
     const now = Date.now();
     const results = await Promise.allSettled(
-      SOURCES.map(async (s) => ({ s, items: s.parse(await fetchJson(s.url), now) })),
+      SOURCES.map(async (s) => ({ s, items: s.parse(await fetchBody(s), now) })),
     );
     const health: Record<string, SourceHealth> = {};
     const batches: { source: string; items: Item[] }[] = [];
@@ -46,7 +52,7 @@ export const run = internalAction({
       const id = SOURCES[i].id;
       if (r.status === "fulfilled") {
         health[id] = { ok: true, at: now, count: r.value.items.length };
-        batches.push({ source: r.value.s.source, items: r.value.items });
+        batches.push({ source: r.value.s.id, items: r.value.items });
       } else {
         health[id] = { ok: false, at: now, count: 0, error: String(r.reason?.message ?? r.reason).slice(0, 200) };
         console.error(`[ingest] ${id} failed:`, r.reason);
@@ -82,6 +88,7 @@ export const commit = internalMutation({
     // Rebuild snapshots from everything still active and unexpired.
     const active = (await ctx.db.query("items").withIndex("by_active", (q) => q.eq("active", true)).collect())
       .filter((r) => !r.expiresAt || r.expiresAt > now);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const toItem = ({ _id, _creationTime, active: _a, ...rest }: (typeof active)[number]) => rest as Item;
     const mode: Manifest["mode"] = active.some((r) => WATCH_EVENTS.test(r.fields?.event ?? "")) ? "watch" : "normal";
 

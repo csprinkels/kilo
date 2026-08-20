@@ -54,3 +54,43 @@ test("HCCDA: malformed layer does not throw", () => {
   assert.deepEqual(parseHccda("roads", { features: [] }, NOW), []);
   assert.deepEqual(parseHccda("roads", {} as never, NOW), []);
 });
+
+test("new feeds: USGS, HVO, HDOT, HI-EMA, PTWC parse their fixtures", async () => {
+  const { parseUsgs, parseHvo, parseHdot, parseHiema, parsePtwc } = await import("../convex/parsers/feeds.ts");
+  const now = Date.parse("2026-08-19T21:00:00-10:00");
+  const txt = (f: string) => readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8");
+
+  const quakes = parseUsgs(fx("usgs-hi.json"), now);
+  assert.ok(quakes.length >= 1 && quakes.length <= 20);
+  assert.ok(quakes.every((q) => q.islands[0] === "hawaii" && q.type === "quake" && now - q.issuedAt < 3 * 86_400_000));
+  assert.ok(quakes.some((q) => q.fields?.mag === "4.1" && q.sev === 2));
+
+  const volcanoes = parseHvo(fx("hvo-elevated.json"), now);
+  assert.equal(volcanoes.length, 1);
+  assert.match(volcanoes[0].title, /Kilauea: ADVISORY \/ YELLOW/);
+  assert.equal(volcanoes[0].sev, 1, "chronic YELLOW is informational, not a warning");
+
+  const lanes = parseHdot(fx("hdot-current.json"), now);
+  assert.ok(lanes.length > 0 && lanes.length < 32, `expected dedupe by project, got ${lanes.length}`);
+  assert.ok(lanes.every((l) => l.sev === 1 && ["oahu", "maui", "kauai", "hawaii"].includes(l.islands[0])));
+
+  const notices = parseHiema(txt("hiema.rss"), now);
+  assert.ok(notices.length >= 1);
+  assert.match(notices[0].title, /Lala/);
+  assert.ok(!/<|&#8230;/.test(notices[0].body), "HTML and entities stripped");
+  assert.deepEqual(notices[0].islands, ["state"]);
+
+  const tsunami = parsePtwc(txt("ptwc.atom"), now);
+  assert.equal(tsunami.length, 0, "a week-old information statement has aged out");
+  const fresh = parsePtwc(txt("ptwc.atom"), Date.parse("2026-08-12T04:00:00Z"));
+  assert.equal(fresh.length, 1);
+  assert.equal(fresh[0].sev, 1);
+  assert.match(fresh[0].title, /TSUNAMI INFORMATION STATEMENT.*LOIHI/);
+  assert.equal(fresh[0].srcUrl, "https://www.tsunami.gov/events/PHEB/2026/08/12/26224050/1/WEHW42/WEHW42.txt");
+});
+
+
+test("HCCDA items carry the per-layer source id", () => {
+  const roads = parseHccda("roads", fx("hccda-road_closures.json"), NOW);
+  assert.ok(roads.every((r) => r.source === "hccda:roads"));
+});

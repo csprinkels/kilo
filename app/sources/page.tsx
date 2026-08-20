@@ -4,6 +4,11 @@ import { APP_NAME } from "@/lib/brand";
 const SOURCES = [
   { name: "National Weather Service — Honolulu", what: "Watches, warnings and advisories for every Hawaiʻi zone", url: "https://www.weather.gov/hfo/" },
   { name: "Hawaiʻi County Civil Defense (public GIS)", what: "Open shelters, road closures, evacuations, hazards, school closures", url: "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17" },
+  { name: "Hawaiʻi DOT Highways", what: "State highway lane closures in effect today, all islands", url: "https://experience.arcgis.com/experience/397fed5aafdb4f25b73e342ef35f2ec5" },
+  { name: "Hawaiʻi Emergency Management Agency", what: "State proclamations and news", url: "https://dod.hawaii.gov/hiema/" },
+  { name: "USGS Earthquakes", what: "Magnitude 2.5+ earthquakes in Hawaiian waters, last 3 days", url: "https://earthquake.usgs.gov/earthquakes/map/?extent=17,-162&extent=23,-153" },
+  { name: "USGS Hawaiian Volcano Observatory", what: "Alert level and color code for Kīlauea and Mauna Loa", url: "https://www.usgs.gov/observatories/hvo" },
+  { name: "Pacific Tsunami Warning Center", what: "Tsunami warnings, watches, advisories and information statements", url: "https://www.tsunami.gov/" },
 ];
 
 export default function Sources() {

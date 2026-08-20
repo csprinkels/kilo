@@ -19,6 +19,11 @@ export const TYPE_LABEL: Record<ItemType, string> = {
 export const SOURCE_LABEL: Record<string, string> = {
   nws: "National Weather Service",
   hccda: "Hawaiʻi County Civil Defense",
+  hdot: "Hawaiʻi DOT Highways",
+  hiema: "HI-EMA",
+  usgs: "USGS",
+  hvo: "USGS Hawaiian Volcano Observatory",
+  ptwc: "Pacific Tsunami Warning Center",
 };
 
 export const SEV_SECTION: Record<1 | 2 | 3 | 4, string> = {

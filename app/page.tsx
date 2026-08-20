@@ -18,14 +18,14 @@ const SEV_STYLE: Record<number, string> = {
 export default function Home() {
   const [island, setIsland] = useStoredIsland();
   const { snap, manifest } = useFeed(island);
-  const now = Date.now();
-  const items = snap?.data?.items ?? [];
+  const now = snap?.fetchedAt || 0; // "x min ago" is relative to the last fetch; refreshed every poll
   const gen = snap?.data?.gen ?? 0;
   const sections = useMemo(() => {
     const by: Record<number, Item[]> = { 4: [], 3: [], 2: [], 1: [] };
-    for (const i of items) by[i.sev].push(i);
+    for (const i of snap?.data?.items ?? []) by[i.sev].push(i);
     return ([4, 3, 2, 1] as const).filter((s) => by[s].length).map((s) => ({ sev: s, items: by[s] }));
-  }, [items]);
+  }, [snap]);
+  const empty = !!snap?.data && sections.length === 0;
 
   const offline = !!snap?.offline;
   const stale = gen > 0 && now - gen > STALE_MS;
@@ -63,7 +63,7 @@ export default function Home() {
       )}
 
       {!snap?.data && !offline && <p className="py-10 text-center text-muted">Loading…</p>}
-      {snap?.data && items.length === 0 && (
+      {empty && (
         <p className="py-10 text-center text-muted">Nothing active for {ISLAND_LABEL[island]} right now.</p>
       )}
 

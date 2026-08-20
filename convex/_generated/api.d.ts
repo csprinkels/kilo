@@ -11,6 +11,7 @@
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as ingest from "../ingest.js";
+import type * as parsers_feeds from "../parsers/feeds.js";
 import type * as parsers_hccda from "../parsers/hccda.js";
 import type * as parsers_nws from "../parsers/nws.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   http: typeof http;
   ingest: typeof ingest;
+  "parsers/feeds": typeof parsers_feeds;
   "parsers/hccda": typeof parsers_hccda;
   "parsers/nws": typeof parsers_nws;
 }>;

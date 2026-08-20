@@ -37,7 +37,7 @@ function base(layer: HccdaLayer, p: Props, f: Feature, now: number): Omit<Item, 
   const end = num(p.End_Date);
   return {
     key: `hccda:${layer}:${str(p.GlobalID) || str(p.OBJECTID)}`,
-    source: "hccda",
+    source: `hccda:${layer}`, // must equal the ingest source id, or deactivation of vanished rows breaks
     tier: "official",
     islands: ["hawaii"],
     districts: p.District ? [str(p.District)] : [],

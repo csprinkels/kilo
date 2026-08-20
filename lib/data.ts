@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Island, Manifest, Snapshot } from "./types";
 
 // Where the JSON lives. Prod: the R2/CDN domain. Dev: the Convex HTTP endpoint serving the same bytes.
@@ -33,7 +33,8 @@ export async function load<T>(path: string): Promise<Loaded<T>> {
     try { localStorage.setItem(lsKey(path), JSON.stringify(out)); } catch { /* storage full: still return live data */ }
     return out;
   } catch {
-    return cached ? { ...cached, offline: true } : { data: null, fetchedAt: 0, offline: true };
+    // fetchedAt = last attempt, so "x min ago" stays truthful while offline
+    return cached ? { ...cached, fetchedAt: Date.now(), offline: true } : { data: null, fetchedAt: Date.now(), offline: true };
   }
 }
 
@@ -45,14 +46,18 @@ export function useFeed(island: Island) {
 
   useEffect(() => {
     let alive = true;
-    setSnap(readCache<Snapshot>(`v1/${island}.json`));
-    setManifest(readCache<Manifest>("v1/manifest.json"));
     const tick = async () => {
       const [s, m] = await Promise.all([load<Snapshot>(`v1/${island}.json`), load<Manifest>("v1/manifest.json")]);
       if (!alive) return;
       setSnap(s); setManifest(m);
     };
-    void tick();
+    // Show the saved copy immediately, then refresh. (Async so the prerendered HTML hydrates first.)
+    void Promise.resolve().then(() => {
+      if (!alive) return;
+      setSnap(readCache<Snapshot>(`v1/${island}.json`));
+      setManifest(readCache<Manifest>("v1/manifest.json"));
+      return tick();
+    });
     const id = setInterval(tick, POLL_MS);
     const onVisible = () => document.visibilityState === "visible" && void tick();
     document.addEventListener("visibilitychange", onVisible);
@@ -63,11 +68,11 @@ export function useFeed(island: Island) {
   return { snap, manifest };
 }
 
+// localStorage-backed island choice; server snapshot is the default so prerendered HTML matches.
+const islandListeners = new Set<() => void>();
+const subscribeIsland = (cb: () => void) => { islandListeners.add(cb); return () => { islandListeners.delete(cb); }; };
+const getIsland = () => (localStorage.getItem("island") as Island | null) ?? "hawaii";
 export function useStoredIsland(): [Island, (i: Island) => void] {
-  const [island, set] = useState<Island>("hawaii");
-  useEffect(() => {
-    const saved = localStorage.getItem("island") as Island | null;
-    if (saved) set(saved);
-  }, []);
-  return [island, (i) => { localStorage.setItem("island", i); set(i); }];
+  const island = useSyncExternalStore(subscribeIsland, getIsland, () => "hawaii" as Island);
+  return [island, (i) => { localStorage.setItem("island", i); islandListeners.forEach((cb) => cb()); }];
 }
