@@ -16,7 +16,7 @@ export default function AlertBlock({ item, now, children }: { item: Item; now: n
   return (
     <section role={danger ? "alert" : undefined} aria-label={p.headline}
       className={`mt-s4 rounded-card border-l-4 px-s4 py-s4 ${danger ? "border-danger bg-danger-bg" : "border-warn bg-warn-bg"}`}>
-      <p className={`flex items-center gap-s2 font-display text-title font-bold ${danger ? "text-danger" : "text-warn"}`}><Icon className="size-6" aria-hidden /> {LEVEL_WORD[p.level] ?? "Heads up"}</p>
+      <p className={`flex items-center gap-s2 font-display text-title font-bold ${danger ? "text-danger" : "text-warn"}`}><Icon className="size-6" aria-hidden /> {p.word ?? LEVEL_WORD[p.level] ?? "Heads up"}</p>
       <h2 className="mt-s2 text-display font-display font-bold leading-tight text-ink">{p.headline}</h2>
       {p.action && <p className="mt-s2 text-body font-semibold text-ink">{p.action}</p>}
       <p className="mt-s2 text-small text-ink-2 num">{p.until ? `${p.until[0].toUpperCase()}${p.until.slice(1)}. ` : ""}From {p.source}, {fmtClock(item.issuedAt, now)}.</p>

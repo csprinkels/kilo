@@ -140,3 +140,6 @@ export function useStoredIsland(): [Island, (i: Island) => void] {
   const island = useSyncExternalStore(subscribeIsland, getIsland, () => "hawaii" as Island);
   return [island, (i) => { localStorage.setItem("island", i); islandListeners.forEach((cb) => cb()); }];
 }
+/** Has this phone ever picked an island? Drives the one-screen first run. ("state" counts as not chosen.) */
+const getChosen = () => { const v = localStorage.getItem("island"); return !!v && v !== "state"; };
+export const useIslandChosen = () => useSyncExternalStore(subscribeIsland, getChosen, () => true);

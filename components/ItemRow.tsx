@@ -55,7 +55,7 @@ function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: bo
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
         <span className="min-w-0 flex-1">
-          {p.level >= 2 && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{LEVEL_WORD[p.level]}</span>}
+          {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
           <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>

@@ -91,8 +91,10 @@ export function sunTimes(dayStartMs: number, lat: number, lon: number): { rise: 
   const rad = Math.PI / 180;
   const noonGuess = dayStartMs + 12 * 3_600_000;
   const J = noonGuess / 86_400_000 + 2440587.5;
-  const n = Math.round(J - 2451545.0 + 0.0008 - lon / 360);
-  const Jstar = n - lon / 360;
+  // n = whole days since J2000 for this local day (J is local noon, so rounding lands on the right day);
+  // J* = mean solar noon at this longitude (west is negative here, so "- lon/360" adds the westward fraction).
+  const n = Math.round(J - 2451545.0);
+  const Jstar = n + 0.0008 - lon / 360;
   const M = (357.5291 + 0.98560028 * Jstar) % 360;
   const C = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad);
   const lam = (M + C + 180 + 102.9372) % 360;

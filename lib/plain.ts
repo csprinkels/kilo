@@ -2,7 +2,8 @@
 // The official wording stays in item.title/body and is shown only behind "Official wording".
 // Rules: ≤ 20 words a sentence, 6th-grade words, clock times only, no acronyms, never invent a fact the feed didn't give.
 import type { Island, Item } from "./types.ts";
-import { ISLAND_LABEL } from "./brand.ts";
+import { ISLAND_LABEL, fmtDayTime } from "./brand.ts";
+import { bearingDeg, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "./storm.ts";
 
 export type Level = 0 | 1 | 2 | 3 | 4;
 export const LEVEL_WORD: Record<number, string> = { 4: "Act now", 3: "Get ready", 2: "Heads up" };
@@ -11,6 +12,7 @@ export type Plain = {
   headline: string;   // "Roads may flood in Puna until 9 PM"
   action: string;     // "Do not drive through water on the road." ("" when there is nothing to do)
   level: Level;       // 0 = not worth a row; 4 = life-safety
+  word?: string;      // replaces the level word when a kind has a better one ("Shelter open")
   until?: string;     // "until 9 PM"
   source: string;     // "the National Weather Service"
   official: string;   // the agency's own title, for the disclosure
@@ -100,9 +102,9 @@ function shelter(item: Item): Plain {
   const name = item.title.replace(/^Shelter\s+\w+:\s*/i, "");
   const st = (item.status ?? "").toLowerCase();
   const pets = /yes|pet|allowed/i.test(item.fields?.animals ?? "") ? " Pets are allowed." : " Pets only if it says pet-friendly.";
-  if (/full/.test(st)) return { headline: `${name} is full`, action: "Go to another shelter. Civil Defense lists the open ones.", level: 3, source: sourceName(item.source), official: item.title };
-  if (/clos/.test(st)) return { headline: `${name} is closed`, action: "", level: 1, source: sourceName(item.source), official: item.title };
-  return { headline: `${name} is open`, action: `Bring medicine, ID, food and bedding.${pets}`, level: 3, source: sourceName(item.source), official: item.title };
+  if (/full/.test(st)) return { headline: `${name} is full`, action: "Go to another shelter. Civil Defense lists the open ones.", level: 3, word: "Shelter full", source: sourceName(item.source), official: item.title };
+  if (/clos/.test(st)) return { headline: `${name} is closed`, action: "", level: 1, word: "Shelter closed", source: sourceName(item.source), official: item.title };
+  return { headline: `${name} is open`, action: `Bring medicine, ID, food and bedding.${pets}`, level: 3, word: "Shelter open", source: sourceName(item.source), official: item.title };
 }
 
 function school(item: Item, now: number): Plain {
@@ -212,6 +214,25 @@ export function plainAlert(item: Item, now = Date.now(), island?: Island): Plain
     default: return fallback("");
   }
 }
+
+// ---------- storms ----------
+const CLS: Record<string, string> = { HU: "Hurricane", TS: "Tropical Storm", TD: "Tropical Depression", PTC: "Potential Tropical Cyclone" };
+const DIR = ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"];
+export const dirWord = (deg: number) => DIR[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+export const stormName = (s: Storm) => `${CLS[s.cls] ?? ""} ${s.name}`.trim();
+
+/** One sentence about a storm for one island: where it is, which way, whether it matters here. */
+export function stormLine(s: Storm, place: { lat: number; lon: number; label: string }): { text: string; short: string; approaching: boolean; level: Level } {
+  const o = outlookFor(s, place);
+  const mi = nmToMi(distanceNm(s.lat, s.lon, place.lat, place.lon)).toLocaleString();
+  const dir = dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon));
+  const name = stormName(s);
+  if (o.hurricaneWindsFrom) return { text: `${name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}. Follow Civil Defense.`, short: `${s.name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}.`, approaching: true, level: 4 };
+  if (o.tsWindsFrom) return { text: `${name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}. Finish getting ready before then.`, short: `${s.name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}.`, approaching: true, level: 3 };
+  if (o.movingAway) return { text: `${name} is ${mi} miles to the ${dir} and moving away.`, short: `${s.name} is moving away.`, approaching: false, level: 0 };
+  return { text: `${name} is ${mi} miles to the ${dir}, heading this way. Closest ${fmtDayTime(o.closest.at)}. Too early to know if it will matter here.`, short: `${s.name} is ${mi} miles ${dir}, closest ${fmtDayTime(o.closest.at)}.`, approaching: true, level: 1 };
+}
+export const windsLine = (s: Storm) => `Winds around ${Math.round(ktToMph(s.windKt) / 5) * 5} mph`;
 
 /** One line for a community post: always says "Neighbor report" and never carries a level word. */
 export const neighborLine = (item: Item) => `Neighbor report: ${plainAlert(item).headline}`;
