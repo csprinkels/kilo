@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
-  Activity, CarFront, ChevronDown, CloudRainWind, ExternalLink, MapPin, Megaphone, Mountain, School,
-  Share2, Siren, Tent, TrafficCone, TriangleAlert, Waves, Wind, ZapOff, type LucideIcon,
+  Activity, CarFront, ChevronDown, CloudRainWind, ExternalLink, Flag, MapPin, Megaphone, Mountain, School,
+  Share2, Siren, Tent, ThumbsUp, TrafficCone, TriangleAlert, Users, Waves, Wind, X, ZapOff, type LucideIcon,
 } from "lucide-react";
+import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { SOURCE_LABEL, TYPE_LABEL, ago, fmtDateTime, fmtTime } from "@/lib/brand";
@@ -18,7 +19,20 @@ export const SEV_CHIP: Record<number, string> = { 4: "bg-sev4-bg text-sev4", 3: 
 export default function ItemRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
   const [open, setOpen] = useState(!!focus);
   const Icon = ICON[item.type] ?? Megaphone;
-  const src = item.source === "digest" ? "From your latest alert" : SOURCE_LABEL[item.source.split(":")[0]] ?? item.source;
+  const community = item.tier === "community";
+  const rid = item.fields?.rid;
+  // Vote state is read lazily on expand (localStorage isn't available during prerender).
+  const [voted, setVoted] = useState<boolean | null>(null);
+  const [confirms, setConfirms] = useState(Number(item.fields?.confirms ?? 0));
+  const [voteMsg, setVoteMsg] = useState<string | null>(null);
+  const votedNow = voted ?? (open && rid ? hasVoted(rid) : false);
+  const cast = async (v: "still" | "gone" | "flag") => {
+    if (!rid) return;
+    const out = await voteReport(rid, v);
+    if (out.ok) { setVoted(true); if (v === "still") setConfirms((c) => c + 1); setVoteMsg(v === "still" ? "Thanks — marked still there." : v === "gone" ? "Thanks — marked as cleared." : "Reported for review."); }
+    else setVoteMsg(out.error ?? "Couldn't send that right now.");
+  };
+  const src = community ? "Neighbour report" : item.source === "digest" ? "From your latest alert" : SOURCE_LABEL[item.source.split(":")[0]] ?? item.source;
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   // One GSM-7 SMS segment: a person WITH signal can text this to someone without, no link to load.
   const share = async () => {
@@ -36,6 +50,7 @@ export default function ItemRow({ item, now, focus }: { item: Item; now: number;
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-xs text-muted">
+            {community && <span className="rounded bg-surface-2 px-1.5 py-0.5 font-semibold uppercase tracking-wide text-ink-2">Unverified</span>}
             <span className="font-medium text-ink-2">{TYPE_LABEL[item.type]}</span>
             {item.districts[0] && <><span>·</span><span>{item.districts[0]}</span></>}
             <span className="ml-auto shrink-0 tabular-nums">{ago(item.issuedAt, now)}</span>
@@ -48,17 +63,31 @@ export default function ItemRow({ item, now, focus }: { item: Item; now: number;
       {open && (
         <div className="fade-up mb-4 ml-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
           <span className="text-muted">
-            {src} · confirmed {fmtTime(item.lastConfirmedAt)}{item.expiresAt ? ` · until ${fmtDateTime(item.expiresAt)}` : ""}
+            {src} · {community ? <><Users className="inline size-3.5 align-text-bottom" /> {confirms + 1} {confirms ? "say still there" : "reported"} · last {fmtTime(item.lastConfirmedAt)}</> : <>confirmed {fmtTime(item.lastConfirmedAt)}</>}{item.expiresAt ? ` · until ${fmtDateTime(item.expiresAt)}` : ""}
           </span>
+          {community && (
+            <span className="flex w-full flex-wrap items-center gap-2">
+              {votedNow ? <span className="text-muted">{voteMsg ?? "You've weighed in on this one."}</span> : (
+                <>
+                  <button className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-medium" onClick={() => cast("still")}><ThumbsUp className="size-3.5" /> Still there</button>
+                  <button className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-medium" onClick={() => cast("gone")}><X className="size-3.5" /> Gone</button>
+                  <button className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 font-medium text-muted" onClick={() => cast("flag")}><Flag className="size-3.5" /> Report</button>
+                </>
+              )}
+              <span className="basis-full text-[12px] text-muted">Unverified neighbour report. Call 911 for emergencies.</span>
+            </span>
+          )}
           <span className="flex gap-4">
             {item.lat && item.lon && (
               <a className="inline-flex items-center gap-1 font-medium text-brand" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer">
                 <MapPin className="size-3.5" /> Map
               </a>
             )}
-            <a className="inline-flex items-center gap-1 font-medium text-brand" href={item.srcUrl} target="_blank" rel="noreferrer">
-              <ExternalLink className="size-3.5" /> Official page
-            </a>
+            {item.srcUrl && (
+              <a className="inline-flex items-center gap-1 font-medium text-brand" href={item.srcUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-3.5" /> Official page
+              </a>
+            )}
             <button className="inline-flex items-center gap-1 font-medium text-brand" onClick={share}>
               <Share2 className="size-3.5" /> Share
             </button>

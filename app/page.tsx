@@ -42,9 +42,10 @@ export default function Home() {
   }, [snap, digest, island]);
   const sections = useMemo(() => {
     const by: Record<number, Item[]> = { 4: [], 3: [], 2: [], 1: [] };
-    for (const i of items) by[i.sev].push(i);
+    for (const i of items) if (i.tier !== "community") by[i.sev].push(i);
     return ([4, 3, 2, 1] as const).filter((s) => by[s].length).map((s) => ({ sev: s, items: by[s] }));
   }, [items]);
+  const community = useMemo(() => items.filter((i) => i.tier === "community"), [items]);
   const situation = useMemo(() => summarize(items), [items]);
 
   const offline = !!ess?.offline && !!snap?.offline;
@@ -177,6 +178,19 @@ export default function Home() {
           </ul>
         </section>
       ))}
+
+      {/* Neighbour reports: always below official items, never interleaved */}
+      {(community.length > 0 || island !== "state") && (
+        <section className="mt-7">
+          <h2 className="flex items-baseline gap-2 border-b border-line pb-2">
+            <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-2">Neighbour reports</span>
+            <span className="text-xs tabular-nums text-muted">{community.length}</span>
+            <Link href="/report/" className="ml-auto text-[13px] font-medium text-brand">Report something</Link>
+          </h2>
+          {community.length ? <ul className="divide-y divide-line">{community.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>
+            : <p className="py-3 text-[14px] text-muted">Nothing from neighbours right now. Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
+        </section>
+      )}
 
       {island !== "state" && <AlertsCard island={island} />}
 

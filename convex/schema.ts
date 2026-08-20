@@ -62,6 +62,29 @@ export default defineSchema({
   }).index("by_endpoint", ["endpoint"]).index("by_island", ["island"]),
   pushLog: defineTable({ island: v.string(), at: v.number(), trigger: v.string(), sent: v.number(), failed: v.number() }).index("by_island", ["island"]),
 
+  // Community reports. Never deleted by app code while fresh; never published with coordinates (none collected in v1).
+  reports: defineTable({
+    type: v.string(),
+    text: v.string(),
+    locText: v.string(),
+    island: v.string(),
+    district: v.string(),
+    status: v.union(v.literal("pending"), v.literal("live"), v.literal("hidden"), v.literal("expired")),
+    holdReason: v.optional(v.string()),
+    deviceHash: v.string(),
+    confirmCount: v.number(),
+    goneCount: v.number(),
+    flagCount: v.number(),
+    voters: v.array(v.string()),
+    createdAt: v.number(),
+    lastConfirmedAt: v.number(),
+    expiresAt: v.number(),
+    modNote: v.optional(v.string()),
+  })
+    .index("by_status", ["status"])
+    .index("by_district_type_created", ["district", "type", "createdAt"])
+    .index("by_device_created", ["deviceHash", "createdAt"]),
+
   // Published JSON: served by http.ts (dev / fallback) and mirrored to R2 (prod).
   snapshots: defineTable({
     path: v.string(), // "v1/hawaii.json", "v1/manifest.json"

@@ -17,6 +17,7 @@ import type * as parsers_nws from "../parsers/nws.js";
 import type * as parsers_storms from "../parsers/storms.js";
 import type * as push from "../push.js";
 import type * as pushStore from "../pushStore.js";
+import type * as reports from "../reports.js";
 import type * as storms from "../storms.js";
 
 import type {
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   "parsers/storms": typeof parsers_storms;
   push: typeof push;
   pushStore: typeof pushStore;
+  reports: typeof reports;
   storms: typeof storms;
 }>;
 

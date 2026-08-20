@@ -7,6 +7,7 @@ import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
 import { HDOT_URL, HIEMA_URL, HNL_TRAFFIC_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHnlTraffic, parseHpd, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
 import { districtFor } from "../lib/places.ts";
+import { reportToItem } from "../lib/reportRules.ts";
 
 export const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
 const BROWSER_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
@@ -90,11 +91,14 @@ export const commit = internalMutation({
       for (const row of existing) if (!seen.has(row.key)) await ctx.db.patch(row._id, { active: false });
     }
 
-    // Rebuild snapshots from everything still active and unexpired.
+    // Rebuild snapshots from everything still active and unexpired, plus live community reports (sev <= 2 by construction).
     const active = (await ctx.db.query("items").withIndex("by_active", (q) => q.eq("active", true)).collect())
       .filter((r) => !r.expiresAt || r.expiresAt > now);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const toItem = ({ _id, _creationTime, active: _a, ...rest }: (typeof active)[number]) => rest as Item;
+    const community = (await ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "live")).collect())
+      .filter((r) => r.expiresAt > now)
+      .map((r) => reportToItem({ ...r, _id: r._id as string } as never));
     const mode: Manifest["mode"] = active.some((r) => WATCH_EVENTS.test(r.fields?.event ?? "")) ? "watch" : "normal";
     const okCount = Object.values(health as Record<string, SourceHealth>).filter((h) => h.ok).length;
     const srcTotal = Object.keys(health as object).length;
@@ -103,11 +107,12 @@ export const commit = internalMutation({
     const vmap = {} as Record<Island, number>;
     const triggers: { island: Island; key: string }[] = [];
     for (const island of [...ISLANDS, "state" as const]) {
-      const items = active
-        .filter((r) => island === "state" || r.islands.includes(island) || r.islands.includes("state"))
+      const items = [
+        ...active.filter((r) => island === "state" || r.islands.includes(island) || r.islands.includes("state")).map(toItem),
+        ...community.filter((c) => island === "state" || c.islands.includes(island)),
+      ]
         .sort((a, b) => b.sev - a.sev || b.issuedAt - a.issuedAt)
-        .slice(0, MAX_ITEMS_PER_SNAPSHOT)
-        .map(toItem);
+        .slice(0, MAX_ITEMS_PER_SNAPSHOT);
       const snap: Snapshot = { gen: now, island, items };
       vmap[island] = now;
       out.push({ path: `v1/${island}.json`, body: JSON.stringify(snap) });
