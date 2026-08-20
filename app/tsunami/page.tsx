@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { CircleCheck, ExternalLink, LocateFixed, Siren, Waves } from "lucide-react";
 import PageShell, { H2 } from "@/components/PageShell";
+import Hero from "@/components/Hero";
 import type { Tsunami, TsunamiLevel } from "@/lib/pages";
 import { useJson } from "@/lib/data";
 import { distanceNm, nmToMi } from "@/lib/storm";
@@ -46,25 +47,22 @@ export default function TsunamiPage() {
 
   return (
     <PageShell title="Tsunami" blurb={d ? (d.status.level === "none" ? "No tsunami threat to Hawaiʻi right now." : lvl.label) : undefined} fetchedAt={t?.fetchedAt} gen={d?.upd} offline={t?.offline} source="PTWC">
-      <section className={`mt-5 rounded-card border p-4 ${lvl.cls}`} role="status">
-        <div className="flex items-center gap-2">
-          {d?.status.level === "none" || !d ? <CircleCheck className="size-5 text-emerald-600" /> : <Waves className="size-5" />}
-          <p className="display text-h2 font-medium">{lvl.label}</p>
-        </div>
-        {d?.status.headline && d.status.level !== "none" && <p className="mt-1 text-body font-medium">{d.status.headline}</p>}
-        {lvl.action && <p className="mt-2 text-body">{lvl.action}</p>}
-        <p className="mt-2 text-micro text-muted">
-          {d?.status.level === "none" ? `Nothing in effect for Hawaiʻi. Last bulletin: ${d.status.headline?.toLowerCase() ?? "none"}${d.status.issued ? `, ${fmtDateTime(d.status.issued)} HST` : ""}.` : d?.status.issued ? `Issued ${fmtDateTime(d.status.issued)} HST${d.status.expires ? ` · until ${fmtDateTime(d.status.expires)}` : ""}` : ""}
-          {" "}<a className="underline underline-offset-4" href="https://www.tsunami.gov/" target="_blank" rel="noreferrer">tsunami.gov</a>
-        </p>
-      </section>
+      <Hero
+        tone={d?.status.level === "warning" ? "var(--sev4)" : d?.status.level === "advisory" ? "var(--sev3)" : d?.status.level === "watch" ? "var(--sev2)" : "var(--cond-windy)"}
+        eyebrow={d?.status.issued ? `PTWC · ${fmtDateTime(d.status.issued)} HST` : "Pacific Tsunami Warning Center"}
+        icon={d?.status.level === "none" || !d ? <CircleCheck className="size-11 text-emerald-600 dark:text-emerald-400" strokeWidth={1.75} /> : <Waves className="size-11 text-ink" strokeWidth={1.75} />}
+        value={<span className="text-display">{lvl.label}</span>}
+        label={d?.status.level !== "none" && d?.status.headline ? d.status.headline : undefined}
+        sentence={lvl.action || (d ? `Nothing in effect for Hawaiʻi. Last bulletin was ${d.status.headline?.toLowerCase() ?? "an information statement"}.` : undefined)}
+        meta={<>{d?.status.expires && d.status.level !== "none" && <span>Until {fmtDateTime(d.status.expires)}</span>}<a className="text-brand underline underline-offset-4" href="https://www.tsunami.gov/" target="_blank" rel="noreferrer">tsunami.gov</a></>}
+      />
 
       <H2>Am I in an evacuation zone?</H2>
       <div className="mt-3 card">
         {zone === null ? (
           <>
             <p className="text-body text-ink-2">Checks your current location against the state&apos;s tsunami evacuation map. Needs a connection; your location is not stored.</p>
-            <button onClick={lookup} disabled={busy} className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-label font-semibold text-brand-ink disabled:opacity-50"><LocateFixed className="size-4" /> {busy ? "Checking…" : "Check my location"}</button>
+            <button onClick={lookup} disabled={busy} className="btn btn-primary mt-s3 disabled:opacity-50"><LocateFixed className="size-4" /> {busy ? "Checking…" : "Check my location"}</button>
           </>
         ) : zone === "none" ? (
           <p className="text-body"><strong className="text-emerald-700 dark:text-emerald-400">Not in a mapped evacuation zone.</strong> <span className="text-ink-2">If you feel strong or long shaking near the coast, move inland anyway — maps assume a distant tsunami.</span></p>

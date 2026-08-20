@@ -76,11 +76,11 @@
   --color-cond-rain: var(--cond-rain); --color-cond-storm: var(--cond-storm); --color-cond-fog: var(--cond-fog);
   --color-cond-windy: var(--cond-windy); --color-cond-night: var(--cond-night);
   --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* type scale: nothing smaller than micro (13px) anywhere */
-  --text-hero: 64px;    --text-hero--line-height: 1;
-  --text-display: 40px; --text-display--line-height: 1.05;
+  --text-hero: 64px;    --text-hero--line-height: 1;     --text-hero--letter-spacing: -0.04em;
+  --text-display: 36px; --text-display--line-height: 1.1; --text-display--letter-spacing: -0.03em;
   --text-h2: 24px;      --text-h2--line-height: 1.2;
   --text-lead: 19px;    --text-lead--line-height: 1.4;
   --text-body: 17px;    --text-body--line-height: 1.5;
@@ -103,7 +103,7 @@
 @utility btn { @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-label font-medium text-ink-2 num; }
 @utility btn-primary { @apply border-transparent bg-brand text-brand-ink; }
 @utility chip-active { @apply border-transparent bg-ink text-bg; }
-@utility h2-display { @apply font-display text-h2 font-medium tracking-tight text-ink; }
+@utility h2-display { @apply text-h2 font-semibold tracking-[-0.02em] text-ink; }
 
 html { background: var(--bg); }
 body {
@@ -126,7 +126,7 @@ body::before {
   background-size: 3px 3px;
 }
 
-.display { font-family: var(--font-display); font-variation-settings: "opsz" 144, "SOFT" 30; }
+.display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.03em; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 

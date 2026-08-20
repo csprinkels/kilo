@@ -9,7 +9,7 @@ import type { Weather } from "@/lib/pages";
 import { useJson, useStoredIsland } from "@/lib/data";
 import { TOWNS } from "@/lib/towns";
 import { clock, condWord, conditionCode, feelsLike, summarize, sunTimes } from "@/lib/summary";
-import { ago, fmtTime, okina } from "@/lib/brand";
+import { ago, fmtTime } from "@/lib/brand";
 
 const HST = -10 * 3_600_000;
 const dayStartHST = (ms: number) => Math.floor((ms + HST) / 86_400_000) * 86_400_000 - HST;
@@ -48,17 +48,17 @@ export default function WeatherPage() {
         <>
           <div className="no-scrollbar -mx-5 mt-s4 flex gap-s2 overflow-x-auto px-5">
             {d.towns.map((t) => (
-              <button key={t.id} onClick={() => setTownId(t.id)} aria-pressed={t.id === town?.id} className={`btn shrink-0 ${t.id === town?.id ? "chip-active" : ""}`}>{okina(t.name)}</button>
+              <button key={t.id} onClick={() => setTownId(t.id)} aria-pressed={t.id === town?.id} className={`btn shrink-0 ${t.id === town?.id ? "chip-active" : ""}`}>{t.name}</button>
             ))}
           </div>
 
           {town && (
             <section className="card-hero mt-s4" style={{ ["--cond" as string]: toneVar(nowCode, night) }} aria-label={`${town.name} now`}>
-              <p className="text-micro font-semibold uppercase tracking-[0.12em] text-muted num">{okina(town.name)} · {town.obs ? `${fmtTime(town.obs.at)} (${ago(town.obs.at, w?.fetchedAt)})` : "forecast"}</p>
+              <p className="text-micro font-semibold uppercase tracking-[0.12em] text-muted num">{town.name} · {town.obs ? `${fmtTime(town.obs.at)} (${ago(town.obs.at, w?.fetchedAt)})` : "forecast"}</p>
               <div className="mt-s3 flex items-start justify-between gap-s4">
                 <div className="flex items-center gap-s3">
                   <ConditionIcon code={nowCode} night={night} size={44} />
-                  <span className="font-display text-hero font-normal num" style={{ fontVariationSettings: '"opsz" 144, "SOFT" 30' }}>{temp != null ? `${temp}°` : "—"}</span>
+                  <span className="text-hero font-semibold num">{temp != null ? `${temp}°` : "—"}</span>
                 </div>
                 <dl className="pt-s2 text-right">
                   {fl != null && Math.abs(fl - (temp ?? fl)) >= 3 && <><dt className="sr-only">Feels like</dt><dd className="text-lead text-muted num">Feels like {fl}°</dd></>}

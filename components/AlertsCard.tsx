@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, BellRing, Share } from "lucide-react";
 import type { Island } from "@/lib/types";
 import { disablePush, enablePush, pushStatus, type PushStatus } from "@/lib/push";
-import { ISLAND_LABEL, okina } from "@/lib/brand";
+import { ISLAND_LABEL } from "@/lib/brand";
 
 /** "Get alerts on this phone": Web Push digests per island. Works on Android and on iPhones with the app on the Home Screen. */
 export default function AlertsCard({ island }: { island: Exclude<Island, "state"> }) {
@@ -20,7 +20,7 @@ export default function AlertsCard({ island }: { island: Exclude<Island, "state"
   };
 
   if (status === null) return null;
-  const name = okina(ISLAND_LABEL[island].split(" · ")[0]);
+  const name = ISLAND_LABEL[island].split(" · ")[0];
   return (
     <section className="mt-6 card" aria-label="Alerts on this phone">
       <div className="flex items-start gap-3">

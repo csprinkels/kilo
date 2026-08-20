@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ExternalLink, Satellite } from "lucide-react";
 import StormMap, { catColor } from "./StormMap";
+import Hero from "./Hero";
 import type { Island } from "@/lib/types";
 import { ISLAND_POINTS, bearingDeg, categoryOf, compass, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "@/lib/storm";
-import { fmtDateTime, fmtDayTime, fmtTime, okina } from "@/lib/brand";
+import { fmtDateTime, fmtDayTime, fmtTime } from "@/lib/brand";
 
 const fmtMi = (nm: number) => nmToMi(nm).toLocaleString("en-US");
 
@@ -20,32 +21,27 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
   const closestIsNow = closest.hour === 0;
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    timelineRef.current?.children[sel]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [sel]);
+  // Scroll the timeline only on user selection (never on mount: effects would yank the page down on load).
+  const select = (i: number) => { setSel(i); timelineRef.current?.children[i]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); };
 
   return (
     <article className="mt-6">
       {/* Header */}
-      <header>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full px-3 py-1 text-label font-semibold text-white" style={{ background: catColor(storm.windKt, storm.cls) }}>{cat.label}</span>
-          <span className="text-label text-muted">Advisory {storm.advNum} · {fmtTime(storm.issuedAt)} HST{storm.nextAdvisoryAt ? ` · next ${fmtTime(storm.nextAdvisoryAt)}` : ""}</span>
-        </div>
-        <h2 className="display mt-2 text-display font-medium leading-[1] tracking-[-0.02em] text-ink">{storm.cls === "HU" ? "Hurricane" : storm.cls === "TS" ? "Tropical Storm" : ""} {storm.name}</h2>
-        {storm.headline && <p className="mt-2 text-body leading-snug text-ink">{storm.headline}.</p>}
-        <p className="mt-2 text-body text-ink-2">
-          Winds <strong className="text-ink">{ktToMph(storm.windKt)} mph</strong>, gusts {ktToMph(storm.gustKt)} mph
-          {storm.moveDirDeg != null && storm.moveKt != null && <> · moving <strong className="text-ink">{compass(storm.moveDirDeg)}</strong> at {ktToMph(storm.moveKt)} mph</>}
-          {storm.pressureMb && <> · {storm.pressureMb} mb</>}
-        </p>
-      </header>
+      <Hero
+        tone={catColor(storm.windKt, storm.cls)}
+        eyebrow={<>Advisory {storm.advNum} · {fmtTime(storm.issuedAt)} HST{storm.nextAdvisoryAt ? ` · next ${fmtTime(storm.nextAdvisoryAt)}` : ""}</>}
+        value={<span className="text-display">{storm.cls === "HU" ? "Hurricane" : storm.cls === "TS" ? "Tropical Storm" : storm.cls === "TD" ? "Tropical Depression" : ""} {storm.name}</span>}
+        right={<span className="inline-flex rounded-full px-3 py-1 text-label font-semibold text-white" style={{ background: catColor(storm.windKt, storm.cls) }}>{cat.label}</span>}
+        label={storm.headline ? `${storm.headline}.` : undefined}
+        sentence={<>{ktToMph(storm.windKt)} mph winds, moving {storm.moveDirDeg != null ? compass(storm.moveDirDeg) : "—"}{storm.moveKt != null ? ` at ${ktToMph(storm.moveKt)} mph` : ""} · {fmtMi(distNow)} mi {dirNow} of {place.label}{outlook.movingAway ? ", moving away." : closestIsNow ? "." : `, closest ${fmtDayTime(closest.at)}.`}</>}
+        meta={<><span>Gusts {ktToMph(storm.gustKt)} mph</span>{storm.pressureMb && <span>{storm.pressureMb} mb</span>}<span>Cone: where the center most likely goes</span></>}
+      />
 
       {/* What it means */}
       <section className="mt-5 card" aria-label={`What this means for ${place.label}`}>
-        <h3 className="display text-h2 font-medium">For {okina(place.label)}</h3>
+        <h3 className="display text-h2 font-medium">For {place.label}</h3>
         <p className="mt-2 text-body leading-relaxed">
-          The center is <strong>{fmtMi(distNow)} mi {dirNow}</strong> of {okina(place.label)} right now
+          The center is <strong>{fmtMi(distNow)} mi {dirNow}</strong> of {place.label} right now
           {outlook.movingAway ? <> and <strong className="text-emerald-700 dark:text-emerald-400">moving away</strong>.</> : <> and <strong className="text-sev3">getting closer</strong>.</>}
         </p>
         <ul className="mt-3 space-y-2 text-body leading-relaxed">
@@ -59,8 +55,8 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
           <li className="flex gap-2"><Dot color={outlook.tsWindsFrom ? "var(--sev3)" : "var(--sev1)"} />
             <span>
               {outlook.tsWindsFrom
-                ? <><strong className="text-sev3">Tropical-storm-force winds (39+ mph) could reach {okina(place.label)} from about {fmtDayTime(outlook.tsWindsFrom)}</strong>{outlook.tsWindsUntil && outlook.tsWindsUntil !== outlook.tsWindsFrom ? ` through ${fmtDayTime(outlook.tsWindsUntil)}` : ""}. Finish preparations before then — outdoor work becomes dangerous once winds arrive.</>
-                : <>On the current forecast, tropical-storm-force winds are <strong>not expected</strong> on {okina(place.label)}. Surf, rain and flooding can still happen well away from the center.</>}
+                ? <><strong className="text-sev3">Tropical-storm-force winds (39+ mph) could reach {place.label} from about {fmtDayTime(outlook.tsWindsFrom)}</strong>{outlook.tsWindsUntil && outlook.tsWindsUntil !== outlook.tsWindsFrom ? ` through ${fmtDayTime(outlook.tsWindsUntil)}` : ""}. Finish preparations before then — outdoor work becomes dangerous once winds arrive.</>
+                : <>On the current forecast, tropical-storm-force winds are <strong>not expected</strong> on {place.label}. Surf, rain and flooding can still happen well away from the center.</>}
             </span>
           </li>
           {outlook.hurricaneWindsFrom && (
@@ -82,8 +78,8 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
 
       {/* Map */}
       <section className="mt-5 overflow-hidden rounded-card border border-line">
-        <StormMap storm={storm} place={place} selected={sel} onSelect={setSel} />
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-micro text-muted">
+        <StormMap storm={storm} place={place} selected={sel} onSelect={select} />
+        <div className="flex flex-wrap items-center gap-x-s4 gap-y-1 border-t border-line bg-surface px-s3 py-s2 text-label text-muted">
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-3 w-5 rounded-sm border border-dashed border-brand bg-brand/15" /> Where the center will likely go</span>
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 border-t-2 border-dashed border-muted" /> Past track</span>
           <span className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 bg-ink" /> Forecast</span>
@@ -93,20 +89,20 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
 
       {/* Timeline */}
       <section className="mt-5" aria-label="Forecast timeline">
-        <h3 className="text-micro font-semibold uppercase tracking-[0.12em] text-muted">Forecast timeline · tap a step</h3>
+        <h3 className="h2-display">Timeline <span className="text-label font-normal text-muted">· tap a step</span></h3>
         <div ref={timelineRef} className="no-scrollbar -mx-5 mt-2 flex snap-x gap-2 overflow-x-auto px-5 pb-2">
           {points.map((p, i) => {
             const d = distanceNm(p.lat, p.lon, place.lat, place.lon);
             const c = categoryOf(p.windKt, i === 0 ? storm.cls : undefined);
             const on = i === sel;
             return (
-              <button key={i} onClick={() => setSel(i)} aria-pressed={on}
-                className={`w-[150px] shrink-0 snap-center rounded-card border p-3 text-left transition-colors ${on ? "border-ink bg-surface" : "border-line bg-surface/60"}`}>
-                <div className="text-micro font-semibold text-ink">{i === 0 ? "Now" : fmtDayTime(p.at)}</div>
-                <div className="mt-0.5 text-micro text-muted">{i === 0 ? fmtTime(p.at) + " HST" : fmtDateTime(p.at).replace(/^\w+ \d+, /, "")}{p.outlook ? " · outlook" : ""}</div>
-                <div className="mt-2 flex items-center gap-1.5"><span className="inline-block size-3 rounded-full" style={{ background: catColor(p.windKt, i === 0 ? storm.cls : undefined) }} /><span className="text-micro font-medium">{c.level > 0 ? `Cat ${c.level}` : c.label}</span></div>
-                <div className="text-micro text-ink-2">{ktToMph(p.windKt)} mph winds</div>
-                <div className="mt-1 text-micro text-muted">{fmtMi(d)} mi {compass(bearingDeg(place.lat, place.lon, p.lat, p.lon))} of {okina(place.label.split(" ")[0])}</div>
+              <button key={i} onClick={() => select(i)} aria-pressed={on}
+                className={`w-[168px] shrink-0 snap-center rounded-card border p-s3 text-left transition-colors num ${on ? "border-ink bg-surface" : "border-line bg-surface/60"}`}>
+                <div className="text-body font-semibold text-ink">{i === 0 ? "Now" : fmtDayTime(p.at)}</div>
+                <div className="mt-0.5 text-label text-muted">{i === 0 ? fmtTime(p.at) + " HST" : fmtDateTime(p.at).replace(/^\w+ \d+, /, "")}{p.outlook ? " · outlook" : ""}</div>
+                <div className="mt-s2 flex items-center gap-1.5"><span className="inline-block size-3 rounded-full" style={{ background: catColor(p.windKt, i === 0 ? storm.cls : undefined) }} /><span className="text-label font-medium">{c.level > 0 ? `Cat ${c.level}` : c.label}</span></div>
+                <div className="text-label text-ink-2">{ktToMph(p.windKt)} mph winds</div>
+                <div className="mt-1 text-label text-muted">{fmtMi(d)} mi {compass(bearingDeg(place.lat, place.lon, p.lat, p.lon))} of {place.label.split(" ")[0]}</div>
               </button>
             );
           })}

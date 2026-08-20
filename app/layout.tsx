@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { APP_NAME, TAGLINE } from "@/lib/brand";
 
-// Self-hosted by next/font at build time, so the offline shell carries them too.
-const display = Fraunces({ subsets: ["latin"], variable: "--font-display", axes: ["opsz", "SOFT"], display: "swap" });
-const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+// One face, self-hosted by next/font at build time so the offline shell carries it. Inter ≈ San Francisco, with tabular numerals.
+const body = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
   title: `${APP_NAME} — ${TAGLINE}`,
@@ -28,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`}>
+    <html lang="en" className={`${body.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col">
         {children}
         <Script id="sw" strategy="afterInteractive">

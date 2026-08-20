@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { Camera, ChevronDown, ExternalLink, Wind } from "lucide-react";
 import PageShell, { H2 } from "@/components/PageShell";
-import type { Volcano, VolcanoStatus } from "@/lib/pages";
+import Hero from "@/components/Hero";
+import EmptyState from "@/components/EmptyState";
+import type { Volcano } from "@/lib/pages";
 import { useJson } from "@/lib/data";
 import { ago, fmtDateTime } from "@/lib/brand";
 
@@ -24,18 +26,25 @@ export default function VolcanoPage() {
 
   return (
     <PageShell title="Volcano" blurb={d?.kilauea ? `Kīlauea is ${d.kilauea.erupting ? "erupting" : "not erupting"} · ${d.kilauea.level.toLowerCase()}${d.maunaloa ? ` · Mauna Loa ${d.maunaloa.level.toLowerCase()}` : ""}.` : undefined} fetchedAt={v?.fetchedAt} gen={d?.upd} offline={v?.offline} source="USGS HVO">
-      {!d && <p className="py-10 text-center text-muted">{v === null ? "Loading…" : "No volcano data saved yet."}</p>}
+      {!d && <EmptyState kind="loading" title="" />}
       {d && (
         <>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {[d.kilauea, d.maunaloa].filter(Boolean).map((s) => <StatusTile key={s!.vnum} s={s!} now={now} />)}
-          </div>
+          {d.kilauea && (
+            <Hero
+              tone={COLOR[d.kilauea.color] ?? "var(--cond-cloud)"}
+              eyebrow={`Kīlauea · HVO ${ago(d.kilauea.noticeAt, now)}`}
+              value={<span className="text-display">{d.kilauea.erupting ? "Erupting" : "Not erupting"}</span>}
+              right={<span className="inline-flex rounded-full px-3 py-1 text-label font-bold uppercase tracking-wide text-white" style={{ background: COLOR[d.kilauea.color] ?? "#7c8796" }}>{d.kilauea.level}</span>}
+              label={d.kilauea.erupting ? `Activity at the ${d.kilauea.where}` : d.kilauea.vnum === "332010" ? "Summit eruption paused between episodes" : undefined}
+              sentence={d.kilauea.sms}
+              meta={<>{d.kilauea.levelSince && <span>{d.kilauea.level} since {fmtDateTime(d.kilauea.levelSince)}{d.kilauea.prevLevel ? ` (was ${d.kilauea.prevLevel})` : ""}</span>}{d.maunaloa && <span>Mauna Loa {d.maunaloa.level}</span>}</>}
+            />
+          )}
 
           {d.kilauea && (
             <>
-              <H2 right={`HVO daily update · ${fmtDateTime(d.kilauea.noticeAt)}`}>Kīlauea today</H2>
-              <p className="mt-3 text-body leading-relaxed">{d.kilauea.sms}</p>
-              <div className="mt-3 divide-y divide-line rounded-card border border-line bg-surface">
+              <H2 right={`HVO daily update · ${fmtDateTime(d.kilauea.noticeAt)}`}>Today&apos;s update</H2>
+              <div className="mt-s3 divide-y divide-line rounded-card border border-line bg-surface">
                 {Object.entries(d.kilauea.sections).filter(([k]) => !/Resources|Overview/i.test(k)).map(([k, body]) => (
                   <details key={k} className="group px-4 py-3">
                     <summary className="flex cursor-pointer list-none items-center justify-between text-body font-semibold [&::-webkit-details-marker]:hidden">{k} <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" /></summary>
@@ -49,11 +58,11 @@ export default function VolcanoPage() {
 
           <H2 right="DOH monitors · 15-min SO₂, hourly PM2.5">Vog &amp; air</H2>
           {d.air.length ? (
-            <ul className="mt-3 divide-y divide-line">
+            <ul className="mt-s3 divide-y divide-line">
               {d.air.map((a) => (
-                <li key={a.name} className="flex items-center justify-between gap-3 py-2 text-label">
+                <li key={a.name} className="flex min-h-12 items-center justify-between gap-s3 py-s2 text-body num">
                   <span className="font-medium">{a.name}{a.stale && <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 text-micro text-muted">stale</span>}</span>
-                  <span className="flex gap-4 num text-ink-2">
+                  <span className="flex gap-s4 text-label text-ink-2">
                     <span>SO₂ {a.so2 != null ? `${a.so2} ppm` : "—"}</span>
                     <span>PM2.5 {a.pm25 ?? "—"}</span>
                     <span className={`w-28 text-right font-medium ${aqiClass(a.aqi)}`}>{a.aqi != null ? `AQI ${a.aqi} ${aqiLabel(a.aqi)}` : ""}</span>
@@ -69,7 +78,7 @@ export default function VolcanoPage() {
           <p className="mt-2 text-micro text-muted">Tap to load a still (6–250 KB each). Nothing loads on its own.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {d.cams.map((c) => (
-              <button key={c.id} onClick={() => setCam(c.id)} aria-pressed={cam === c.id} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-micro font-medium ${cam === c.id ? "border-ink bg-surface" : "border-line bg-surface text-ink-2"}`}><Camera className="size-3.5" /> {c.name}</button>
+              <button key={c.id} onClick={() => setCam(c.id)} aria-pressed={cam === c.id} className={`btn ${cam === c.id ? "chip-active" : ""}`}><Camera className="size-4" /> {c.name}</button>
             ))}
           </div>
           {cam && (
@@ -92,20 +101,5 @@ export default function VolcanoPage() {
         </>
       )}
     </PageShell>
-  );
-}
-
-function StatusTile({ s, now }: { s: VolcanoStatus; now: number }) {
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between">
-        <p className="display text-h2 font-medium">{s.name}</p>
-        <span className="rounded-full px-3 py-1 text-micro font-bold uppercase tracking-wide text-white" style={{ background: COLOR[s.color] ?? "#7c8796" }}>{s.level}</span>
-      </div>
-      <p className="mt-2 text-body font-semibold">{s.erupting ? `Erupting · ${s.where}` : s.vnum === "332010" ? "Not erupting · summit eruption paused" : "Not erupting"}</p>
-      <p className="mt-1 text-micro text-muted">
-        {s.levelSince ? `${s.level} since ${fmtDateTime(s.levelSince)}${s.prevLevel ? ` (was ${s.prevLevel})` : ""} · ` : ""}updated {ago(s.noticeAt, now)}
-      </p>
-    </div>
   );
 }

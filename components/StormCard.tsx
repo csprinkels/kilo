@@ -5,7 +5,7 @@ import StormMap, { catColor } from "./StormMap";
 import type { Island } from "@/lib/types";
 import { ISLAND_POINTS, bearingDeg, categoryOf, compass, distanceNm, ktToMph, nmToMi, outlookFor, type StormsSnapshot } from "@/lib/storm";
 import { useJson } from "@/lib/data";
-import { fmtDayTime, okina } from "@/lib/brand";
+import { fmtDayTime } from "@/lib/brand";
 
 /** Compact tracker preview for the home page; renders nothing when no storm is active. */
 export default function StormCard({ island }: { island: Exclude<Island, "state"> }) {
@@ -28,7 +28,7 @@ export default function StormCard({ island }: { island: Exclude<Island, "state">
                   <span className="display truncate text-h2 font-medium leading-none">{s.cls === "HU" ? "Hurricane" : s.cls === "TS" ? "Tropical Storm" : ""} {s.name}</span>
                 </div>
                 <p className="mt-2 text-label leading-snug text-ink-2">
-                  {ktToMph(s.windKt)} mph · {nmToMi(d).toLocaleString()} mi {compass(bearingDeg(place.lat, place.lon, s.lat, s.lon))} of {okina(place.label)}
+                  {ktToMph(s.windKt)} mph · {nmToMi(d).toLocaleString()} mi {compass(bearingDeg(place.lat, place.lon, s.lat, s.lon))} of {place.label}
                   {o.movingAway ? ", moving away" : o.tsWindsFrom ? <> · <strong className="text-sev3">TS winds possible from {fmtDayTime(o.tsWindsFrom)}</strong></> : `, closest ${fmtDayTime(o.closest.at)}`}
                 </p>
               </div>

@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import PageShell, { H2 } from "@/components/PageShell";
 import DotMap from "@/components/DotMap";
+import Hero from "@/components/Hero";
+import EmptyState from "@/components/EmptyState";
 import type { Quake, Quakes } from "@/lib/pages";
 import { useJson } from "@/lib/data";
 import { ago, fmtDateTime } from "@/lib/brand";
@@ -21,10 +23,23 @@ export default function QuakesPage() {
     label: e.m >= 4 ? `M${e.m.toFixed(1)}` : undefined,
   })), [d, now]);
   const selected = d?.q.find((e) => e.i === sel);
+  const biggest = d?.q.length ? d.q.reduce((a, b) => (b.m > a.m ? b : a)) : undefined;
+  const felt = d?.q.filter((e) => e.m >= 3).length ?? 0;
 
   return (
     <PageShell title="Earthquakes" blurb={d ? `${d.q.length}${d.more ? "+" : ""} quakes of magnitude 2 or more in the last week${d.notable.length ? `, ${d.notable.length} notable this month` : ""}.` : undefined} fetchedAt={q?.fetchedAt} gen={d?.upd} offline={q?.offline} source="USGS">
-      {!d && <p className="py-10 text-center text-muted">{q === null ? "Loading…" : "No earthquake data saved yet."}</p>}
+      {!d && <EmptyState kind="loading" title="" />}
+      {d && biggest && (
+        <Hero
+          tone={magColor(biggest.m)}
+          eyebrow={`Largest this week · ${ago(biggest.t * 1000, now)}`}
+          value={<>M{biggest.m.toFixed(1)}</>}
+          label={biggest.p}
+          sentence={felt ? `${felt} quake${felt > 1 ? "s" : ""} this week were big enough to feel (magnitude 3+)${d.notable.length ? `; ${d.notable.length} notable in the last month` : ""}.` : "Nothing big enough to feel this week — the usual background of small Kīlauea quakes."}
+          meta={<><span>{biggest.d} km deep</span>{biggest.f ? <span>{biggest.f} felt reports</span> : null}<a className="text-brand underline underline-offset-4" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${biggest.i}/tellus`} target="_blank" rel="noreferrer">Did you feel it?</a></>}
+        />
+      )}
+      {d && !biggest && <EmptyState title="No earthquakes of magnitude 2 or more this week" />}
       {d && (
         <>
           {d.notable.length > 0 && (
@@ -36,9 +51,9 @@ export default function QuakesPage() {
             </>
           )}
 
-          <section className="mt-6 overflow-hidden rounded-card border border-line">
+          <section className="mt-s4 overflow-hidden rounded-card border border-line">
             <DotMap dots={dots} selected={sel ?? undefined} onSelect={setSel} />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface px-3 py-2 text-micro text-muted">
+            <div className="flex flex-wrap items-center gap-x-s4 gap-y-1 border-t border-line bg-surface px-s3 py-s2 text-label text-muted num">
               {[["M2", "#7c8796"], ["M3", "#d9a400"], ["M4", "#e4632a"], ["M5+", "#b3261e"]].map(([l, c]) => <span key={l} className="inline-flex items-center gap-1"><span className="inline-block size-2.5 rounded-full" style={{ background: c }} />{l}</span>)}
               <span>· faded = older</span>
               {selected && <span className="ml-auto font-medium text-ink">M{selected.m.toFixed(1)} {selected.p} · {ago(selected.t * 1000, now)}</span>}
@@ -60,7 +75,7 @@ export default function QuakesPage() {
           </ul>
           <a className="mt-3 inline-flex items-center gap-1 text-label font-medium text-brand" href="https://earthquake.usgs.gov/earthquakes/eventpage/unknown/tellus" target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Felt one that isn&apos;t listed? Tell USGS</a>
 
-          <section className="mt-6 divide-y divide-line rounded-card border border-line bg-surface">
+          <section className="mt-s6 divide-y divide-line rounded-card border border-line bg-surface">
             <Explain q="What does the magnitude mean for me?">People usually start feeling earthquakes around magnitude 3. A quake has one magnitude (energy at the source) but many intensities — how hard it shook where you were depends on distance and depth. Kīlauea produces dozens of small quakes a week; the south side of Hawaiʻi Island has the highest hazard in the state.</Explain>
             <Explain q="Is there early warning here?">No. ShakeAlert covers only California, Oregon and Washington. When shaking starts: drop, cover, hold on. Some Android phones get a crowd-sourced alert for M4.5+; iPhones get none.</Explain>
             <Explain q="Earthquake near the coast?">Strong or long shaking near the shore is your tsunami warning — a local tsunami can arrive in minutes, before any siren. Move inland or uphill on foot right away; don&apos;t wait for an official message. See the Tsunami page for your evacuation zone.</Explain>

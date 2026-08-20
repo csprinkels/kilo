@@ -11,7 +11,7 @@ import { useFeed, useStoredIsland } from "@/lib/data";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
 import SectionNav from "@/components/SectionNav";
-import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtTime, okina } from "@/lib/brand";
+import { APP_NAME, TAGLINE, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, ago, fmtTime } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
 
@@ -64,15 +64,15 @@ export default function Home() {
       {/* Masthead */}
       <header className="pt-6">
         <div className="flex items-baseline justify-between">
-          <span className="display text-body font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {okina(TAGLINE)}</span></span>
+          <span className="display text-body font-semibold tracking-tight text-ink">{APP_NAME} <span className="font-normal text-muted">· {TAGLINE}</span></span>
           <Link href="/sources/" className="text-micro font-medium text-muted underline-offset-4 hover:underline">Sources &amp; about</Link>
         </div>
         <SectionNav />
         <h1 className="display mt-4 text-display font-medium leading-[0.95] tracking-[-0.02em] text-ink sm:text-[56px]">
-          {okina(ISLAND_LABEL[island].split(" · ")[0])}
+          {ISLAND_LABEL[island].split(" · ")[0]}
           {ISLAND_LABEL[island].includes(" · ") && (
             <span className="block text-h2 font-normal tracking-normal text-ink-2 sm:text-[26px]">
-              {okina(ISLAND_LABEL[island].split(" · ").slice(1).join(" · "))}
+              {ISLAND_LABEL[island].split(" · ").slice(1).join(" · ")}
             </span>
           )}
         </h1>
