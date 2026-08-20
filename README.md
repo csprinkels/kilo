@@ -39,14 +39,14 @@ Sources live: NWS alerts, Hawaiʻi County Civil Defense ArcGIS (shelters, roads,
 
 | Page | Data | Cadence |
 |---|---|---|
-| `/` Now | per-island feed: official items + neighbour reports, push digests, essentials | 2 min |
+| `/` Now | per-island feed: official items + neighbor reports, push digests, essentials | 2 min |
 | `/storms` | CPHC/NHC advisories → cone, timeline, per-island outlook | 2 min (re-parse on new advisory) |
 | `/traffic` | Honolulu 911 dispatch (crashes, signal problems), HCCDA/HDOT closures, Waze embed on tap | 2 min |
 | `/weather` | NWS obs + forecast per town, SRF surf by shore, NDBC buoys, AirNow PM2.5 | 15 min (forecast/surf/air hourly) |
 | `/quakes` | USGS M2+ 7 d, M3.5+ 30 d | 5 min |
 | `/volcano` | HVO HANS daily update + sections, DOH SO₂/PM2.5, webcams on tap | 15 min |
 | `/tsunami` | PTWC CAP level, one-tap evacuation-zone lookup (state GIS), HI-EMA siren status | 5 min (sirens daily) |
-| `/report` | neighbour reports: 3-step form, auto-hold rules, votes; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
+| `/report` | neighbor reports: 3-step form, auto-hold rules, votes; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
 
 Optional env: `TURNSTILE_SECRET` + `NEXT_PUBLIC_TURNSTILE_SITEKEY` (Cloudflare Turnstile, free) turn on bot verification for reports; `DEVICE_SALT` hashes device ids.
 

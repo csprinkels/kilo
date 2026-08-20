@@ -12,7 +12,7 @@ export const ISLAND_LABEL: Record<Island, string> = {
 };
 
 export const TYPE_LABEL: Record<ItemType, string> = {
-  advisory: "Weather", storm: "Tropical cyclone", tsunami: "Tsunami", quake: "Earthquake", volcano: "Volcano",
+  advisory: "Weather", storm: "Hurricane or tropical storm", tsunami: "Tsunami", quake: "Earthquake", volcano: "Volcano",
   notice: "Notice", shelter: "Shelter", road_closure: "Road", evac: "Evacuation", hazard: "Hazard",
   school: "School", outage: "Outage", traffic: "Traffic",
 };

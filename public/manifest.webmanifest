@@ -1,7 +1,7 @@
 {
   "name": "Kilo — Hawaiʻi at a glance",
   "short_name": "Kilo",
-  "description": "Official Hawaiʻi alerts, storms, shelters, roads, weather, quakes, volcano and neighbour reports. Works offline.",
+  "description": "Official Hawaiʻi alerts, storms, shelters, roads, weather, quakes, volcano and neighbor reports. Works offline.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -30,12 +30,12 @@ export default function TrafficPage() {
   const signals = live.filter((i) => i.status === "signal").length, crashes = live.filter((i) => i.status === "crash").length;
   const parts = [signals && `${signals} signal problem${signals > 1 ? "s" : ""}`, crashes && `${crashes} crash${crashes > 1 ? "es" : ""}`, live.length - signals - crashes > 0 && `${live.length - signals - crashes} other`].filter(Boolean);
   const islandName = ISLAND_LABEL[island].split(" · ")[0];
-  const neighbours = live.filter((i) => i.tier === "community").length;
-  const via = neighbours === live.length ? "reported by neighbours" : neighbours ? "reported to dispatch or by neighbours" : "reported to dispatch";
+  const neighbors = live.filter((i) => i.tier === "community").length;
+  const via = neighbors === live.length ? "reported by neighbors" : neighbors ? "reported to dispatch or by neighbors" : "reported to dispatch";
   const sentence = live.length
     ? `${parts.join(", ")} ${via} in the last few hours${closures.length ? `, plus ${closures.length} closure${closures.length > 1 ? "s" : ""} and roadwork` : ""}.`
     : island === "oahu" ? `Nothing active from Honolulu dispatch${closures.length ? `; ${closures.length} planned closure${closures.length > 1 ? "s" : ""}` : ""}.`
-    : `No live dispatch feed exists for ${islandName} yet${closures.length ? ` — ${closures.length} closure${closures.length > 1 ? "s" : ""} and roadwork listed` : ""}. Neighbour reports fill the gap.`;
+    : `No live dispatch feed exists for ${islandName} yet${closures.length ? ` — ${closures.length} closure${closures.length > 1 ? "s" : ""} and roadwork listed` : ""}. Neighbor reports fill the gap.`;
 
   return (
     <PageShell title="Traffic" island={island} onIsland={setIsland} fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={!!snap?.offline && !!ess?.offline} source={island === "oahu" ? "Honolulu 911 dispatch" : "County + HDOT"}>
@@ -64,14 +64,14 @@ export default function TrafficPage() {
 
           <H2 right={`${live.length}`}>Right now</H2>
           {live.length ? <ul className="divide-y divide-line">{live.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
-            : <EmptyState title={island === "oahu" ? "No active incidents from Honolulu dispatch" : `No live incident feed for ${islandName}`}>{island === "oahu" ? "Crashes, stalled vehicles and signal problems appear here within minutes of a 911 call." : "Neighbour reports are the source here — tap Report when you see something."}</EmptyState>}
+            : <EmptyState title={island === "oahu" ? "No active incidents from Honolulu dispatch" : `No live incident feed for ${islandName}`}>{island === "oahu" ? "Crashes, stalled vehicles and signal problems appear here within minutes of a 911 call." : "Neighbor reports are the source here — tap Report when you see something."}</EmptyState>}
 
           <H2 right={`${closures.length}`}>Closures &amp; roadwork</H2>
           {closures.length ? <ul className="divide-y divide-line">{closures.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s3 text-body text-muted">None listed.</p>}
 
           <Link href="/report/" className="card mt-s6 flex items-center gap-s3">
             <Megaphone className="size-6 text-brand" />
-            <span><span className="block text-body font-semibold">See something? Report it</span><span className="block text-label text-ink-2">Crash, signal out, road flooded. Shown to neighbours as unverified until others confirm.</span></span>
+            <span><span className="block text-body font-semibold">See something? Report it</span><span className="block text-label text-ink-2">Crash, signal out, road flooded. Shown to neighbors as unverified until others confirm.</span></span>
           </Link>
         </>
       )}

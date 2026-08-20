@@ -3,10 +3,10 @@ import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Activity, CarFront, ChevronDown, ChevronRight, CircleCheck, CloudRainWind, ExternalLink, Megaphone, Mountain,
-  School, Siren, Tent, TrafficCone, TriangleAlert, Users, Waves, Wind, ZapOff, type LucideIcon,
+  School, Tent, TrafficCone, TriangleAlert, Users, Waves, Wind, ZapOff, type LucideIcon,
 } from "lucide-react";
-import ItemRow, { ICON, SEV_TEXT } from "@/components/ItemRow";
-import Banner from "@/components/Banner";
+import ItemRow, { ICON, LEVEL_TEXT } from "@/components/ItemRow";
+import { Notice } from "@/components/AlertBlock";
 import Freshness from "@/components/Freshness";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
@@ -53,7 +53,7 @@ function groupItems(items: Item[], island: Island): Group[] {
     { key: "quakes", label: "Earthquakes", icon: Activity, items: quakes, summary: `${plural(quakes.length, "quake")} this week`, href: "/quakes/" },
     { key: "notices", label: "Notices", icon: Megaphone, items: notices, summary: `${notices.length} from the state and county` },
   ].filter((g) => g.items.length);
-  if (island !== "state") groups.push({ key: "community", label: "Neighbours", icon: Users, items: community, summary: community.length ? plural(community.length, "unverified report") : "Nothing reported", href: "/report/" });
+  if (island !== "state") groups.push({ key: "community", label: "Neighbors", icon: Users, items: community, summary: community.length ? plural(community.length, "unverified report") : "Nothing reported", href: "/report/" });
   return groups;
 }
 
@@ -109,7 +109,7 @@ export default function Home() {
       <SectionNav />
 
       <Freshness gen={gen} checkedAt={now} offline={offline} weak={slow} />
-      {watch && <Banner sev={4} icon={Siren} title="A hurricane, tropical storm or tsunami alert is out for Hawaiʻi">Do what Civil Defense tells you.</Banner>}
+      {watch && <Notice title="A hurricane, tropical storm or tsunami alert is out for Hawaiʻi.">Do what Civil Defense tells you.</Notice>}
 
       {/* Right now */}
       <h2 className="h-title mt-s6">Right now</h2>
@@ -132,7 +132,7 @@ export default function Home() {
           <ul className="mt-s2 divide-y divide-line">
             {headlinesOnly.map((a) => {
               const Icon = ICON[a.type] ?? Megaphone;
-              return <li key={a.h} className="flex items-start gap-s3 py-s3 text-body leading-snug"><Icon className={`mt-0.5 size-5 shrink-0 ${SEV_TEXT[a.sev]}`} /><span>{a.title}<span className="block text-label text-muted">Title only until the connection improves</span></span></li>;
+              return <li key={a.h} className="flex items-start gap-s3 py-s3 text-body leading-snug"><Icon className={`mt-0.5 size-5 shrink-0 ${LEVEL_TEXT[a.sev]}`} /><span>{a.title}<span className="block text-label text-muted">Title only until the connection improves</span></span></li>;
             })}
             {alerts.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
           </ul>
@@ -159,7 +159,7 @@ export default function Home() {
                       <ChevronDown className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
                     </summary>
                     <div className="pb-s3 pl-9">
-                      {g.items.length > 0 && <ul className="divide-y divide-line border-t border-line">{g.items.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} compact />)}</ul>}
+                      {g.items.length > 0 && <ul className="divide-y divide-line border-t border-line">{g.items.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>}
                       {g.key === "community" && g.items.length === 0 && <p className="py-s2 text-label text-muted">Crashes, signals out, flooded roads, outages, lost pets — unverified until others confirm.</p>}
                       {g.href && <Link href={g.href} className="mt-s2 inline-flex items-center gap-1 text-label font-medium text-brand">{g.key === "community" ? "Report something" : `Open ${g.label.toLowerCase()}`} <ChevronRight className="size-4" /></Link>}
                     </div>

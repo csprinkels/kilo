@@ -2,10 +2,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { CarFront, CircleCheck, Clock, Dog, HelpCircle, Siren, TrafficCone, Waves, ZapOff, type LucideIcon } from "lucide-react";
+import { CarFront, CircleCheck, Clock, Dog, HelpCircle, TrafficCone, Waves, ZapOff, type LucideIcon } from "lucide-react";
 import SectionNav from "@/components/SectionNav";
 import TopBar from "@/components/TopBar";
-import Banner from "@/components/Banner";
+import { Notice } from "@/components/AlertBlock";
 import { HAWAII_DISTRICTS, districtFor } from "@/lib/places";
 import { HOLD_COPY, LOC_MAX, REPORT_TYPES, REPORT_TYPE_KEYS, TEXT_MAX, holdReason, validateReport, type ReportType } from "@/lib/reportRules";
 import { submitReport, type SubmitResult } from "@/lib/report";
@@ -56,8 +56,8 @@ export default function ReportPage() {
       <TopBar />
       <SectionNav />
       <h1 className="h-display mt-s6">Report something</h1>
-      <p className="mt-s2 text-body leading-snug text-ink-2">Crash, signal out, flooded road, outage, lost pet. Shown to neighbours as unverified until others confirm.</p>
-      <Banner sev={4} icon={Siren} title="Hurt or in danger? Call 911 first.">This is for letting neighbours know, not for getting help.</Banner>
+      <p className="mt-s2 text-body leading-snug text-ink-2">Crash, signal out, flooded road, outage, lost pet. Shown to neighbors as unverified until others confirm.</p>
+      <Notice title="Hurt or in danger? Call 911 first.">This is for letting neighbors know, not for getting help.</Notice>
 
       {result?.ok ? (
         <Done result={result} district={d.district} onAgain={() => { setResult(null); setD(EMPTY); setStep(1); setOpenedAt(Date.now()); }} />
@@ -134,7 +134,7 @@ export default function ReportPage() {
               {result && !result.ok && <p className="rounded-card bg-sev4-bg px-3 py-2 text-micro text-sev4">{result.error}</p>}
               <div className="flex gap-2">
                 <button onClick={() => setStep(2)} className="btn">Back</button>
-                <button onClick={send} disabled={busy || !!error || !d.agreed || (!!TURNSTILE_KEY && !token)} className="btn btn-primary disabled:opacity-40">{busy ? "Sending…" : "Post to neighbours"}</button>
+                <button onClick={send} disabled={busy || !!error || !d.agreed || (!!TURNSTILE_KEY && !token)} className="btn btn-primary disabled:opacity-40">{busy ? "Sending…" : "Post to neighbors"}</button>
               </div>
             </div>
           )}
@@ -161,7 +161,7 @@ function Done({ result, district, onAgain }: { result: Extract<SubmitResult, { o
       ) : (
         <>
           <p className="display mt-2 text-h2 font-medium">Posted to {district ?? ""}</p>
-          <p className="mt-1 text-body text-ink-2">It shows as <strong>Unverified</strong> until neighbours confirm, and clears on its own around {fmtDateTime(result.expiresAt)} HST.</p>
+          <p className="mt-1 text-body text-ink-2">It shows as <strong>Unverified</strong> until neighbors confirm, and clears on its own around {fmtDateTime(result.expiresAt)} HST.</p>
         </>
       )}
       <div className="mt-4 flex gap-2">
