@@ -122,3 +122,20 @@ test("bad-signal builders: essentials and digest fit their byte budgets; SMS tex
   }
   assert.match(smsText({ title: "Shelter OPEN: Nāʻālehu", body: "Bring supplies — and medication…", issuedAt: Date.UTC(2026, 7, 15, 4) }), /^8\/14 6:00PM Shelter OPEN: Na'alehu Bring supplies - and medication\.\.\.$/);
 });
+
+test("HPD media releases: keyword severity and district tagging", async () => {
+  const { parseHpd } = await import("../convex/parsers/feeds.ts");
+  const { districtFor } = await import("../lib/places.ts");
+  const now = Date.parse("2026-08-18T12:00:00Z"); // fixture spans Aug 16-20; 3-day window
+  const items = parseHpd(readFileSync(new URL("../fixtures/hpd.rss", import.meta.url), "utf8"), now, (t) => { const d = districtFor(t); return d ? [d] : []; });
+  assert.ok(items.length >= 5 && items.length <= 10, `${items.length} within 3 days`);
+  const nine11 = items.find((i) => /911 Service Number is Non Operational/.test(i.title));
+  assert.equal(nine11?.sev, 3, "911 outage is a warning");
+  const crash = items.find((i) => /Two Car Crash/.test(i.title));
+  assert.equal(crash?.sev, 2);
+  assert.deepEqual(crash?.districts, ["Ka‘ū"], "Ocean View -> Kaʻū");
+  assert.deepEqual(items.find((i) => /Nāʻālehu/.test(i.title))?.districts, ["Ka‘ū"]);
+  assert.equal(districtFor("Stalled truck on Hwy 11 near Kurtistown"), "Puna");
+  assert.equal(districtFor("Kailua-Kona water main break"), "North Kona");
+  assert.equal(districtFor("Hawaii Island police are investigating"), undefined);
+});

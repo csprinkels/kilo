@@ -21,6 +21,7 @@ export const SOURCE_LABEL: Record<string, string> = {
   hccda: "Hawaiʻi County Civil Defense",
   hdot: "Hawaiʻi DOT Highways",
   hiema: "HI-EMA",
+  hpd: "Hawaiʻi Police Department",
   usgs: "USGS",
   hvo: "USGS Hawaiian Volcano Observatory",
   ptwc: "Pacific Tsunami Warning Center",

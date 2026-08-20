@@ -91,27 +91,39 @@ export function parseHdot(json: { features: Lane[] }, now = Date.now()): Item[] 
   return out;
 }
 
-// ---------- HI-EMA news (WordPress RSS) ----------
-export const HIEMA_URL = "https://dod.hawaii.gov/hiema/feed/";
-export function parseHiema(rss: string, now = Date.now()): Item[] {
+// ---------- WordPress RSS feeds (HI-EMA, Hawaiʻi Police Department) ----------
+type WpOpts = { source: string; islands: Island[]; maxAgeDays: number; sev?: (title: string, body: string) => Item["sev"]; districts?: (t: string) => string[] };
+export function parseWordPress(rss: string, o: WpOpts, now = Date.now()): Item[] {
   const doc = xml.parse(rss);
   return asArray<Record<string, unknown>>(doc?.rss?.channel?.item)
     .map((it) => ({ it, at: Date.parse(text(it.pubDate)) }))
-    .filter(({ at }) => Number.isFinite(at) && now - at < 14 * DAY)
+    .filter(({ at }) => Number.isFinite(at) && now - at < o.maxAgeDays * DAY)
     .map(({ it, at }) => {
-      const link = text(it.link);
+      const link = text(it.link), title = clip(text(it.title), 120), body = clip(stripHtml(text(it.description)), 600);
       return {
-        key: `hiema:${text(it.guid) || link}`, source: "hiema", type: "notice" as const, tier: "official" as const,
-        sev: 2 as const, islands: ["state" as const], districts: [],
-        title: clip(text(it.title), 120),
-        body: clip(stripHtml(text(it.description)), 600),
-        srcUrl: link,
+        key: `${o.source}:${text(it.guid) || link}`, source: o.source, type: "notice" as const, tier: "official" as const,
+        sev: o.sev?.(title, body) ?? (2 as const), islands: o.islands, districts: o.districts?.(`${title} ${body}`) ?? [],
+        title, body, srcUrl: link,
         fields: { category: asArray(it.category).map(text).join(", ") },
-        issuedAt: at, lastConfirmedAt: now, expiresAt: at + 14 * DAY,
-        hash: hashOf(text(it.title), text(it.description)),
+        issuedAt: at, lastConfirmedAt: now, expiresAt: at + o.maxAgeDays * DAY,
+        hash: hashOf(title, body),
       };
     });
 }
+
+export const HIEMA_URL = "https://dod.hawaii.gov/hiema/feed/";
+export const parseHiema = (rss: string, now = Date.now()) => parseWordPress(rss, { source: "hiema", islands: ["state"], maxAgeDays: 14 }, now);
+
+// Hawaiʻi Police Department media releases: after-the-fact mostly, but also "911 non-operational", road closures, crashes.
+export const HPD_URL = "https://www.hawaiipolice.gov/feed/";
+const HPD_SEV = (title: string, body: string): Item["sev"] => {
+  const t = `${title} ${body}`;
+  if (/\b911\b.*(non.?operational|not working|outage|down)|tsunami|evacuat|shelter in place|active shooter/i.test(t)) return 3;
+  if (/crash|collision|closed|closure|roadway|highway|traffic|signal|stoplight|missing|runaway|flood|fire|hazmat|checkpoint/i.test(t)) return 2;
+  return 1;
+};
+export const parseHpd = (rss: string, now = Date.now(), districts?: (t: string) => string[]) =>
+  parseWordPress(rss, { source: "hpd", islands: ["hawaii"], maxAgeDays: 3, sev: HPD_SEV, districts }, now);
 
 // ---------- PTWC tsunami bulletins (Atom) ----------
 export const PTWC_URL = "https://www.tsunami.gov/events/xml/PHEBAtom.xml";

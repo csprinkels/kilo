@@ -5,16 +5,18 @@ import { AwsClient } from "aws4fetch";
 import { ISLANDS, buildEssentials, hashOf, type Island, type Item, type Manifest, type Snapshot, type SourceHealth } from "../lib/types.ts";
 import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
-import { HDOT_URL, HIEMA_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
+import { HDOT_URL, HIEMA_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHpd, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
+import { districtFor } from "../lib/places.ts";
 
 export const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
+const BROWSER_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const FETCH_TIMEOUT_MS = 8_000;
 const MAX_ITEMS_PER_SNAPSHOT = 200;
 
 // One entry per upstream feed. `source` groups items so a failed fetch never deactivates its own rows.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Parse = (body: any, now: number) => Item[];
-type Source = { id: string; url: string; parse: Parse; text?: true };
+type Source = { id: string; url: string; parse: Parse; text?: true; browserUA?: true }; // browserUA: WordPress hosts that 403 bots
 export const SOURCES: Source[] = [
   { id: "nws", url: NWS_URL, parse: parseNws },
   ...(Object.keys(HCCDA_LAYERS) as HccdaLayer[]).map((layer) => ({
@@ -26,12 +28,13 @@ export const SOURCES: Source[] = [
   { id: "hvo", url: HVO_URL, parse: parseHvo },
   { id: "hdot", url: HDOT_URL, parse: parseHdot },
   { id: "hiema", url: HIEMA_URL, parse: parseHiema, text: true },
+  { id: "hpd", url: HPD_URL, parse: (rss, now) => parseHpd(rss, now, (t) => { const d = districtFor(t); return d ? [d] : []; }), text: true, browserUA: true },
   { id: "ptwc", url: PTWC_URL, parse: parsePtwc, text: true },
 ];
 
 async function fetchBody(s: Source) {
   const res = await fetch(s.url, {
-    headers: { "User-Agent": UA, Accept: s.text ? "application/rss+xml, application/atom+xml, application/xml, text/xml" : "application/geo+json, application/json" },
+    headers: { "User-Agent": s.browserUA ? BROWSER_UA : UA, Accept: s.text ? "application/rss+xml, application/atom+xml, application/xml, text/xml" : "application/geo+json, application/json" },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

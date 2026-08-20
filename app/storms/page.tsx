@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ArrowLeft, CircleCheck } from "lucide-react";
 import StormTracker from "@/components/StormTracker";
+import SectionNav from "@/components/SectionNav";
 import { ISLANDS } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
 import { useJson, useStoredIsland } from "@/lib/data";
@@ -16,6 +17,7 @@ export default function StormsPage() {
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-20 pt-6">
       <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted"><ArrowLeft className="size-4" /> Back</Link>
+      <SectionNav />
       <h1 className="display mt-4 text-[34px] font-medium leading-[1] tracking-[-0.02em] text-ink">Storm tracker</h1>
       <p className="mt-2 text-[14px] text-muted">
         Central Pacific Hurricane Center forecasts, explained for where you live.
