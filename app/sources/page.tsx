@@ -1,59 +1,112 @@
-import TopBar from "@/components/TopBar";
-import SectionNav from "@/components/SectionNav";
-import { ExternalLink } from "lucide-react";
-import { APP_NAME } from "@/lib/brand";
+"use client";
+import { useSyncExternalStore } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import PageShell, { Section } from "@/components/PageShell";
+import AlertsCard from "@/components/AlertsCard";
+import { ISLANDS, type Island } from "@/lib/types";
+import { useStoredIsland } from "@/lib/data";
+import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL } from "@/lib/brand";
 
 const SOURCES = [
-  { name: "National Weather Service — Honolulu", what: "Watches, warnings and advisories for every Hawaiʻi zone", url: "https://www.weather.gov/hfo/" },
-  { name: "Hawaiʻi County Civil Defense (public GIS)", what: "Open shelters, road closures, evacuations, hazards, school closures", url: "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17" },
-  { name: "Hawaiʻi DOT Highways", what: "State highway lane closures in effect today, all islands", url: "https://experience.arcgis.com/experience/397fed5aafdb4f25b73e342ef35f2ec5" },
-  { name: "Hawaiʻi Emergency Management Agency", what: "State proclamations and news", url: "https://dod.hawaii.gov/hiema/" },
-  { name: "USGS Earthquakes", what: "Magnitude 2.5+ earthquakes in Hawaiian waters, last 3 days", url: "https://earthquake.usgs.gov/earthquakes/map/?extent=17,-162&extent=23,-153" },
-  { name: "USGS Hawaiian Volcano Observatory", what: "Alert level and color code for Kīlauea and Mauna Loa", url: "https://www.usgs.gov/observatories/hvo" },
-  { name: "Pacific Tsunami Warning Center", what: "Tsunami warnings, watches, advisories and information statements", url: "https://www.tsunami.gov/" },
-];
+  ["National Weather Service", "weather, surf, warnings"],
+  ["Hawaiʻi County Civil Defense", "shelters, road closures, schools"],
+  ["State highways department", "roadwork"],
+  ["USGS", "earthquakes"],
+  ["USGS Hawaiian Volcano Observatory", "Kīlauea and Mauna Loa"],
+  ["Pacific Tsunami Warning Center", "tsunami"],
+  ["Central Pacific Hurricane Center", "storms"],
+  ["Hawaiʻi Department of Health and AirNow", "air and vog"],
+  ["Honolulu 911 dispatch", "crashes on Oʻahu"],
+  ["Neighbors", "their own reports"],
+] as const;
 
-const H = ({ children }: { children: React.ReactNode }) => <h2 className="h-title mt-s7">{children}</h2>;
+const SIZES = [["", "Normal"], ["large", "Large"], ["largest", "Largest"]] as const;
+type TextSize = (typeof SIZES)[number][0];
 
-export default function Sources() {
+// Kilo's own text size, mirrored to <html data-text> right away; app/layout.tsx re-applies it before paint on the next load.
+const sizeListeners = new Set<() => void>();
+const subscribeSize = (cb: () => void) => { sizeListeners.add(cb); return () => { sizeListeners.delete(cb); }; };
+const getSize = () => (localStorage.getItem("text") ?? "") as TextSize;
+function useTextSize(): [TextSize, (s: TextSize) => void] {
+  const size = useSyncExternalStore(subscribeSize, getSize, () => "" as TextSize);
+  return [size, (s) => {
+    if (s) { localStorage.setItem("text", s); document.documentElement.dataset.text = s; }
+    else { localStorage.removeItem("text"); delete document.documentElement.dataset.text; }
+    sizeListeners.forEach((cb) => cb());
+  }];
+}
+
+// Where this is running, for the one Home Screen instruction. Read once; it cannot change while the page is open.
+const getPlatform = () => {
+  if (window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true) return "standalone";
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) return "ios";
+  if (/Android/.test(navigator.userAgent)) return "android";
+  return "other";
+};
+const usePlatform = () => useSyncExternalStore(() => () => {}, getPlatform, () => "other" as ReturnType<typeof getPlatform>);
+
+const islandName = (i: Island) => { const p = ISLAND_LABEL[i].split(" · "); return p.length > 1 ? `${p.slice(0, -1).join(", ")} and ${p.at(-1)}` : p[0]; };
+
+export default function Settings() {
+  const [stored, setIsland] = useStoredIsland();
+  const island = stored === "state" ? "hawaii" : stored;
+  const [size, setSize] = useTextSize();
+  const platform = usePlatform();
+  const county = COUNTY_ALERTS[island];
+  const countyName = county.label.replace(/\s*\(.*\)$/, "");
+  const countyHow = county.how.startsWith("Text") ? county.how : "Sign up on their website";
+
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20 text-body leading-relaxed text-ink-2">
-      <TopBar />
-      <SectionNav />
-      <h1 className="h-display mt-s6">About {APP_NAME}</h1>
-      <p className="mt-2 text-label text-muted">Kilo (Hawaiian): to watch, observe, forecast — as in kilo makani, a weather forecaster.</p>
-      <p className="mt-5 text-lead leading-relaxed text-ink">
-        One page that pulls official Hawaiʻi emergency and community information into a single list, sorted by what matters most — and keeps the last copy on your phone so it still opens when the signal is gone.
-      </p>
+    <PageShell title="Settings and about" sentence={`Pick your island and text size, turn on warnings, and see where ${APP_NAME}'s information comes from.`}>
+      <Section title="Your island" sentence="Everything in Kilo is about this island.">
+        <div className="mt-s3 flex flex-col gap-s2">
+          {ISLANDS.map((i) => (
+            <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
+              {islandName(i)}
+            </button>
+          ))}
+        </div>
+      </Section>
 
-      <H>What this is not</H>
-      <p className="mt-2">
-        Not an emergency service and not affiliated with any government agency. Information may be delayed or incomplete. <strong className="text-ink">In an emergency call 911.</strong> When in doubt, follow Civil Defense radio messages and your county&apos;s alert system.
-      </p>
+      <Section title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
+        <div className="mt-s3 flex gap-s2" role="group" aria-label="Text size">
+          {SIZES.map(([v, label]) => (
+            <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>
+          ))}
+        </div>
+      </Section>
 
-      <H>Sources</H>
-      <ul className="mt-3 divide-y divide-line">
-        {SOURCES.map((s) => (
-          <li key={s.url} className="py-3">
-            <a className="inline-flex items-center gap-1.5 font-semibold text-ink underline-offset-4 hover:underline" href={s.url} target="_blank" rel="noreferrer">
-              {s.name} <ExternalLink className="size-3.5 text-muted" />
-            </a>
-            <div className="text-label text-muted">{s.what}</div>
-          </li>
-        ))}
-      </ul>
+      <AlertsCard island={island} />
 
-      <H>How fresh is it?</H>
-      <p className="mt-2">
-        Feeds are checked every two minutes. Every item shows when its source last listed it. If updates stop for more than 30 minutes you&apos;ll see an amber banner; if your phone can&apos;t reach the internet you&apos;ll see a red one with the time of the saved copy.
-      </p>
+      <Section title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
+        <a className="btn mt-s3" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <ChevronRight className="size-5" aria-hidden /></a>
+      </Section>
 
-      <H>Add to your home screen</H>
-      <p className="mt-2">
-        <strong className="text-ink">iPhone:</strong> Share → <em>Add to Home Screen</em>. <strong className="text-ink">Android:</strong> menu → <em>Install app</em>. It then opens full-screen and works offline.
-      </p>
+      <Section title={`Add ${APP_NAME} to your Home Screen`} sentence={
+        platform === "standalone" ? `${APP_NAME} is on your Home Screen.`
+        : platform === "ios" ? <>Tap the Share button, then &ldquo;Add to Home Screen&rdquo;. It then opens full screen and works with no signal.</>
+        : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
+        : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
+      } />
 
-      <p className="mt-10 text-label text-muted">Built in Hilo. Free, no ads, no account needed to read.</p>
-    </main>
+      <Section title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
+        <ul className="mt-s2 divide-y divide-line">
+          {SOURCES.map(([name, what]) => (
+            <li key={name} className="py-s2 text-body"><span className="font-semibold text-ink">{name}</span> <span className="text-ink-2">— {what}</span></li>
+          ))}
+        </ul>
+        <p className="mt-s3 max-w-[36rem] text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
+      </Section>
+
+      <Section title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="font-semibold text-ink">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
+
+      <Section title={`What ${APP_NAME} will never do`} sentence="Show ads. Ask you to sign up. Sell or share where you are. Let a computer write an alert. Make a neighbor's post look official." />
+
+      <Link href="/guidelines/" className="row mt-s6 border-t border-line font-semibold text-brand">
+        <span className="flex-1">Neighbor rules</span><ChevronRight className="size-5 shrink-0" aria-hidden />
+      </Link>
+      <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
+    </PageShell>
   );
 }

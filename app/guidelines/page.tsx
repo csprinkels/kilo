@@ -1,38 +1,33 @@
-import TopBar from "@/components/TopBar";
-import SectionNav from "@/components/SectionNav";
+"use client";
+import PageShell, { Section } from "@/components/PageShell";
+import { REPORT_TYPES } from "@/lib/reportRules";
 
-import { APP_NAME } from "@/lib/brand";
-
+const hours = (ms: number) => Math.round(ms / 3_600_000);
 const RULES: [string, string][] = [
-  ["Call 911 first.", "If anyone is hurt or in danger, call 911 before posting here."],
-  ["Report what you see, where and when.", "Crashes, signals out, flooded or blocked roads, power or water outages, lost or found pets. Stick to facts you observed yourself."],
-  ["No people.", "Don't post names, license plates, phone numbers, home addresses, or descriptions that single someone out. Don't call anyone a thief or a suspect. Posts that do are held automatically."],
-  ["No guessing.", "If you're unsure, say so. Reports show as Unverified until neighbors confirm — and even then they're neighbors, not officials."],
-  ["Keep it local.", "Reports stay in the district you pick and expire on their own — a crash in two hours, a signal outage in twelve, a lost pet in a week."],
-  ["Be decent.", "No threats, harassment, slurs, or dogpiling. Repeat problems get a device blocked."],
-  ["We moderate after the fact, not in real time.", "Tap Report on anything that breaks these rules; three reports send a post back to review. Community reports are unverified, may be wrong or outdated, and this app is not an emergency service."],
+  ["Call 911 first.", "If anyone is hurt or in danger, call 911 before you post here."],
+  ["Say what you saw, where, and when.", "A crash, a light out, a flooded road, power out, a lost pet."],
+  ["No names, plates, phone numbers, or home addresses.", "Do not say who you think did it. We stop those before anyone sees them."],
+  ["If you are not sure, say so.", "Every post says “not checked” because a neighbor wrote it, not an official."],
+  ["Posts clear by themselves.", `A crash after ${hours(REPORT_TYPES.crash.ttlMs)} hours, a light out after ${hours(REPORT_TYPES.signal_out.ttlMs)}, a lost pet after a week.`],
+  ["Be kind.", "No threats, no insults, no piling on. A phone that keeps doing this gets blocked."],
+  ["Help keep it clean.", "If a post breaks these rules, open it and tap “Flag this post”. Three flags and a person reviews it."],
 ];
 
 export default function Guidelines() {
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20 text-body leading-relaxed text-ink-2">
-      <TopBar />
-      <SectionNav />
-      <h1 className="h-display mt-s6">Community guidelines</h1>
-      <p className="mt-4">The neighbor reports on {APP_NAME} work because people keep them honest and boring. Seven rules:</p>
-      <ol className="mt-5 space-y-4">
+    <PageShell title="Neighbor rules" sentence="Seven rules that keep neighbor reports honest and useful.">
+      <ol className="mt-s5 max-w-[36rem]">
         {RULES.map(([h, b], i) => (
-          <li key={h} className="flex gap-3">
-            <span className="display mt-0.5 w-6 shrink-0 text-h2 text-muted">{i + 1}</span>
-            <span><strong className="text-ink">{h}</strong> {b}</span>
+          <li key={h} className="flex gap-s3 border-t border-line py-s4 first:border-t-0">
+            <span className="h-title w-7 shrink-0 num">{i + 1}</span>
+            <span className="text-body text-ink-2"><strong className="font-semibold text-ink">{h}</strong> {b}</span>
           </li>
         ))}
       </ol>
-      <h2 className="display mt-9 text-h2 font-medium tracking-tight text-ink">What we store</h2>
-      <p className="mt-2">
-        Posters must be 18 or older. We store a hashed device id (not your name, phone, or account), the district, the time, and your text. Nothing else is collected: no location coordinates, no photos. Posts are purged 30 days after they expire. No ads, no selling data.
-      </p>
-      <p className="mt-6 text-label text-muted">Questions or takedown requests: aloha@csprinkels.com</p>
-    </main>
+      <Section title="What we keep" sentence="A random code for your phone, not your name or number. Posts are deleted 30 days after they expire.">
+        <p className="mt-s2 max-w-[36rem] text-body text-ink-2">You must be 18 or older to post. We do not keep where you are or any photos. No ads, and nothing is sold.</p>
+        <p className="mt-s4 max-w-[36rem] text-body text-ink-2">Have a question, or want a post taken down? <a href="mailto:aloha@csprinkels.com" className="inline-flex min-h-11 items-center font-semibold text-brand">Email aloha@csprinkels.com</a></p>
+      </Section>
+    </PageShell>
   );
 }

@@ -157,3 +157,39 @@ test("Honolulu CAD traffic: kinds, HST timestamps, short TTLs", async () => {
   }
   assert.equal(parseHnlTraffic(rows, now + 48 * 3_600_000).length, 0, "everything expires within hours");
 });
+
+test("road closures carry the closed segment as a short path; endpoints stay put; never in essentials or digest", async () => {
+  const { parseHdot } = await import("../convex/parsers/feeds.ts");
+  const { buildEssentials, buildDigest } = await import("../lib/types.ts");
+  const { distanceNm } = await import("../lib/storm.ts");
+  const { pathMiles, pathMidpoint, simplifyPath } = await import("../lib/roads.ts");
+  const raw = fx("hccda-road_closures.json") as { features: { geometry: { type: string; coordinates: [number, number][] }; properties: Record<string, string | number | null> }[] };
+  const roads = parseHccda("roads", raw, NOW);
+  const withPath = roads.filter((r) => r.path);
+  assert.ok(withPath.length >= 15, `expected most county closures to carry a path, got ${withPath.length}`);
+  for (const r of withPath) {
+    const orig = raw.features.find((f) => `hccda:roads:${f.properties.GlobalID}` === r.key)!.geometry.coordinates;
+    assert.ok(r.path!.length <= 16 && r.path!.length >= 2, `${r.key}: ${r.path!.length} points`);
+    assert.ok(r.path!.every(([lat, lon]) => Number.isFinite(lat) && Number.isFinite(lon) && String(lat).split(".")[1]?.length <= 4 && String(lon).split(".")[1]?.length <= 4));
+    const [a, b] = [r.path![0], r.path![r.path!.length - 1]];
+    assert.ok(distanceNm(a[0], a[1], orig[0][1], orig[0][0]) * 1852 < 200, `${r.key}: start moved`);
+    assert.ok(distanceNm(b[0], b[1], orig[orig.length - 1][1], orig[orig.length - 1][0]) * 1852 < 200, `${r.key}: end moved`);
+  }
+  const wood = roads.find((r) => /Wood Valley/.test(r.title))!;
+  assert.ok(wood.path!.length >= 8 && wood.path!.length <= 16, `a 62-point road keeps only its ${wood.path!.length} most important points`);
+  assert.ok(pathMiles(wood.path!) > 1 && pathMiles(wood.path!) < 15);
+  assert.ok(pathMidpoint(wood.path!));
+  assert.ok(roads.every((r) => "location" in (r.fields ?? {}) && "alternate" in (r.fields ?? {}) && "mileMarker" in (r.fields ?? {})));
+  assert.equal(roads.find((r) => /Alternate Route/.test(r.title))?.fields?.alternate, "Detour for Highway 11 traffic OPEN to PUBLIC");
+  assert.deepEqual(simplifyPath([[19.5, -155.1]]), [[19.5, -155.1]]);
+  assert.deepEqual(simplifyPath([]), []);
+
+  const lanes = parseHdot(fx("hdot-current.json"), NOW);
+  assert.ok(lanes.every((l) => l.path && l.path.length <= 16 && l.path[0][0] === l.lat && l.path[0][1] === l.lon));
+
+  const ess = JSON.stringify(buildEssentials("hawaii", roads, NOW, "normal", [1, 1]));
+  const dig = JSON.stringify(buildDigest("hawaii", roads, NOW, roads[0].key));
+  assert.ok(!ess.includes('"path"') && !dig.includes('"path"'));
+  const snapBytes = Buffer.byteLength(JSON.stringify(roads.map((r) => r.path)));
+  assert.ok(snapBytes < 8_000, `paths add ${snapBytes} B to the island snapshot`);
+});

@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { clip, hashOf, type Island, type Item } from "../../lib/types.ts";
+import { geoJsonPath, simplifyPath } from "../../lib/roads.ts";
 
 const DAY = 86_400_000;
 const xml = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", cdataPropName: "__cdata", textNodeName: "#text" });
@@ -59,7 +60,7 @@ export function parseHvo(json: Volcano[], now = Date.now()): Item[] {
 const HDOT_WHERE = encodeURIComponent("Active=1 AND beginDate <= CURRENT_TIMESTAMP AND enDate >= CURRENT_TIMESTAMP");
 export const HDOT_URL = `https://services.arcgis.com/HQ0xoN0EzDPBOEci/arcgis/rest/services/Lane_Closure_WFL1_View_NoEd/FeatureServer/0/query?where=${HDOT_WHERE}&outFields=*&outSR=4326&f=geojson`;
 const HDOT_ISLAND: Record<string, Island> = { Oahu: "oahu", Hawaii: "hawaii", Maui: "maui", Molokai: "maui", Lanai: "maui", Kauai: "kauai" };
-type Lane = { geometry: { coordinates: unknown } | null; properties: Record<string, string | number | null> };
+type Lane = { geometry: { type: string; coordinates: unknown } | null; properties: Record<string, string | number | null> };
 export function parseHdot(json: { features: Lane[] }, now = Date.now()): Item[] {
   const seen = new Set<string>();
   const out: Item[] = [];
@@ -70,9 +71,8 @@ export function parseHdot(json: { features: Lane[] }, now = Date.now()): Item[] 
     const id = hashOf(island, road, p.IntersFrom, p.IntersTo, p.ClosHours, p.CloseFact, p.direct);
     if (seen.has(id)) continue;
     seen.add(id);
-    let c: unknown = geometry?.coordinates;
-    while (Array.isArray(c) && Array.isArray(c[0])) c = c[0];
-    const [lon, lat] = Array.isArray(c) ? (c as number[]) : [undefined, undefined];
+    const path = simplifyPath(geoJsonPath(geometry));
+    const [lat, lon] = path[0] ?? [undefined, undefined];
     out.push({
       key: `hdot:${id}`, source: "hdot", type: "road_closure", tier: "official",
       sev: 1,
@@ -82,10 +82,11 @@ export function parseHdot(json: { features: Lane[] }, now = Date.now()): Item[] 
       body: clip([p.IntersFrom && p.IntersTo && `${p.IntersFrom} → ${p.IntersTo}`, p.ClosReason, p.Remarks].filter(Boolean).join(". "), 600),
       srcUrl: "https://experience.arcgis.com/experience/397fed5aafdb4f25b73e342ef35f2ec5",
       lat, lon,
+      ...(path.length >= 2 ? { path } : {}),
       fields: { reason: String(p.ClosReason ?? ""), hours: String(p.ClosHours ?? "") },
       issuedAt: Number(p.beginDate) || now, lastConfirmedAt: now,
       expiresAt: Number(p.enDate) || undefined,
-      hash: hashOf(p.CloseFact, p.ClosHours, p.enDate, p.Remarks),
+      hash: hashOf(p.CloseFact, p.ClosHours, p.enDate, p.Remarks, String(path)),
     });
   }
   return out;

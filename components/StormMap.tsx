@@ -1,26 +1,20 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { categoryOf, conePolygon, type Storm } from "@/lib/storm";
+import { conePolygon, type Storm } from "@/lib/storm";
 import { fmtDayTime } from "@/lib/brand";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
 let coastCache: Coast | null = null;
 
-export const CAT_COLOR: Record<number, string> = {
-  [-1]: "#7c8796", 0: "#d9a400", 1: "#f08a24", 2: "#e4632a", 3: "#d23c2a", 4: "#a8142d", 5: "#7b1fa2",
-};
-export const catColor = (windKt: number, cls?: string) => CAT_COLOR[categoryOf(windKt, cls).level];
-
 type Props = {
   storm: Storm;
   place?: { lat: number; lon: number; label: string };
-  selected?: number;               // index into [now, ...forecast]
-  onSelect?: (i: number) => void;
   compact?: boolean;
   className?: string;
 };
 
-export default function StormMap({ storm, place, selected = 0, onSelect, compact, className }: Props) {
+/** Monochrome track + cone. Labels are HTML (not SVG text) so they follow the user's text size. */
+export default function StormMap({ storm, place, compact, className }: Props) {
   const [coast, setCoast] = useState<Coast | null>(coastCache);
   useEffect(() => {
     if (coastCache) return;
@@ -51,72 +45,65 @@ export default function StormMap({ storm, place, selected = 0, onSelect, compact
     const s = Math.min(W / ((maxLon - minLon) * kx), H / (maxLat - minLat));
     const ox = (W - (maxLon - minLon) * kx * s) / 2, oy = (H - (maxLat - minLat) * s) / 2;
     const f = (lon: number, lat: number): [number, number] => [ox + (lon - minLon) * kx * s, oy + (maxLat - lat) * s];
-    return { f, minLon, maxLon, minLat, maxLat, nmPerPx: 60 / s };
+    return { f, nmPerPx: 60 / s };
   }, [points, place, H]);
 
   const { f } = proj;
   const path = (coords: [number, number][]) => coords.map(([lon, lat], i) => `${i ? "L" : "M"}${f(lon, lat).map((n) => n.toFixed(1)).join(",")}`).join(" ") + "Z";
   const line = (pts: { lon: number; lat: number }[]) => pts.map((p, i) => `${i ? "L" : "M"}${f(p.lon, p.lat).map((n) => n.toFixed(1)).join(",")}`).join(" ");
 
-  const grat: number[] = [];
-  for (let g = Math.ceil(proj.minLon / 5) * 5; g <= proj.maxLon; g += 5) grat.push(g);
-  const gratLat: number[] = [];
-  for (let g = Math.ceil(proj.minLat / 5) * 5; g <= proj.maxLat; g += 5) gratLat.push(g);
-
   const past = storm.track.filter((t) => t.adv < storm.advNum).sort((a, b) => a.at - b.at);
-  const sel = points[Math.min(selected, points.length - 1)];
+  const last = points[points.length - 1];
+  const [nowX, nowY] = f(points[0].lon, points[0].lat);
+  const [lastX, lastY] = f(last.lon, last.lat);
+  const [placeX, placeY] = place ? f(place.lon, place.lat) : [NaN, NaN];
+  const nearPlace = Math.hypot(nowX - placeX, nowY - placeY) < 200; // labels would collide; the pulsing ring still says "now"
+  const scalePx = 200 / 1.15078 / proj.nmPerPx; // 200 statute miles
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={`block h-auto w-full ${className ?? ""}`} role="img" aria-label={`Map of ${storm.name} track and forecast cone`}>
-      <rect width={W} height={H} fill="var(--surface)" />
-      {grat.map((g) => { const [x] = f(g, 0); return <g key={`lon${g}`}><line x1={x} y1={0} x2={x} y2={H} stroke="var(--line)" strokeWidth={1} /><text x={x + 4} y={H - 6} fontSize={11} fill="var(--muted)">{Math.abs(g)}°W</text></g>; })}
-      {gratLat.map((g) => { const [, y] = f(0, g); return <g key={`lat${g}`}><line x1={0} y1={y} x2={W} y2={y} stroke="var(--line)" strokeWidth={1} /><text x={6} y={y - 4} fontSize={11} fill="var(--muted)">{g}°N</text></g>; })}
+    <div className={`relative ${className ?? ""}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: where it is and where the centre will probably go`}>
+        <rect width={W} height={H} fill="var(--surface)" />
+        {cone.length > 2 && <path d={path(cone)} fill="var(--brand)" fillOpacity={0.15} stroke="var(--brand)" strokeOpacity={0.6} strokeWidth={1.5} strokeDasharray="6 4" />}
+        {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--ink-2)" fillOpacity={0.55} stroke="var(--ink)" strokeWidth={0.8} />)}
 
-      {cone.length > 2 && <path d={path(cone)} fill="var(--brand)" fillOpacity={0.13} stroke="var(--brand)" strokeOpacity={0.6} strokeWidth={1.5} strokeDasharray="6 4" />}
+        {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--ink-2)" strokeWidth={2} strokeDasharray="3 5" />}
+        {past.map((t) => { const [x, y] = f(t.lon, t.lat); return <circle key={t.adv} cx={x} cy={y} r={3} fill="var(--ink-2)" />; })}
 
-      {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--ink-2)" fillOpacity={0.55} stroke="var(--ink)" strokeWidth={0.8} />)}
+        <path d={line(points)} fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
+        {points.map((p, i) => {
+          const [x, y] = f(p.lon, p.lat);
+          const r = 4 + Math.min(p.windKt, 140) / 14; // dot size says how strong the wind is
+          return (
+            <g key={i}>
+              {i === 0 && <circle cx={x} cy={y} r={18} fill="var(--ink)" opacity={0.25}><animate attributeName="r" values="12;26;12" dur="2.4s" repeatCount="indefinite" /><animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" /></circle>}
+              <circle cx={x} cy={y} r={r} fill={p.outlook ? "var(--surface)" : "var(--ink)"} stroke="var(--ink)" strokeWidth={2} />
+            </g>
+          );
+        })}
 
-      {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--muted)" strokeWidth={2} strokeDasharray="3 5" />}
-      {past.map((t) => { const [x, y] = f(t.lon, t.lat); return <circle key={t.adv} cx={x} cy={y} r={3.5} fill={catColor(t.windKt, t.cls)} stroke="var(--surface)" strokeWidth={1} />; })}
+        {place && <circle cx={placeX} cy={placeY} r={6} fill="var(--brand)" stroke="var(--surface)" strokeWidth={2} />}
+      </svg>
 
-      <path d={line(points)} fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
-      {points.map((p, i) => {
-        const [x, y] = f(p.lon, p.lat);
-        const isSel = i === selected, isNow = i === 0;
-        const r = isNow ? 9 : p.outlook ? 6 : 7;
-        const label = isNow ? "Now" : fmtDayTime(p.at);
-        // Label sits perpendicular to the local track direction, alternating sides, so a north-running track doesn't stack labels.
-        const [px0, py0] = f(points[Math.max(0, i - 1)].lon, points[Math.max(0, i - 1)].lat);
-        const [px1, py1] = f(points[Math.min(points.length - 1, i + 1)].lon, points[Math.min(points.length - 1, i + 1)].lat);
-        const len = Math.hypot(px1 - px0, py1 - py0) || 1;
-        const side = i % 2 === 0 ? 1 : -1;
-        const nx = (-(py1 - py0) / len) * side, ny = ((px1 - px0) / len) * side;
-        const lx = x + nx * (r + 14), ly = y + ny * (r + 14) + 4;
-        const anchor = Math.abs(nx) < 0.3 ? "middle" : nx > 0 ? "start" : "end";
-        return (
-          <g key={i} onClick={() => onSelect?.(i)} style={{ cursor: onSelect ? "pointer" : "default" }}>
-            {isNow && <circle cx={x} cy={y} r={18} fill={catColor(p.windKt, storm.cls)} opacity={0.25}><animate attributeName="r" values="12;26;12" dur="2.4s" repeatCount="indefinite" /><animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" /></circle>}
-            {isSel && <circle cx={x} cy={y} r={r + 6} fill="none" stroke="var(--ink)" strokeWidth={2} />}
-            <circle cx={x} cy={y} r={r} fill={catColor(p.windKt, isNow ? storm.cls : undefined)} stroke="var(--surface)" strokeWidth={2} />
-            {!compact && (
-              <text x={lx} y={ly} fontSize={12} fontWeight={isSel ? 700 : 500} textAnchor={anchor} fill="var(--ink)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke">{label}</text>
-            )}
-          </g>
-        );
-      })}
+      {/* HTML labels: real rem text, positioned by percentage so they ride along with the picture. */}
+      {!nearPlace && <Label x={nowX} y={nowY} h={H} above className="font-semibold text-ink">Now</Label>}
+      {!compact && storm.forecast.length > 0 && <Label x={lastX} y={lastY} h={H} className="text-ink">{fmtDayTime(last.at)}</Label>}
+      {place && <Label x={placeX} y={placeY} h={H} className="font-semibold text-brand">{place.label}</Label>}
+      <p className="flex items-center justify-end gap-s2 px-s4 pb-s3 text-small text-ink-2 num"><span className="inline-block h-0.5 bg-ink" style={{ width: `${(scalePx / W) * 100}%` }} aria-hidden /> 200 miles</p>
+    </div>
+  );
+}
 
-      {place && (() => { const [x, y] = f(place.lon, place.lat); return (
-        <g>
-          <circle cx={x} cy={y} r={5} fill="var(--brand)" stroke="var(--surface)" strokeWidth={2} />
-          <text x={x} y={y + 20} fontSize={12} fontWeight={600} textAnchor="middle" fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke">{place.label}</text>
-        </g>
-      ); })()}
-
-      {/* Scale bar: 200 nautical miles */}
-      {(() => { const px = 200 / proj.nmPerPx; const x0 = W - px - 16, y0 = H - 18; return (
-        <g><line x1={x0} y1={y0} x2={x0 + px} y2={y0} stroke="var(--ink)" strokeWidth={2} /><text x={x0 + px / 2} y={y0 - 5} fontSize={11} textAnchor="middle" fill="var(--muted)">230 mi</text></g>
-      ); })()}
-      {!compact && sel && <title>{`${storm.name} · ${fmtDayTime(sel.at)}`}</title>}
-    </svg>
+/** A text label pinned to a map point; anchored so it never runs past the picture's edge. */
+function Label({ x, y, h, above, className, children }: { x: number; y: number; h: number; above?: boolean; className: string; children: React.ReactNode }) {
+  const W = 800, H = h;
+  if (x < 0 || x > W || y < 0 || y > H) return null; // point is off the picture
+  const side = x < W * 0.2 ? "start" : x > W * 0.8 ? "end" : "mid";
+  const tx = side === "start" ? "0" : side === "end" ? "-100%" : "-50%";
+  return (
+    <span className={`pointer-events-none absolute whitespace-nowrap text-small [text-shadow:0_0_0.25rem_var(--surface)] ${className}`}
+      style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, transform: `translate(${tx}, ${above ? "calc(-100% - 0.9rem)" : "0.7rem"})` }}>
+      {children}
+    </span>
   );
 }

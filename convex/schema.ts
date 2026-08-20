@@ -19,6 +19,7 @@ export default defineSchema({
     srcUrl: v.string(),
     lat: v.optional(v.number()),
     lon: v.optional(v.number()),
+    path: v.optional(v.array(v.array(v.number()))),
     status: v.optional(v.string()),
     fields: v.optional(v.record(v.string(), v.string())),
     issuedAt: v.number(),

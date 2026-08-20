@@ -1,80 +1,200 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CarFront, Map, Megaphone } from "lucide-react";
-import ItemRow from "@/components/ItemRow";
-import PageShell, { H2 } from "@/components/PageShell";
-import Hero from "@/components/Hero";
+import { CarFront, ChevronDown, ChevronRight, ExternalLink, MapPin, Share2, TrafficCone } from "lucide-react";
+import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
+import PageShell, { Section } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
-import type { Island } from "@/lib/types";
+import OfficialWording from "@/components/OfficialWording";
+import RoadMap, { type Segment } from "@/components/RoadMap";
+import type { Island, Item } from "@/lib/types";
+import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
-import { ISLAND_LABEL } from "@/lib/brand";
+import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
+import { LEVEL_WORD, plainAlert, type Plain } from "@/lib/plain";
+import { endsWord, milesWord, pathMidpoint, pathMiles, type LatLon } from "@/lib/roads";
+
+type IslandId = Exclude<Island, "state">;
 
 // Waze's official embeddable live map (jams + crowd reports). Loaded only on tap: it's a full web app.
-const WAZE: Record<Exclude<Island, "state">, { lat: number; lon: number; zoom: number }> = {
+const WAZE: Record<IslandId, { lat: number; lon: number; zoom: number }> = {
   hawaii: { lat: 19.62, lon: -155.45, zoom: 9 }, maui: { lat: 20.8, lon: -156.33, zoom: 10 },
   oahu: { lat: 21.42, lon: -157.98, zoom: 10 }, kauai: { lat: 22.05, lon: -159.5, zoom: 10 },
 };
+const SOURCE: Record<IslandId, string> = {
+  hawaii: "Hawaiʻi County Civil Defense and the state highways department", oahu: "Honolulu 911 dispatch and the state highways department",
+  maui: "the state highways department", kauai: "the state highways department",
+};
+const islandName = (i: IslandId) => ISLAND_LABEL[i].split(" · ")[0];
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const isRoadwork = (i: Item) => i.source === "hdot";
+const isClosed = (i: Item) => /both|closed/i.test(i.status ?? "") && !/open|lane/i.test(i.status ?? "");
+/** How an item is drawn; an open detour is not drawn at all. */
+const segmentKind = (i: Item): Segment["kind"] | null =>
+  /alternate|detour/i.test(i.status ?? "") ? null : isRoadwork(i) ? "lane" : i.type === "road_closure" && isClosed(i) ? "closed" : i.type === "road_closure" ? "lane" : "spot";
 
-export default function TrafficPage() {
+/** One sentence: the worst closure and its detour, then how many more, then crashes. Quiet days count roadwork. */
+function roadsSentence(island: IslandId, closures: Item[], trouble: Item[], roadwork: number, plain: Map<string, Plain>): string {
+  const parts: string[] = [];
+  if (closures.length) {
+    const p = plain.get(closures[0].key)!;
+    parts.push(`${p.headline}.`);
+    if (p.action) parts.push(p.action);
+    if (closures.length > 1) parts.push(`${closures.length - 1} more ${closures.length === 2 ? "closure" : "closures"}.`);
+  }
+  const crashes = trouble.filter((i) => /crash/.test(i.status ?? "")).length, lights = trouble.filter((i) => /signal/.test(i.status ?? "")).length, other = trouble.length - crashes - lights;
+  const bits = [crashes && plural(crashes, "crash", "crashes"), lights && plural(lights, "traffic light out", "traffic lights out"), other && plural(other, "stalled car")].filter(Boolean);
+  if (bits.length) parts.push(`${bits.join(", ")} in the last few hours.`);
+  if (!parts.length) parts.push(`No crashes or closures reported on ${islandName(island)}.`, roadwork ? `${plural(roadwork, "roadwork site")} today.` : "");
+  return parts.filter(Boolean).join(" ");
+}
+
+export default function RoadsPage() {
   const [stored, setIsland] = useStoredIsland();
-  const island = stored === "state" ? "hawaii" : stored;
-  const { snap, ess } = useFeed(island);
+  const island: IslandId = stored === "state" ? "hawaii" : stored;
+  const { snap, ess, mode } = useFeed(island);
   const now = ess?.fetchedAt || snap?.fetchedAt || 0;
   const [showMap, setShowMap] = useState(false);
-  const items = useMemo(() => (snap?.data?.items ?? []).filter((i) => i.type === "traffic" || i.type === "road_closure" || i.type === "hazard"), [snap]);
-  const live = items.filter((i) => i.type === "traffic");
-  const closures = items.filter((i) => i.type !== "traffic");
+  const [showWork, setShowWork] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const items = useMemo(() => (snap?.data?.items ?? []).filter((i) => i.type === "traffic" || i.type === "road_closure"), [snap]);
+  const plain = useMemo(() => new Map(items.map((i) => [i.key, plainAlert(i, now, island)] as [string, Plain])), [items, now, island]);
+  const official = items.filter((i) => i.tier !== "community" && !isRoadwork(i)).sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level || b.issuedAt - a.issuedAt);
+  const closures = official.filter((i) => i.type === "road_closure" && isClosed(i));
+  const trouble = official.filter((i) => i.type === "traffic");
+  const neighbors = items.filter((i) => i.tier === "community");
+  const roadwork = items.filter(isRoadwork);
+  const loaded = !!snap?.data;
+  const offline = !!snap?.offline && !!ess?.offline;
+
+  const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon }] : []; });
+  const drawn = { closed: segments.filter((g) => g.kind === "closed").length, lane: segments.filter((g) => g.kind === "lane").length, spot: segments.filter((g) => g.kind === "spot" && g.lat != null && g.lon != null).length };
+  const legend = [drawn.closed && "Red: closed.", drawn.lane && "Orange: one lane or roadwork.", drawn.spot && "Dots: crashes or lights out."].filter(Boolean).join(" ");
+  const rows = showAll ? official : official.slice(0, 3);
   const w = WAZE[island];
 
-  const signals = live.filter((i) => i.status === "signal").length, crashes = live.filter((i) => i.status === "crash").length;
-  const parts = [signals && `${signals} signal problem${signals > 1 ? "s" : ""}`, crashes && `${crashes} crash${crashes > 1 ? "es" : ""}`, live.length - signals - crashes > 0 && `${live.length - signals - crashes} other`].filter(Boolean);
-  const islandName = ISLAND_LABEL[island].split(" · ")[0];
-  const neighbors = live.filter((i) => i.tier === "community").length;
-  const via = neighbors === live.length ? "reported by neighbors" : neighbors ? "reported to dispatch or by neighbors" : "reported to dispatch";
-  const sentence = live.length
-    ? `${parts.join(", ")} ${via} in the last few hours${closures.length ? `, plus ${closures.length} closure${closures.length > 1 ? "s" : ""} and roadwork` : ""}.`
-    : island === "oahu" ? `Nothing active from Honolulu dispatch${closures.length ? `; ${closures.length} planned closure${closures.length > 1 ? "s" : ""}` : ""}.`
-    : `No live dispatch feed exists for ${islandName} yet${closures.length ? ` — ${closures.length} closure${closures.length > 1 ? "s" : ""} and roadwork listed` : ""}. Neighbor reports fill the gap.`;
-
   return (
-    <PageShell title="Traffic" island={island} onIsland={setIsland} fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={!!snap?.offline && !!ess?.offline} source={island === "oahu" ? "Honolulu 911 dispatch" : "County + HDOT"}>
-      {!snap?.data && <EmptyState kind="loading" title="" />}
-      {snap?.data && (
+    <PageShell title="Roads" sentence={loaded ? roadsSentence(island, closures, trouble, roadwork.length, plain) : undefined} island={island} onIsland={setIsland}
+      fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source={SOURCE[island]}>
+      {!loaded && offline && (
         <>
-          <Hero
-            tone={live.length ? "var(--sev2)" : "var(--cond-windy)"}
-            eyebrow={`${islandName} · right now`}
-            icon={<CarFront className="size-11 text-ink-2" strokeWidth={1.75} aria-hidden />}
-            value={live.length}
-            label={live.length === 1 ? "active incident" : "active incidents"}
-            sentence={sentence}
-          />
+          <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
+          {/* useFeed listens for "online" and re-polls a second later */}
+          <button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
+        </>
+      )}
+      {!loaded && !offline && <p className="mt-s4 text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
+      {loaded && (
+        <>
+          <div className="picture mt-s4">
+            <RoadMap island={island} segments={segments} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+          </div>
+          {legend && <p className="mt-s3 text-small text-ink-2">{legend}</p>}
 
-          <section className="card mt-s4 overflow-hidden p-0">
-            {showMap ? (
-              <iframe title={`Waze live traffic map for ${ISLAND_LABEL[island]}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[420px] w-full" loading="lazy" allow="geolocation" />
+          <Section title="Closed or blocked">
+            {official.length ? (
+              <ul className="mt-s2 divide-y divide-line">{rows.map((i) => <RoadRow key={i.key} item={i} island={island} now={now} plain={plain.get(i.key)!} />)}</ul>
             ) : (
-              <button onClick={() => setShowMap(true)} className="flex min-h-14 w-full items-center gap-s3 p-s4 text-left">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2"><Map className="size-5" /></span>
-                <span className="min-w-0"><span className="block text-body font-semibold">Show live traffic map</span><span className="block text-label text-muted">Congestion and driver reports from Waze. Uses data — skip it on a weak connection.</span></span>
-              </button>
+              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
+            )}
+            {official.length > 3 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {official.length - 3} more <ChevronDown className="size-5" aria-hidden /></button>}
+          </Section>
+
+          {island === "hawaii" && (
+            <Section title="What neighbors say">
+              {neighbors.length ? <ul className="mt-s2">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s2 text-body text-ink-2">Nothing from neighbors today.</p>}
+            </Section>
+          )}
+
+          {roadwork.length > 0 && (
+            <section className="mt-s7">
+              {showWork ? (
+                <>
+                  <h2 className="h-title">Roadwork</h2>
+                  <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Planned work. Expect a wait, not a closed road.</p>
+                  <ul className="mt-s2 divide-y divide-line">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
+                </>
+              ) : (
+                <button className="btn btn-big" onClick={() => setShowWork(true)}><TrafficCone className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
+              )}
+            </section>
+          )}
+
+          <section className="mt-s4">
+            {showMap ? (
+              <div className="picture">
+                <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
+              </div>
+            ) : (
+              <button className="btn btn-big" onClick={() => setShowMap(true)}><CarFront className="size-5" aria-hidden /> Open the live traffic map (needs a good signal)</button>
             )}
           </section>
 
-          <H2 right={`${live.length}`}>Right now</H2>
-          {live.length ? <ul className="divide-y divide-line">{live.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
-            : <EmptyState title={island === "oahu" ? "No active incidents from Honolulu dispatch" : `No live incident feed for ${islandName}`}>{island === "oahu" ? "Crashes, stalled vehicles and signal problems appear here within minutes of a 911 call." : "Neighbor reports are the source here — tap Report when you see something."}</EmptyState>}
-
-          <H2 right={`${closures.length}`}>Closures &amp; roadwork</H2>
-          {closures.length ? <ul className="divide-y divide-line">{closures.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s3 text-body text-muted">None listed.</p>}
-
-          <Link href="/report/" className="card mt-s6 flex items-center gap-s3">
-            <Megaphone className="size-6 text-brand" />
-            <span><span className="block text-body font-semibold">See something? Report it</span><span className="block text-label text-ink-2">Crash, signal out, road flooded. Shown to neighbors as unverified until others confirm.</span></span>
-          </Link>
+          {island === "hawaii" && (
+            <Link href="/report/?type=road_blocked" className="row mt-s4 border-t border-line">
+              <span className="flex-1 text-body font-semibold text-ink">Saw something on the road? Tell your neighbors</span>
+              <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+            </Link>
+          )}
         </>
       )}
     </PageShell>
+  );
+}
+
+/** Short road name people say: "Highway 130", "Wood Valley Road". */
+function roadName(item: Item) {
+  const raw = isRoadwork(item) ? item.title.split(":")[0] : item.title.split(" — ")[0];
+  return raw.replace(/_.*$/, "").replace(/\b(Route|Rte\.?|Hwy\.?|State Route|SR)\s*(H-?\d+|\d+)/i, (_, __, n: string) => (/^H/i.test(n) ? `the ${n.toUpperCase()}` : `Highway ${n}`)).trim();
+}
+
+/**
+ * A closure or crash row, like ItemRow but with the closed stretch drawn when you open it.
+ * Headline and action come from plainAlert so the words match the rest of the app.
+ */
+function RoadRow({ item, island, now, plain: p }: { item: Item; island: IslandId; now: number; plain: Plain }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const Icon = item.type === "traffic" ? CarFront : TrafficCone;
+  const path: LatLon[] | undefined = item.path && item.path.length >= 2 ? item.path : undefined;
+  const mid = path ? pathMidpoint(path) : item.lat != null && item.lon != null ? ([item.lat, item.lon] as LatLon) : undefined;
+  const verb = item.type === "traffic" ? "" : /one lane|partial/i.test(item.status ?? "") ? "down to one lane" : isClosed(item) ? "closed" : "";
+  const caption = path && verb ? `${roadName(item)} ${verb} ${endsWord(path, island)} · ${milesWord(pathMiles(path))}` : path ? `${roadName(item)} ${endsWord(path, island)} · ${milesWord(pathMiles(path))}` : "";
+  const share = async () => {
+    const text = smsText(item);
+    try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); setCopied(true); } } catch { /* cancelled */ }
+  };
+  return (
+    <li id={`item-${hashOf(item.key)}`}>
+      <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
+        <span className="min-w-0 flex-1">
+          {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
+          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
+          {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
+          <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>
+        </span>
+        <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      {open && (
+        <div className="fade-up mb-s4 pl-9">
+          {path && (
+            <>
+              <div className="picture"><RoadMap island={island} segments={[{ key: item.key, kind: segmentKind(item) ?? "lane", path }]} focus={path} label={caption} /></div>
+              <p className="mt-s3 text-small text-ink-2">{caption}</p>
+            </>
+          )}
+          {item.body && !path && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
+          {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
+          <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
+            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={`https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><MapPin className="size-4" aria-hidden /> Open in Maps</a>}
+            {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" aria-hidden /> Read it on their site</a>}
+            <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Share2 className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
+          </p>
+          <OfficialWording title={item.title} body={item.body} />
+        </div>
+      )}
+    </li>
   );
 }

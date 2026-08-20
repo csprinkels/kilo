@@ -1,33 +1,54 @@
 "use client";
-
+import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
+import PageShell from "@/components/PageShell";
 import StormTracker from "@/components/StormTracker";
-import SectionNav from "@/components/SectionNav";
-import TopBar from "@/components/TopBar";
-import type { StormsSnapshot } from "@/lib/storm";
+import { ISLAND_POINTS, bearingDeg, distanceNm, nmToMi, type StormsSnapshot } from "@/lib/storm";
+import { dirWord, stormName, windsLine } from "@/lib/plain";
 import { useJson, useStoredIsland } from "@/lib/data";
-import { fmtDateTime } from "@/lib/brand";
+
+const SOURCE = "the Central Pacific Hurricane Center";
 
 export default function StormsPage() {
   const [stored, setIsland] = useStoredIsland();
   const island = stored === "state" ? "hawaii" : stored;
+  const place = ISLAND_POINTS[island];
   const snap = useJson<StormsSnapshot>("v1/storms.json");
-  const storms = snap?.data?.storms ?? [];
+  const [pick, setPick] = useState<string | null>(null);
+
+  const miles = (s: { lat: number; lon: number }) => nmToMi(distanceNm(s.lat, s.lon, place.lat, place.lon));
+  const storms = [...(snap?.data?.storms ?? [])].sort((a, b) => miles(a) - miles(b)); // closest first
+  const shown = storms.find((s) => s.id === pick) ?? storms[0];
+  const shell = { island, onIsland: setIsland, fetchedAt: snap?.fetchedAt, gen: snap?.data?.gen, offline: snap?.offline, source: SOURCE };
+
+  if (snap && !snap.data) {
+    return (
+      <PageShell {...shell} fetchedAt={undefined} title="Storms">
+        <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
+        {/* useJson refetches on the window "online" event, so this is a retry without a page reload. */}
+        <button className="btn mt-s4" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
+      </PageShell>
+    );
+  }
+
+  if (!shown) {
+    return (
+      <PageShell {...shell} title="Storms" sentence={snap ? "No hurricanes or tropical storms near Hawaiʻi. Hurricane season runs June to November." : undefined}>
+        {!snap && <p className="mt-s4 text-body text-ink-2">Checking for storms…</p>}
+      </PageShell>
+    );
+  }
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
-      <TopBar island={island} onIsland={setIsland} />
-      <SectionNav />
-      <h1 className="h-display mt-s6">Storms</h1>
-      <p className="mt-s2 text-body leading-snug text-ink-2">
-        {storms.length ? `${storms.length === 1 ? "One system" : `${storms.length} systems`} being tracked by the Central Pacific Hurricane Center, explained for where you live.` : "Central Pacific Hurricane Center forecasts, explained for where you live."}
-      </p>
-
-      {snap?.data && storms.length === 0 && (
-        <EmptyState title="No active tropical cyclones near Hawaiʻi">This page wakes up when the Central Pacific Hurricane Center issues advisories. Last checked {fmtDateTime(snap.data.gen)} HST.</EmptyState>
-      )}
-      {storms.map((s) => <StormTracker key={s.id} storm={s} island={island} />)}
-      <p className="mt-8 text-center text-micro text-muted">Data: NWS Central Pacific Hurricane Center / National Hurricane Center. Not an emergency service. {"Hawaiʻi"} county alerts are the official call to act.</p>
-    </main>
+    <PageShell {...shell} title={stormName(shown)} sentence={windsLine(shown)}>
+      <StormTracker key={shown.id} storm={shown} island={island} />
+      {storms.filter((s) => s !== shown).map((s) => (
+        <button key={s.id} className="row mt-s4 border-t border-line text-body text-ink num" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
+          <span className="min-w-0 flex-1">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
+          <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+        </button>
+      ))}
+    </PageShell>
   );
 }

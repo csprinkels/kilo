@@ -1,4 +1,5 @@
 import { clip, hashOf, type Item } from "../../lib/types.ts";
+import { geoJsonPath, simplifyPath } from "../../lib/roads.ts";
 
 // Hawaii County Civil Defense public ArcGIS feature layers (GeoJSON, no auth).
 const BASE = "https://services1.arcgis.com/C2LPusZs5OXNGFDn/arcgis/rest/services";
@@ -76,12 +77,14 @@ export function parseHccda(layer: HccdaLayer, fc: FC, now = Date.now()): Item[] 
     } else if (layer === "roads") {
       if (!active || !str(p.Name)) continue; // county data has the odd blank row
       const kind = str(p.Road_Closure_Type) || "Closed";
+      const path = simplifyPath(geoJsonPath(f.geometry)); // the closed segment itself, for the Roads map
       out.push({
         ...b, type: "road_closure", sev: /both directions|closed/i.test(kind) ? 2 : 1, status: kind,
         title: clip(`${str(p.Name)} — ${kind}`, 120),
         body: clip([where, str(p.Reason), str(p.Alternate_Route) && `Alternate: ${str(p.Alternate_Route)}`, str(p.Notes)].filter(Boolean).join(". "), 600),
-        fields: { reason: str(p.Reason), alternate: str(p.Alternate_Route), editDate: str(p.EditDate) },
-        hash: hashOf(kind, p.Reason, p.Notes, p.EditDate),
+        ...(path.length >= 2 ? { path } : {}),
+        fields: { reason: str(p.Reason), alternate: str(p.Alternate_Route), location: str(p.Location), mileMarker: str(p.Mile_Marker), editDate: str(p.EditDate) },
+        hash: hashOf(kind, p.Reason, p.Notes, p.EditDate, String(path)),
       });
     } else if (layer === "evacs") {
       if (!active) continue;

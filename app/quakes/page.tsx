@@ -1,110 +1,102 @@
 "use client";
-import { useMemo, useState } from "react";
-import { ChevronDown, ExternalLink } from "lucide-react";
-import PageShell, { H2 } from "@/components/PageShell";
+import { useState } from "react";
+import { ChevronRight } from "lucide-react";
+import PageShell, { Section } from "@/components/PageShell";
 import DotMap from "@/components/DotMap";
-import Hero from "@/components/Hero";
 import EmptyState from "@/components/EmptyState";
 import type { Quake, Quakes } from "@/lib/pages";
 import { useJson } from "@/lib/data";
-import { ago, fmtDateTime } from "@/lib/brand";
+import { fmtClock, fmtDateTime, fmtTime } from "@/lib/brand";
+import { shakingVerb, shakingWord } from "@/lib/plain";
 
-const magColor = (m: number) => (m >= 5 ? "#b3261e" : m >= 4 ? "#e4632a" : m >= 3 ? "#d9a400" : "#7c8796");
-const magRadius = (m: number) => 3 + Math.max(0, m - 1.5) * 2.4;
+const DAY = 86_400_000;
+const USGS = "https://earthquake.usgs.gov/earthquakes";
+
+/** "16 km SSE of Honaunau-Napoopoo" → "Honaunau-Napoopoo". The page never prints km or compass letters. */
+const placeOf = (p: string) => /\bof\s+(.+)$/.exec(p)?.[1]?.trim() || p;
+/** How it felt: the USGS felt-intensity word when people reported it, else by size. */
+const MMI_WORD = ["", "", "Weak", "Weak", "Light", "Moderate", "Strong", "Very strong"];
+const VERB: Record<string, string> = { Weak: "was barely felt", Light: "shook lightly", Moderate: "shook", Strong: "shook hard", "Very strong": "shook very hard" };
+const feltWord = (e: Quake) => (e.mmi ? MMI_WORD[Math.min(7, Math.max(2, Math.round(e.mmi)))] : shakingWord(e.m));
+const feltVerb = (e: Quake) => (e.mmi ? VERB[feltWord(e)] : shakingVerb(e.m));
+const weekday = (ms: number) => new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long" }).format(ms);
+/** Clock time; weekday once it is more than a day old; date once the weekday would be ambiguous. */
+const when = (ms: number, now: number) => (now - ms > 6 * DAY ? fmtDateTime(ms) : fmtClock(ms, now));
+const people = (n: number) => (n === 1 ? "1 person felt it" : `${n} people felt it`);
+/** Dot radius in map units: size is the only cue, so it grows fast with magnitude. */
+const radius = (m: number) => 5 * 1.7 ** (m - 2);
+
+function sentence(d: Quakes, hero: Quake | undefined, now: number): string {
+  if (!hero) {
+    const n = d.q.length;
+    if (!n) return "No earthquakes big enough to register this week.";
+    return `Nothing big enough to feel this week. ${d.more ? "More than " : ""}${n} small quake${n === 1 ? "" : "s"}, which is normal for Kīlauea.`;
+  }
+  const at = hero.t * 1000, age = now - at;
+  const head = `A ${hero.m.toFixed(1)} near ${placeOf(hero.p)}`;
+  const tail = hero.m >= 6 ? "If it was hard to stand near the coast, go uphill now." : age < 3_600_000 ? "No tsunami expected." : "No tsunami.";
+  if (age < 3_600_000 && hero.m >= 4) return `${head} just shook, ${fmtTime(at)}. ${tail}`;
+  return `${head} ${feltVerb(hero)} ${age > DAY ? `on ${weekday(at)} at ${fmtTime(at)}` : `at ${fmtTime(at)}`}. ${tail}`;
+}
 
 export default function QuakesPage() {
+  // "Try again" remounts the loader, which refetches.
+  const [tries, setTries] = useState(0);
+  return <QuakesBody key={tries} retry={() => setTries((n) => n + 1)} />;
+}
+
+function QuakesBody({ retry }: { retry: () => void }) {
   const q = useJson<Quakes>("v1/quakes.json");
   const d = q?.data;
-  const [sel, setSel] = useState<string | null>(null);
   const now = q?.fetchedAt ?? 0;
-  const dots = useMemo(() => (d?.q ?? []).slice().reverse().map((e) => ({
-    id: e.i, lat: e.ll[0], lon: e.ll[1], r: magRadius(e.m), color: magColor(e.m),
-    opacity: Math.max(0.25, 1 - (now / 1000 - e.t) / (7 * 86_400)),
-    label: e.m >= 4 ? `M${e.m.toFixed(1)}` : undefined,
-  })), [d, now]);
-  const selected = d?.q.find((e) => e.i === sel);
-  const biggest = d?.q.length ? d.q.reduce((a, b) => (b.m > a.m ? b : a)) : undefined;
-  const felt = d?.q.filter((e) => e.m >= 3).length ?? 0;
+
+  // Biggest quake people could feel this week (ties → most recent).
+  const hero = d?.q.filter((e) => e.m >= 3).sort((a, b) => b.m - a.m || b.t - a.t)[0];
+  // This week's list plus the month's notable ones, once each.
+  const month = new Map<string, Quake>();
+  for (const e of [...(d?.q ?? []), ...(d?.notable ?? [])]) month.set(e.i, e);
+  const all = [...month.values()];
+  // Ones people felt: the five biggest M ≥ 3 of the last 30 days, shown newest first.
+  const felt = all.filter((e) => e.m >= 3 && now - e.t * 1000 <= 30 * DAY).sort((a, b) => b.m - a.m).slice(0, 5).sort((a, b) => b.t - a.t);
+  // The map: big ones drawn last so they sit on top; lighter = older.
+  const dots = all.sort((a, b) => a.m - b.m).map((e) => ({ id: e.i, lat: e.ll[0], lon: e.ll[1], r: radius(e.m), opacity: Math.max(0.2, 1 - (now - e.t * 1000) / (30 * DAY)) }));
+  const tell = hero ?? d?.q[0];
 
   return (
-    <PageShell title="Earthquakes" blurb={d ? `${d.q.length}${d.more ? "+" : ""} quakes of magnitude 2 or more in the last week${d.notable.length ? `, ${d.notable.length} notable this month` : ""}.` : undefined} fetchedAt={q?.fetchedAt} gen={d?.upd} offline={q?.offline} source="USGS">
-      {!d && <EmptyState kind="loading" title="" />}
-      {d && biggest && (
-        <Hero
-          tone={magColor(biggest.m)}
-          eyebrow={`Largest this week · ${ago(biggest.t * 1000, now)}`}
-          value={<>M{biggest.m.toFixed(1)}</>}
-          label={biggest.p}
-          sentence={felt ? `${felt} quake${felt > 1 ? "s" : ""} this week were big enough to feel (magnitude 3+)${d.notable.length ? `; ${d.notable.length} notable in the last month` : ""}.` : "Nothing big enough to feel this week — the usual background of small Kīlauea quakes."}
-          meta={<><span>{biggest.d} km deep</span>{biggest.f ? <span>{biggest.f} felt reports</span> : null}<a className="text-brand underline underline-offset-4" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${biggest.i}/tellus`} target="_blank" rel="noreferrer">Did you feel it?</a></>}
-        />
+    <PageShell title="Earthquakes" sentence={d ? sentence(d, hero, now) : q ? undefined : "Checking for earthquakes…"} fetchedAt={d ? q?.fetchedAt : undefined} gen={d?.upd} offline={q?.offline} source="the USGS">
+      {q && !d && (
+        <>
+          <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
+          <button className="btn mt-s3" onClick={retry}>Try again</button>
+        </>
       )}
-      {d && !biggest && <EmptyState title="No earthquakes of magnitude 2 or more this week" />}
       {d && (
         <>
-          {d.notable.length > 0 && (
-            <>
-              <H2 right="M3.5+ · last 30 days">Notable</H2>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {d.notable.map((e) => <QuakeCard key={e.i} e={e} now={now} />)}
+          <DotMap className="picture mt-s4" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
+
+          <Section title="Ones people felt" sentence={felt.length ? undefined : "None this month."}>
+            {felt.length > 0 && (
+              <ul className="mt-s2 divide-y divide-line">
+                {felt.map((e) => (
+                  <li key={e.i} className="py-s3">
+                    <span className="block text-body font-semibold text-ink">{feltWord(e)} shaking near {placeOf(e.p)}</span>
+                    <span className="block text-body text-ink-2 num">{when(e.t * 1000, now)} · {e.m.toFixed(1)}{e.f ? ` · ${people(e.f)}` : ""}</span>
+                  </li>
+                ))}
               </ul>
-            </>
-          )}
+            )}
+          </Section>
 
-          <section className="mt-s4 overflow-hidden rounded-card border border-line">
-            <DotMap dots={dots} selected={sel ?? undefined} onSelect={setSel} />
-            <div className="flex flex-wrap items-center gap-x-s4 gap-y-1 border-t border-line bg-surface px-s3 py-s2 text-label text-muted num">
-              {[["M2", "#7c8796"], ["M3", "#d9a400"], ["M4", "#e4632a"], ["M5+", "#b3261e"]].map(([l, c]) => <span key={l} className="inline-flex items-center gap-1"><span className="inline-block size-2.5 rounded-full" style={{ background: c }} />{l}</span>)}
-              <span>· faded = older</span>
-              {selected && <span className="ml-auto font-medium text-ink">M{selected.m.toFixed(1)} {selected.p} · {ago(selected.t * 1000, now)}</span>}
-            </div>
-          </section>
+          <p className="mt-s7 max-w-[36rem] border-l-4 border-warn pl-s4 text-body text-ink">If the ground shakes hard near the coast, go uphill right away. Do not wait for a siren.</p>
 
-          <H2 right={`${d.q.length}${d.more ? "+" : ""} quakes`}>Last 7 days</H2>
-          <ul className="divide-y divide-line">
-            {d.q.map((e) => (
-              <li key={e.i} id={`q-${e.i}`} className={`flex items-center gap-3 py-2.5 ${e.i === sel ? "-mx-2 rounded-lg bg-surface px-2" : ""}`} onClick={() => setSel(e.i)}>
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full text-label font-bold text-white num" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-medium">{e.p}</span>
-                  <span className="block text-micro text-muted">{fmtDateTime(e.t * 1000)} HST · {e.d} km deep{e.f ? ` · ${e.f} felt reports` : ""}{e.r ? " · reviewed" : ""}</span>
-                </span>
-                <a className="shrink-0 text-muted" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${e.i}`} target="_blank" rel="noreferrer" aria-label="USGS event page"><ExternalLink className="size-4" /></a>
-              </li>
-            ))}
+          <ul className="mt-s6 divide-y divide-line">
+            {tell && (
+              <li><a className="row font-semibold text-brand" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it <ChevronRight className="size-5 shrink-0" aria-hidden /></a></li>
+            )}
+            <li><a className="row font-semibold text-brand" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <ChevronRight className="size-5 shrink-0" aria-hidden /></a></li>
           </ul>
-          <a className="mt-3 inline-flex items-center gap-1 text-label font-medium text-brand" href="https://earthquake.usgs.gov/earthquakes/eventpage/unknown/tellus" target="_blank" rel="noreferrer"><ExternalLink className="size-3.5" /> Felt one that isn&apos;t listed? Tell USGS</a>
-
-          <section className="mt-s6 divide-y divide-line rounded-card border border-line bg-surface">
-            <Explain q="What does the magnitude mean for me?">People usually start feeling earthquakes around magnitude 3. A quake has one magnitude (energy at the source) but many intensities — how hard it shook where you were depends on distance and depth. Kīlauea produces dozens of small quakes a week; the south side of Hawaiʻi Island has the highest hazard in the state.</Explain>
-            <Explain q="Is there early warning here?">No. ShakeAlert covers only California, Oregon and Washington. When shaking starts: drop, cover, hold on. Some Android phones get a crowd-sourced alert for M4.5+; iPhones get none.</Explain>
-            <Explain q="Earthquake near the coast?">Strong or long shaking near the shore is your tsunami warning — a local tsunami can arrive in minutes, before any siren. Move inland or uphill on foot right away; don&apos;t wait for an official message. See the Tsunami page for your evacuation zone.</Explain>
-          </section>
-          <p className="mt-4 text-micro text-muted">Magnitudes and locations can change after USGS review. Data: earthquake.usgs.gov.</p>
         </>
       )}
     </PageShell>
-  );
-}
-
-function QuakeCard({ e, now }: { e: Quake; now: number }) {
-  return (
-    <li className="flex items-start gap-3 card">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-body font-bold text-white num" style={{ background: magColor(e.m) }}>{e.m.toFixed(1)}</span>
-      <span className="min-w-0">
-        <span className="block text-body font-semibold leading-snug">{e.p}</span>
-        <span className="block text-micro text-muted">{ago(e.t * 1000, now)} · {e.d} km deep{e.f ? ` · ${e.f} felt it` : ""}{e.mmi ? ` · shaking ${e.mmi}` : ""}</span>
-        <a className="mt-1 inline-flex items-center gap-1 text-micro font-medium text-brand" href={`https://earthquake.usgs.gov/earthquakes/eventpage/${e.i}/tellus`} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /> Did you feel it?</a>
-      </span>
-    </li>
-  );
-}
-
-function Explain({ q, children }: { q: string; children: React.ReactNode }) {
-  return (
-    <details className="group px-4 py-3">
-      <summary className="flex cursor-pointer list-none items-center justify-between text-body font-semibold [&::-webkit-details-marker]:hidden">{q} <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" /></summary>
-      <p className="mt-2 text-label leading-relaxed text-ink-2">{children}</p>
-    </details>
   );
 }

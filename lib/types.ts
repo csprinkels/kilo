@@ -19,6 +19,7 @@ export type Item = {
   srcUrl: string;
   lat?: number;
   lon?: number;
+  path?: [number, number][];          // [lat, lon] pairs: the closed road segment, ≤ 16 points (road_closure only; never in essentials/digest)
   status?: string;                   // shelter Open/Full/Closed; road Closed/One Lane Open ...
   fields?: Record<string, string>;
   issuedAt: number;

@@ -21,27 +21,23 @@ export function rowsFromPeriods(fc: Period[]): DayRow[] {
   return rows;
 }
 
-/** Daily rows with hi/lo range bars on ONE shared scale (Dark Sky's trick: a mild day looks short next to a wide one). */
-export default function DailyRows({ fc, nowTemp }: { fc: Period[]; nowTemp?: number }) {
+export const rainWords = (pop: number) => (pop < 5 ? "No rain." : `${pop}% rain.`);
+
+/** One row a day: the day, an icon, and one line in words ("High 84°, low 73°. 40% rain."). */
+export default function DailyRows({ fc }: { fc: Period[] }) {
   const rows = rowsFromPeriods(fc);
-  const all = rows.flatMap((r) => [r.hi, r.lo]).filter((t): t is number => t != null);
-  if (!all.length) return null;
-  const min = Math.min(...all), max = Math.max(...all), span = Math.max(8, max - min);
-  const pct = (t: number) => ((t - min) / span) * 100;
+  if (!rows.length) return null;
   return (
     <ul className="mt-s3 divide-y divide-line">
       {rows.map((r) => (
-        <li key={r.name} className="flex min-h-12 items-center gap-s3 py-s1">
-          <span className="w-[76px] shrink-0 text-body font-medium">{r.name.replace(" Night", " night")}</span>
-          <ConditionIcon code={r.code} night={r.night} size={20} />
-          <span className="w-9 shrink-0 text-right text-body text-ink-2 num">{r.lo != null ? `${r.lo}°` : ""}</span>
-          <span className="relative h-2 flex-1 rounded-full bg-surface-2">
-            {r.hi != null && r.lo != null && <span className="absolute inset-y-0 rounded-full bg-ink/25" style={{ left: `${pct(r.lo)}%`, width: `${Math.max(4, pct(r.hi) - pct(r.lo))}%` }} />}
-            {r.hi == null && r.lo != null && <span className="absolute inset-y-0 w-2 rounded-full bg-ink/25" style={{ left: `${pct(r.lo)}%` }} />}
-            {r.today && nowTemp != null && <span className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-2 ring-surface" style={{ left: `${Math.max(0, Math.min(100, pct(nowTemp)))}%` }} />}
+        <li key={r.name} className="flex min-h-14 items-center gap-s3 py-s3">
+          <ConditionIcon code={r.code} night={r.night} size={32} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-body font-semibold text-ink">{r.name.replace(" Night", " night")}</span>
+            <span className="block text-body leading-snug text-ink-2 num">
+              {r.hi != null && r.lo != null ? `High ${r.hi}°, low ${r.lo}°. ` : r.hi != null ? `High ${r.hi}°. ` : r.lo != null ? `Low ${r.lo}°. ` : ""}{rainWords(r.pop)}
+            </span>
           </span>
-          <span className="w-9 shrink-0 text-body font-medium num">{r.hi != null ? `${r.hi}°` : ""}</span>
-          <span className="w-10 shrink-0 text-right text-label text-muted num">{r.pop >= 10 ? `${r.pop}%` : ""}</span>
         </li>
       ))}
     </ul>
