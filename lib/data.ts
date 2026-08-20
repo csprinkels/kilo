@@ -72,6 +72,21 @@ export function useFeed(island: Island) {
 const islandListeners = new Set<() => void>();
 const subscribeIsland = (cb: () => void) => { islandListeners.add(cb); return () => { islandListeners.delete(cb); }; };
 const getIsland = () => (localStorage.getItem("island") as Island | null) ?? "hawaii";
+/** Any other published JSON file (e.g. v1/storms.json), same cache + poll behaviour. */
+export function useJson<T>(path: string) {
+  const [state, setState] = useState<Loaded<T> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => { const r = await load<T>(path); if (alive) setState(r); };
+    void Promise.resolve().then(() => { if (alive) setState(readCache<T>(path)); return tick(); });
+    const id = setInterval(tick, POLL_MS);
+    const onVisible = () => document.visibilityState === "visible" && void tick();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
+  }, [path]);
+  return state;
+}
+
 export function useStoredIsland(): [Island, (i: Island) => void] {
   const island = useSyncExternalStore(subscribeIsland, getIsland, () => "hawaii" as Island);
   return [island, (i) => { localStorage.setItem("island", i); islandListeners.forEach((cb) => cb()); }];

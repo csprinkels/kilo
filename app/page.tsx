@@ -8,6 +8,7 @@ import {
 import type { Item, ItemType } from "@/lib/types";
 import { ISLANDS } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
+import StormCard from "@/components/StormCard";
 import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL, SEV_SECTION, SOURCE_LABEL, TYPE_LABEL, ago, fmtDateTime, fmtTime, okina } from "@/lib/brand";
 
 const STALE_MS = 30 * 60_000;
@@ -105,6 +106,8 @@ export default function Home() {
       {watch && (
         <Banner tone="red" icon={Siren}>A hurricane, tropical storm or tsunami watch/warning is in effect for Hawaiʻi. Follow your county&apos;s alerts.</Banner>
       )}
+
+      {island !== "state" && <StormCard island={island} />}
 
       {/* Situation summary */}
       {snap?.data && (

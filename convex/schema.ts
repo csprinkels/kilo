@@ -31,6 +31,24 @@ export default defineSchema({
     .index("by_source_active", ["source", "active"])
     .index("by_active", ["active"]),
 
+  // Active tropical cyclones (latest advisory) + every past advisory position.
+  storms: defineTable({
+    stormId: v.string(),
+    advNum: v.number(),
+    data: v.any(), // Storm minus `track`
+    active: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_stormId", ["stormId"]).index("by_active", ["active"]),
+  stormTrack: defineTable({
+    stormId: v.string(),
+    adv: v.number(),
+    at: v.number(),
+    lat: v.number(),
+    lon: v.number(),
+    windKt: v.number(),
+    cls: v.string(),
+  }).index("by_storm_adv", ["stormId", "adv"]),
+
   // Published JSON: served by http.ts (dev / fallback) and mirrored to R2 (prod).
   snapshots: defineTable({
     path: v.string(), // "v1/hawaii.json", "v1/manifest.json"

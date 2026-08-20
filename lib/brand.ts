@@ -46,6 +46,9 @@ export const fmtTime = (ms: number) =>
   new Intl.DateTimeFormat("en-US", { timeZone: HST, hour: "numeric", minute: "2-digit" }).format(ms);
 export const fmtDateTime = (ms: number) =>
   new Intl.DateTimeFormat("en-US", { timeZone: HST, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(ms);
+/** "Thu 8 AM" in HST: timeline and map labels. */
+export const fmtDayTime = (ms: number) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: HST, weekday: "short", hour: "numeric" }).format(ms).replace(",", "");
 export const ago = (ms: number, now = Date.now()) => {
   const m = Math.max(0, Math.round((now - ms) / 60_000));
   if (m < 1) return "just now";

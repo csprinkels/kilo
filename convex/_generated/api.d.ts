@@ -14,6 +14,8 @@ import type * as ingest from "../ingest.js";
 import type * as parsers_feeds from "../parsers/feeds.js";
 import type * as parsers_hccda from "../parsers/hccda.js";
 import type * as parsers_nws from "../parsers/nws.js";
+import type * as parsers_storms from "../parsers/storms.js";
+import type * as storms from "../storms.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +30,8 @@ declare const fullApi: ApiFromModules<{
   "parsers/feeds": typeof parsers_feeds;
   "parsers/hccda": typeof parsers_hccda;
   "parsers/nws": typeof parsers_nws;
+  "parsers/storms": typeof parsers_storms;
+  storms: typeof storms;
 }>;
 
 /**

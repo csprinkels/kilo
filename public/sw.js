@@ -1,14 +1,14 @@
 // App shell: cache-first for same-origin pages/assets so the UI opens with zero signal.
 // Data JSON is fetched by the page itself (lib/data.ts) with its own localStorage fallback.
-const SHELL = "shell-v2";
-const PAGES = ["/", "/sources/", "/manifest.webmanifest", "/icon-192.png"];
+const SHELL = "shell-v3";
+const PAGES = ["/", "/sources/", "/storms/", "/manifest.webmanifest", "/icon-192.png", "/hawaii-coast.json"];
 
 // Precache the pages plus every /_next/static asset they reference, so a first-visit-then-offline reload still hydrates.
 async function precache() {
   const c = await caches.open(SHELL);
   await c.addAll(PAGES);
   const assets = new Set();
-  for (const p of ["/", "/sources/"]) {
+  for (const p of ["/", "/sources/", "/storms/"]) {
     const html = await (await c.match(p)).text();
     for (const m of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+)"/g)) assets.add(m[1]);
   }

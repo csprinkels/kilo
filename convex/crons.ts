@@ -4,4 +4,5 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 // ponytail: fixed 2-minute poll for every source; self-schedule 60s during "watch" if latency ever matters.
 crons.interval("ingest feeds", { minutes: 2 }, internal.ingest.run, {});
+crons.interval("tropical cyclones", { minutes: 2 }, internal.storms.refresh, {});
 export default crons;

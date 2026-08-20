@@ -1,4 +1,4 @@
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { AwsClient } from "aws4fetch";
@@ -7,7 +7,7 @@ import { NWS_URL, WATCH_EVENTS, parseNws } from "./parsers/nws.ts";
 import { HCCDA_LAYERS, parseHccda, type HccdaLayer } from "./parsers/hccda.ts";
 import { HDOT_URL, HIEMA_URL, HVO_URL, PTWC_URL, USGS_URL, parseHdot, parseHiema, parseHvo, parsePtwc, parseUsgs } from "./parsers/feeds.ts";
 
-const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
+export const UA = "HawaiiCommunityApp/0.1 (aloha@csprinkels.com)";
 const FETCH_TIMEOUT_MS = 8_000;
 const MAX_ITEMS_PER_SNAPSHOT = 200;
 
@@ -107,15 +107,17 @@ export const commit = internalMutation({
     const manifest: Manifest = { gen: now, mode, v: vmap, sources: health };
     out.push({ path: "v1/manifest.json", body: JSON.stringify(manifest) });
 
-    for (const { path, body } of out) {
-      const etag = `"${hashOf(body)}"`;
-      const row = await ctx.db.query("snapshots").withIndex("by_path", (q) => q.eq("path", path)).unique();
-      if (row) await ctx.db.patch(row._id, { body, etag, gen: now });
-      else await ctx.db.insert("snapshots", { path, body, etag, gen: now });
-    }
+    for (const { path, body } of out) await putSnapshot(ctx, path, body, now);
     return out;
   },
 });
+
+export async function putSnapshot(ctx: MutationCtx, path: string, body: string, gen: number) {
+  const etag = `"${hashOf(body)}"`;
+  const row = await ctx.db.query("snapshots").withIndex("by_path", (q) => q.eq("path", path)).unique();
+  if (row) await ctx.db.patch(row._id, { body, etag, gen });
+  else await ctx.db.insert("snapshots", { path, body, etag, gen });
+}
 
 export const getSnapshot = internalQuery({
   args: { path: v.string() },
@@ -123,7 +125,7 @@ export const getSnapshot = internalQuery({
 });
 
 /** Mirror snapshots to Cloudflare R2 when configured; silently skipped in dev. */
-async function publishToR2(files: { path: string; body: string }[]) {
+export async function publishToR2(files: { path: string; body: string }[]) {
   const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET } = process.env;
   if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET) return;
   const r2 = new AwsClient({ accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY, service: "s3", region: "auto" });
