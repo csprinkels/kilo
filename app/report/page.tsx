@@ -52,10 +52,10 @@ export default function ReportPage() {
   };
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
       <TopBar />
       <SectionNav />
-      <h1 className="h2-display mt-s6">Report something</h1>
+      <h1 className="h-display mt-s6">Report something</h1>
       <p className="mt-s2 text-body leading-snug text-ink-2">Crash, signal out, flooded road, outage, lost pet. Shown to neighbours as unverified until others confirm.</p>
       <Banner sev={4} icon={Siren} title="Hurt or in danger? Call 911 first.">This is for letting neighbours know, not for getting help.</Banner>
 

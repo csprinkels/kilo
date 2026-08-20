@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
-  Activity, CarFront, ChevronDown, ChevronRight, CircleCheck, CloudRainWind, ExternalLink, Gauge, Megaphone, Mountain,
-  Radio, School, Siren, Tent, TrafficCone, TriangleAlert, Users, Waves, Wind, ZapOff, type LucideIcon,
+  Activity, CarFront, ChevronDown, ChevronRight, CircleCheck, CloudRainWind, ExternalLink, Megaphone, Mountain,
+  School, Siren, Tent, TrafficCone, TriangleAlert, Users, Waves, Wind, ZapOff, type LucideIcon,
 } from "lucide-react";
 import ItemRow, { ICON, SEV_TEXT } from "@/components/ItemRow";
 import Banner from "@/components/Banner";
+import Freshness from "@/components/Freshness";
 import StormCard from "@/components/StormCard";
 import AlertsCard from "@/components/AlertsCard";
 import SectionNav from "@/components/SectionNav";
@@ -19,9 +20,8 @@ import { ISLAND_POINTS, outlookFor } from "@/lib/storm";
 import type { Weather } from "@/lib/pages";
 import { useFeed, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, summarize as weatherSentence } from "@/lib/summary";
-import { COUNTY_ALERTS, ISLAND_LABEL, ago, fmtDayTime, fmtTime } from "@/lib/brand";
+import { COUNTY_ALERTS, ISLAND_LABEL, fmtDayTime } from "@/lib/brand";
 
-const STALE_MS = 30 * 60_000;
 /** Warnings that earn a full row on Now; everything else folds into a one-line group. */
 const ALERT_TYPES = new Set<ItemType>(["advisory", "storm", "tsunami", "evac", "hazard", "outage"]);
 
@@ -84,8 +84,7 @@ export default function Home() {
   const clauses = useMemo(() => summarize(items), [items]);
 
   const offline = !!ess?.offline && !!snap?.offline;
-  const stale = gen > 0 && now - gen > STALE_MS;
-  const slow = mode === "low" && !offline;
+    const slow = mode === "low" && !offline;
   const watch = ess?.data?.mode === "watch";
   const loaded = !!(snap?.data || ess?.data);
   // Headlines the essentials file knows about but the (older or missing) snapshot doesn't: show titles now, details when the link allows.
@@ -105,24 +104,21 @@ export default function Home() {
     : { icon: CircleCheck, tone: "var(--cond-windy)", head: "All quiet", sub: "No alerts, closures or shelters from the sources we track." };
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
-      <TopBar island={island} onIsland={setIsland} home />
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
+      <TopBar island={island} onIsland={setIsland} />
       <SectionNav />
 
-      {offline && <Banner sev={4} icon={Radio} title="No connection">Showing the copy saved {fmtTime(gen)}. For emergencies call 911; Civil Defense messages air on AM/FM radio.</Banner>}
-      {!offline && slow && <Banner sev={2} icon={Gauge} title="Weak connection">Showing saved details plus the newest headlines. Alerts you turned on still arrive in full.</Banner>}
-      {!offline && !slow && stale && <Banner sev={2} icon={TriangleAlert} title={`Updates paused for ${ago(gen, now)}`}>Treat everything below as possibly out of date.</Banner>}
-      {watch && <Banner sev={4} icon={Siren} title="Hurricane, tropical storm or tsunami watch/warning in effect">Follow your county&apos;s alerts.</Banner>}
+      <Freshness gen={gen} checkedAt={now} offline={offline} weak={slow} />
+      {watch && <Banner sev={4} icon={Siren} title="A hurricane, tropical storm or tsunami alert is out for Hawaiʻi">Do what Civil Defense tells you.</Banner>}
 
       {/* Right now */}
-      <h2 className="h2-display mt-s6">Right now</h2>
+      <h2 className="h-title mt-s6">Right now</h2>
       {rightNow ? (
         <div className="mt-s3 flex items-start gap-s4">
           <rightNow.icon className="mt-1 size-14 shrink-0" strokeWidth={1.5} style={{ color: rightNow.tone }} aria-hidden />
           <div className="min-w-0">
             <p className="text-h2 font-semibold leading-tight tracking-[-0.01em]">{rightNow.head}</p>
             <p className="mt-1 text-body leading-snug text-ink-2">{rightNow.sub}</p>
-            <p className="mt-1.5 text-label text-muted num">{gen ? <>Updated {fmtTime(gen)} · {ago(gen, now)}</> : "Loading…"}</p>
           </div>
         </div>
       ) : !offline && <Skeleton />}
@@ -132,7 +128,7 @@ export default function Home() {
       {/* Warnings + headlines the snapshot hasn't caught up with */}
       {(alerts.length > 0 || headlinesOnly.length > 0) && (
         <section className="mt-10" aria-label="Alerts">
-          <h2 className="h2-display">Alerts</h2>
+          <h2 className="h-title">Alerts</h2>
           <ul className="mt-s2 divide-y divide-line">
             {headlinesOnly.map((a) => {
               const Icon = ICON[a.type] ?? Megaphone;
@@ -146,7 +142,7 @@ export default function Home() {
       {/* Everything else: one line per kind, tap to open */}
       {loaded && (
         <section className="mt-10" aria-label="Around the island">
-          <h2 className="h2-display">{island === "state" ? "Around the state" : `Around ${ISLAND_LABEL[island].split(" · ")[0]}`}</h2>
+          <h2 className="h-title">{island === "state" ? "Around the state" : `Around ${ISLAND_LABEL[island].split(" · ")[0]}`}</h2>
           <ul className="mt-s2 divide-y divide-line">
             {island !== "state" && mode !== "low" && !offline && <WeatherRow island={island} />}
             {groups.map((g) => {

@@ -13,14 +13,14 @@ const SOURCES = [
   { name: "Pacific Tsunami Warning Center", what: "Tsunami warnings, watches, advisories and information statements", url: "https://www.tsunami.gov/" },
 ];
 
-const H = ({ children }: { children: React.ReactNode }) => <h2 className="h2-display mt-s6">{children}</h2>;
+const H = ({ children }: { children: React.ReactNode }) => <h2 className="h-title mt-s7">{children}</h2>;
 
 export default function Sources() {
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20 text-body leading-relaxed text-ink-2">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20 text-body leading-relaxed text-ink-2">
       <TopBar />
       <SectionNav />
-      <h1 className="h2-display mt-s6">About {APP_NAME}</h1>
+      <h1 className="h-display mt-s6">About {APP_NAME}</h1>
       <p className="mt-2 text-label text-muted">Kilo (Hawaiian): to watch, observe, forecast — as in kilo makani, a weather forecaster.</p>
       <p className="mt-5 text-lead leading-relaxed text-ink">
         One page that pulls official Hawaiʻi emergency and community information into a single list, sorted by what matters most — and keeps the last copy on your phone so it still opens when the signal is gone.

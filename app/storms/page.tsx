@@ -15,10 +15,10 @@ export default function StormsPage() {
   const storms = snap?.data?.storms ?? [];
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
       <TopBar island={island} onIsland={setIsland} />
       <SectionNav />
-      <h1 className="h2-display mt-s6">Storms</h1>
+      <h1 className="h-display mt-s6">Storms</h1>
       <p className="mt-s2 text-body leading-snug text-ink-2">
         {storms.length ? `${storms.length === 1 ? "One system" : `${storms.length} systems`} being tracked by the Central Pacific Hurricane Center, explained for where you live.` : "Central Pacific Hurricane Center forecasts, explained for where you live."}
       </p>

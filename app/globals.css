@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
-/* Design tokens. Light = warm paper; dark = volcanic. Severity colors are semantic and fixed. */
+/*
+  Design tokens. Light = warm paper; dark = volcanic.
+  Colour roles: chrome is monochrome (ink on paper); colour appears only in pictures, in danger/warn blocks,
+  and in the one accent for things you can tap. Every text colour clears 4.5:1 on --bg in both schemes.
+*/
 :root {
   --bg: #f5f1ea;
-  --surface: #fffdf9;
-  --surface-2: #ede8df;
+  --surface: #fffdf9;     /* picture containers + tab bar only */
+  --surface-2: #ede8df;   /* neighbor rows, island/town button, secondary buttons */
   --ink: #1b1a17;
-  --ink-2: #4a463f;
-  --muted: #6e6856;   /* 4.7:1 on --bg, so 13-14px muted text passes outside cards too */
-  --line: #e3dccf;
+  --ink-2: #4a463f;       /* 8.3:1 — the floor for text */
+  --muted: var(--ink-2);  /* legacy alias: nothing is quieter than ink-2 */
+  --line: #d6cdbd;        /* row dividers only, never card borders */
   --brand: #0b6b72;
   --brand-ink: #ffffff;
-  --sev4: #b3261e;
-  --sev3: #c2410c;
-  --sev2: #a16207;
-  --sev1: #6b7280;
-  --sev4-bg: #fbe9e7;
-  --sev3-bg: #fdeee3;
-  --sev2-bg: #fbf4df;
+  --danger: #b3261e;  --danger-bg: #fbe9e7;
+  --warn: #9a3d00;    --warn-bg: #fdeee3;
+  /* legacy severity aliases (removed page by page) */
+  --sev4: var(--danger); --sev3: var(--warn); --sev2: #7c5a00; --sev1: #5b6270;
+  --sev4-bg: var(--danger-bg); --sev3-bg: var(--warn-bg); --sev2-bg: #fbf4df;
 
-  /* data + condition colours (icons and marks only, never text) */
+  /* data + condition colours (marks in pictures only, never text) */
   --precip: #0b7a90;
   --night-band: rgb(0 0 0 / .06);
-  --shadow-1: 0 1px 2px rgb(27 26 23 / .06);
   --cond-clear: #b7791f; --cond-cloud: #6b7280; --cond-showers: #2f7f9e; --cond-rain: #1d5f93;
   --cond-storm: #5b4a9e; --cond-fog: #8a6f4e; --cond-windy: #3f7a5e; --cond-night: #3b4a7a;
 }
@@ -34,20 +35,14 @@
     --surface-2: #24251f;
     --ink: #f1ede6;
     --ink-2: #cdc7bb;
-    --muted: #9a9486;
-    --line: #2d2e29;
+    --line: #35362f;
     --brand: #5ccad0;
     --brand-ink: #0a2a2c;
-    --sev4: #ff6b5e;
-    --sev3: #fb923c;
-    --sev2: #e3b341;
-    --sev1: #9ca3af;
-    --sev4-bg: #3a1512;
-    --sev3-bg: #3a1f0c;
-    --sev2-bg: #332a0c;
+    --danger: #ff6b5e;  --danger-bg: #3a1512;
+    --warn: #fb923c;    --warn-bg: #3a1f0c;
+    --sev2: #e3b341; --sev1: #9ca3af; --sev2-bg: #332a0c;
     --precip: #4fb8cc;
     --night-band: rgb(255 255 255 / .07);
-    --shadow-1: none;
     --cond-clear: #f2c14e; --cond-cloud: #b4bcc8; --cond-showers: #6cc4dc; --cond-rain: #5aa6e6;
     --cond-storm: #a99af0; --cond-fog: #c9ad86; --cond-windy: #7fc8a4; --cond-night: #8fa0d8;
   }
@@ -63,6 +58,10 @@
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
   --color-sev4: var(--sev4);
   --color-sev3: var(--sev3);
   --color-sev2: var(--sev2);
@@ -76,50 +75,66 @@
   --color-cond-rain: var(--cond-rain); --color-cond-storm: var(--cond-storm); --color-cond-fog: var(--cond-fog);
   --color-cond-windy: var(--cond-windy); --color-cond-night: var(--cond-night);
   --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-heading), Georgia, "Times New Roman", serif;
 
-  /* type scale: nothing smaller than micro (13px) anywhere */
-  --text-hero: 64px;    --text-hero--line-height: 1;     --text-hero--letter-spacing: -0.04em;
-  --text-display: 36px; --text-display--line-height: 1.1; --text-display--letter-spacing: -0.03em;
-  --text-h2: 24px;      --text-h2--line-height: 1.2;
-  --text-lead: 19px;    --text-lead--line-height: 1.4;
-  --text-body: 17px;    --text-body--line-height: 1.5;
-  --text-label: 14px;   --text-label--line-height: 1.3;
-  --text-micro: 13px;   --text-micro--line-height: 1.3;
+  /*
+    Five text styles, all rem so the phone's text-size setting (and Kilo's own) scales everything.
+    Nothing under 1rem (16px). Body is 19px, GOV.UK's tested size.
+  */
+  --text-number: 3.5rem;      --text-number--line-height: 1;     --text-number--letter-spacing: -0.03em;
+  --text-display: 2rem;       --text-display--line-height: 1.15;
+  --text-title: 1.5rem;       --text-title--line-height: 1.2;
+  --text-body: 1.1875rem;     --text-body--line-height: 1.5;
+  --text-small: 1rem;         --text-small--line-height: 1.4;
+  /* legacy size aliases (removed page by page) */
+  --text-hero: 3.5rem;        --text-hero--line-height: 1;       --text-hero--letter-spacing: -0.03em;
+  --text-h2: 1.5rem;          --text-h2--line-height: 1.2;
+  --text-lead: 1.1875rem;     --text-lead--line-height: 1.5;
+  --text-label: 1rem;         --text-label--line-height: 1.4;
+  --text-micro: 1rem;         --text-micro--line-height: 1.4;
 
-  /* 4-pt spacing + card radii */
-  --spacing-s1: 4px; --spacing-s2: 8px; --spacing-s3: 12px; --spacing-s4: 16px; --spacing-s5: 24px; --spacing-s6: 32px; --spacing-s7: 48px;
-  --radius-card: 16px; --radius-hero: 24px; --radius-chip: 10px;
-  --shadow-1: var(--shadow-1);
+  /* 8-pt spacing + two radii */
+  --spacing-s1: 0.25rem; --spacing-s2: 0.5rem; --spacing-s3: 0.75rem; --spacing-s4: 1rem; --spacing-s5: 1.5rem; --spacing-s6: 2rem; --spacing-s7: 2.5rem;
+  --radius-card: 1rem; --radius-hero: 1rem; --radius-chip: 9999px;
 }
 
 /* shared building blocks */
 @utility num { font-variant-numeric: tabular-nums; }
-@utility card { @apply rounded-card border border-line bg-surface p-s4; }
-@utility card-hero {
-  @apply rounded-hero border border-line p-s5;
-  background: color-mix(in oklab, var(--cond, var(--surface)) 8%, var(--surface));
-}
-@utility btn { @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-label font-medium text-ink-2 num; }
-@utility btn-primary { @apply border-transparent bg-brand text-brand-ink; }
-@utility chip-active { @apply border-transparent bg-ink text-bg; }
-@utility h2-display { @apply text-[28px] font-bold leading-tight tracking-[-0.02em] text-ink; }
+@utility h-display { @apply font-display text-display font-bold text-ink; }
+@utility h-title { @apply font-display text-title font-bold text-ink; }
+@utility h2-display { @apply font-display text-title font-bold text-ink; }           /* legacy alias */
+@utility card { @apply rounded-card bg-surface p-s4; }                                 /* legacy: borderless now */
+@utility card-hero { @apply rounded-card p-s5; background: color-mix(in oklab, var(--cond, var(--surface)) 8%, var(--surface)); }
+@utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-surface-2 px-5 text-body font-semibold text-ink num; }
+@utility btn-primary { @apply bg-brand text-brand-ink; }
+@utility btn-big { @apply min-h-14 w-full; }
+@utility chip-active { @apply bg-ink text-bg; }
+@utility row { @apply flex min-h-14 w-full items-center gap-s3 py-s3 text-left; }
+@utility picture { @apply overflow-hidden rounded-card bg-surface; }
 
-html { background: var(--bg); }
+html {
+  background: var(--bg);
+  font-size: 100%;                 /* never px: inherits the browser/OS text size */
+  -webkit-text-size-adjust: 100%;  /* no landscape inflation; zoom still works */
+  text-size-adjust: 100%;
+}
+html[data-text="large"] { font-size: 112.5%; }
+html[data-text="largest"] { font-size: 125%; }
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: "ss01", "cv11";
 }
 
-.display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.03em; }
+.display { font-family: var(--font-display); font-weight: 700; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-@keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-.fade-up { animation: fade-up 0.25s ease-out both; }
-@keyframes grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-.grow-y { transform-origin: bottom; animation: grow-y 0.3s ease-out both; animation-delay: calc(var(--i, 0) * 15ms); }
+@keyframes fade-up { from { opacity: 0; } to { opacity: 1; } }
+.fade-up { animation: fade-up 0.15s ease-out both; }
+.grow-y { animation: none; }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }

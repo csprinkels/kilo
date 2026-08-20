@@ -15,10 +15,10 @@ const RULES: [string, string][] = [
 
 export default function Guidelines() {
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20 text-body leading-relaxed text-ink-2">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20 text-body leading-relaxed text-ink-2">
       <TopBar />
       <SectionNav />
-      <h1 className="h2-display mt-s6">Community guidelines</h1>
+      <h1 className="h-display mt-s6">Community guidelines</h1>
       <p className="mt-4">The neighbour reports on {APP_NAME} work because people keep them honest and boring. Seven rules:</p>
       <ol className="mt-5 space-y-4">
         {RULES.map(([h, b], i) => (

@@ -1,23 +1,42 @@
 "use client";
 import Link from "next/link";
-import { ChevronDown, Info, Navigation } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { ISLANDS, type Island } from "@/lib/types";
+import { useStoredIsland } from "@/lib/data";
 import { APP_NAME, ISLAND_LABEL } from "@/lib/brand";
 
-/** One 56px bar on every page: wordmark · island (native select, so iPhone shows its wheel) · about. */
-export default function TopBar({ island, onIsland, home }: { island?: Island; onIsland?: (i: Island) => void; home?: boolean }) {
+const TAB_PATHS = ["/", "/weather/", "/traffic/", "/report/"];
+
+/**
+ * One bar on every page: wordmark (or "‹ Now" on pages that aren't tabs) · island as a visible button · Settings.
+ * The island control is a native <select> so iPhones show their big wheel; it looks like a button, not plain text.
+ */
+export default function TopBar({ island: islandProp, onIsland: onIslandProp }: { island?: Island; onIsland?: (i: Island) => void }) {
+  const path = usePathname();
+  const isTab = TAB_PATHS.includes(path);
+  // Pages that aren't per-island still show the control, so it is in the same place on every screen.
+  const [stored, setStored] = useStoredIsland();
+  const island = islandProp ?? (stored === "state" ? "hawaii" : stored);
+  const onIsland = onIslandProp ?? setStored;
+  const label = ISLAND_LABEL[island].split(" · ")[0];
   return (
-    <header className="flex h-14 items-center justify-between pt-s3">
-      {home ? <span className="display text-lead text-ink">{APP_NAME}</span> : <Link href="/" className="display text-lead text-ink">{APP_NAME}</Link>}
-      {island && onIsland ? (
-        <label className="relative inline-flex h-11 items-center gap-1.5 text-body font-semibold text-brand">
-          <Navigation className="size-4" aria-hidden /> {ISLAND_LABEL[island].split(" · ")[0]} <ChevronDown className="size-4" aria-hidden />
+    // @container: when the bar is narrower than 20rem (large text sizes), the island button takes its own row instead of clipping.
+    <header className="@container pt-s2">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-x-s2 gap-y-s1">
+      {isTab
+        ? <span className="display text-title text-ink">{APP_NAME}</span>
+        : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><ChevronLeft className="size-5" aria-hidden /> Now</Link>}
+      {(
+        <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full bg-surface-2 px-4 text-small font-semibold text-ink @max-[20rem]:order-3 @max-[20rem]:basis-full @max-[20rem]:justify-between">
+          {label} <ChevronDown className="size-4 text-ink-2" aria-hidden />
           <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
             {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
           </select>
         </label>
-      ) : island ? <span className="inline-flex items-center gap-1.5 text-body font-semibold text-muted"><Navigation className="size-4" aria-hidden /> {ISLAND_LABEL[island].split(" · ")[0]}</span> : <span />}
-      <Link href="/sources/" aria-label={`About ${APP_NAME}`} className="-mr-2 inline-flex size-11 items-center justify-center text-muted"><Info className="size-5" /></Link>
+      )}
+      <Link href="/sources/" className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-small font-semibold text-brand">Settings</Link>
+      </div>
     </header>
   );
 }
