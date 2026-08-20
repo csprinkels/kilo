@@ -46,7 +46,7 @@ export function parseHvo(json: Volcano[], now = Date.now()): Item[] {
       key: `hvo:${v.vnum}`, source: "hvo", type: "volcano" as const, tier: "official" as const,
       sev: COLOR_SEV[v.color_code],
       islands: ["hawaii" as const], districts: [],
-      title: clip(`${v.volcano_name}: ${v.alert_level} / ${v.color_code}`, 120),
+      title: clip(`${v.volcano_name.replace("Kilauea", "Kīlauea")}: ${v.alert_level} / ${v.color_code}`, 120),
       body: clip(`USGS Hawaiian Volcano Observatory alert level ${v.alert_level}, aviation color code ${v.color_code}. Latest notice ${new Date(Number(v.sent_unixtime) * 1000).toLocaleString("en-US", { timeZone: "Pacific/Honolulu" })} HST.`, 600),
       srcUrl: v.notice_url,
       fields: { alertLevel: v.alert_level, colorCode: v.color_code, notice: v.notice_identifier },

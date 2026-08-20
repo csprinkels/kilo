@@ -1,35 +1,91 @@
 @import "tailwindcss";
 
+/* Design tokens. Light = warm paper; dark = volcanic. Severity colors are semantic and fixed. */
 :root {
-  --background: #f7f7f5;
-  --foreground: #171717;
-  --card: #ffffff;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg: #f5f1ea;
+  --surface: #fffdf9;
+  --surface-2: #ede8df;
+  --ink: #1b1a17;
+  --ink-2: #4a463f;
+  --muted: #77715f;
+  --line: #e3dccf;
+  --brand: #0b6b72;
+  --brand-ink: #ffffff;
+  --sev4: #b3261e;
+  --sev3: #c2410c;
+  --sev2: #a16207;
+  --sev1: #6b7280;
+  --sev4-bg: #fbe9e7;
+  --sev3-bg: #fdeee3;
+  --sev2-bg: #fbf4df;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1115;
-    --foreground: #ededed;
-    --card: #181b22;
-    --muted: #9ca3af;
-    --border: #2a2f3a;
+    --bg: #121311;
+    --surface: #1b1c19;
+    --surface-2: #24251f;
+    --ink: #f1ede6;
+    --ink-2: #cdc7bb;
+    --muted: #9a9486;
+    --line: #2d2e29;
+    --brand: #5ccad0;
+    --brand-ink: #0a2a2c;
+    --sev4: #ff6b5e;
+    --sev3: #fb923c;
+    --sev2: #e3b341;
+    --sev1: #9ca3af;
+    --sev4-bg: #3a1512;
+    --sev3-bg: #3a1f0c;
+    --sev2-bg: #332a0c;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-sev4: var(--sev4);
+  --color-sev3: var(--sev3);
+  --color-sev2: var(--sev2);
+  --color-sev1: var(--sev1);
+  --color-sev4-bg: var(--sev4-bg);
+  --color-sev3-bg: var(--sev3-bg);
+  --color-sev2-bg: var(--sev2-bg);
+  --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
+}
+
+html { background: var(--bg); }
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "ss01", "cv11";
 }
+
+/* Subtle paper grain so large flat areas don't read as "default". */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0);
+  background-size: 3px 3px;
+}
+
+.display { font-family: var(--font-display); font-variation-settings: "opsz" 144, "SOFT" 30; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fade-up 0.25s ease-out both; }

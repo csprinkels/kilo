@@ -67,7 +67,7 @@ test("new feeds: USGS, HVO, HDOT, HI-EMA, PTWC parse their fixtures", async () =
 
   const volcanoes = parseHvo(fx("hvo-elevated.json"), now);
   assert.equal(volcanoes.length, 1);
-  assert.match(volcanoes[0].title, /Kilauea: ADVISORY \/ YELLOW/);
+  assert.match(volcanoes[0].title, /Kīlauea: ADVISORY \/ YELLOW/);
   assert.equal(volcanoes[0].sev, 1, "chronic YELLOW is informational, not a warning");
 
   const lanes = parseHdot(fx("hdot-current.json"), now);

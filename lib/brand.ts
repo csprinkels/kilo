@@ -38,6 +38,9 @@ export const COUNTY_ALERTS: Record<Exclude<Island, "state">, { label: string; ho
   kauai: { label: "Kauaʻi (KEMA Alerts)", how: "Sign up at kauai.gov", url: "https://www.kauai.gov/Government/Departments-Agencies/Emergency-Management-Agency" },
 };
 
+/** Display faces lack U+02BB; the ʻokina is traditionally typeset as an opening single quote. */
+export const okina = (s: string) => s.replace(/ʻ/g, "\u2018");
+
 const HST = "Pacific/Honolulu";
 export const fmtTime = (ms: number) =>
   new Intl.DateTimeFormat("en-US", { timeZone: HST, hour: "numeric", minute: "2-digit" }).format(ms);

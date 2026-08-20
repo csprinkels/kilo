@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Fraunces, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { APP_NAME } from "@/lib/brand";
+
+// Self-hosted by next/font at build time, so the offline shell carries them too.
+const display = Fraunces({ subsets: ["latin"], variable: "--font-display", axes: ["opsz", "SOFT"], display: "swap" });
+const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -13,8 +18,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f7f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1115" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f1ea" },
+    { media: "(prefers-color-scheme: dark)", color: "#121311" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -23,8 +28,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`}>
+      <body className="relative min-h-full flex flex-col">
         {children}
         <Script id="sw" strategy="afterInteractive">
           {`if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");`}
