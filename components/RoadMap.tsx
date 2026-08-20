@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { PLACES, type LatLon } from "@/lib/roads";
+import { PLACES, type LatLon, type RoadLine } from "@/lib/roads";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
-type Roads = { lines: LatLon[][] };
+type Roads = { lines: RoadLine[] };
 type IslandId = "hawaii" | "maui" | "oahu" | "kauai";
 
 /** A road that is closed (county, red, solid), partly closed (roadwork, orange dashes) or a single trouble spot (dot). */
@@ -11,7 +11,7 @@ export type Segment = { key: string; kind: "closed" | "lane" | "spot"; path?: La
 
 // One fetch per file per session; the service worker keeps them for offline.
 const cache = new Map<string, unknown>();
-function useStatic<T>(url: string): T | null {
+export function useStatic<T>(url: string): T | null {
   const [v, setV] = useState<T | null>((cache.get(url) as T) ?? null);
   useEffect(() => {
     if (cache.has(url)) return;
@@ -19,6 +19,8 @@ function useStatic<T>(url: string): T | null {
   }, [url]);
   return v;
 }
+/** The island's highway pack (names, route numbers, simplified paths), or null until it loads. */
+export const useRoads = (island: IslandId) => useStatic<Roads>(`/${island}-roads.json`);
 
 /** Whole-island frames: [south, north, west, east]. Niʻihau and the far northwest islets are left out on purpose. */
 const FRAME: Record<IslandId, [number, number, number, number]> = {
@@ -39,17 +41,25 @@ function frameFor(box: [number, number, number, number], aspect: number) {
 
 /**
  * The Roads picture: coastline, grey highways, town names, and every closed road drawn on top.
- * `focus` zooms to one segment with about 3 miles of road around it. Renders with coast only if a roads file is missing.
+ * `focus` zooms to one segment with about 3 miles of road around it. `detour` draws the county's named alternate route in the accent colour.
+ * `you` marks the reader's own spot when they asked for it. Renders with coast only if a roads file is missing.
  */
-export default function RoadMap({ island, segments, focus, label }: { island: IslandId; segments: Segment[]; focus?: LatLon[]; label: string }) {
+export default function RoadMap({ island, segments, focus, detour, you, label }: { island: IslandId; segments: Segment[]; focus?: LatLon[]; detour?: RoadLine[]; you?: LatLon; label: string }) {
   const coast = useStatic<Coast>("/hawaii-coast.json");
-  const roads = useStatic<Roads>(`/${island}-roads.json`);
+  const roads = useRoads(island);
 
   let box = FRAME[island];
   if (focus?.length) {
     const lats = focus.map((p) => p[0]), lons = focus.map((p) => p[1]);
-    const pad = 3 * MILE_LAT;
-    box = [Math.min(...lats) - pad, Math.max(...lats) + pad, Math.min(...lons) - pad / Math.cos(lats[0] * (Math.PI / 180)), Math.max(...lons) + pad / Math.cos(lats[0] * (Math.PI / 180))];
+    const pad = 3 * MILE_LAT, kpad = pad / Math.cos(lats[0] * (Math.PI / 180));
+    box = [Math.min(...lats) - pad, Math.max(...lats) + pad, Math.min(...lons) - kpad, Math.max(...lons) + kpad];
+    // If the detour runs outside the zoomed frame, widen the frame to reach its nearest point so "the blue line" is visible.
+    const pts = (detour ?? []).flatMap((l) => l.p);
+    if (pts.length && !pts.some(([la, lo]) => la > box[0] && la < box[1] && lo > box[2] && lo < box[3])) {
+      const c: LatLon = [(box[0] + box[1]) / 2, (box[2] + box[3]) / 2];
+      const near = pts.reduce((a, b) => (Math.hypot(b[0] - c[0], b[1] - c[1]) < Math.hypot(a[0] - c[0], a[1] - c[1]) ? b : a));
+      box = [Math.min(box[0], near[0] - pad), Math.max(box[1], near[0] + pad), Math.min(box[2], near[1] - kpad), Math.max(box[3], near[1] + kpad)];
+    }
   }
   const kx0 = Math.cos(((box[0] + box[1]) / 2) * (Math.PI / 180));
   const natural = (box[1] - box[0]) / ((box[3] - box[2]) * kx0);
@@ -70,11 +80,13 @@ export default function RoadMap({ island, segments, focus, label }: { island: Is
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
         <rect width={W} height={H} fill="var(--surface)" />
         {coast?.coordinates.map((poly, i) => <path key={i} d={d(poly[0].map(([lon, lat]) => [lat, lon]), true)} fill="var(--surface-2)" stroke="var(--ink-2)" strokeOpacity={0.5} strokeWidth={1.5} />)}
-        {roads?.lines.map((l, i) => <path key={i} d={d(l)} fill="none" stroke="var(--ink-2)" strokeOpacity={0.55} strokeWidth={focus ? 4 : 2.5} strokeLinejoin="round" strokeLinecap="round" />)}
+        {roads?.lines.map((l, i) => <path key={i} d={d(l.p)} fill="none" stroke="var(--ink-2)" strokeOpacity={0.55} strokeWidth={focus ? 4 : 2.5} strokeLinejoin="round" strokeLinecap="round" />)}
+        {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
         {lines.filter((g) => g.kind === "lane").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--warn)" strokeWidth={focus ? 7 : 5} strokeDasharray="12 9" strokeLinecap="round" strokeLinejoin="round" />)}
         {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
         {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); return <circle key={g.key} cx={x} cy={y} r={9} fill={g.kind === "lane" ? "var(--warn)" : "var(--danger)"} stroke="var(--surface)" strokeWidth={3} />; })}
         {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4} fill="var(--ink)" />; })}
+        {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return <g><circle cx={x} cy={y} r={14} fill="var(--brand)" fillOpacity={0.2} /><circle cx={x} cy={y} r={7} fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} /></g>; })()}
       </svg>
       {/* Town names as HTML so they follow the reader's text size instead of the picture's scale */}
       {places.map((p) => {

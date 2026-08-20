@@ -52,7 +52,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 |---|---|---|
 | `/` Now | first run (pick your island) · warning block · Right now weather · one row per topic | 2 min |
 | `/storms` | CPHC/NHC advisories → one sentence for your island, cone map, what to do, where it will be | 2 min (re-parse on new advisory) |
-| `/traffic` Roads | island map with every closed segment drawn (county + HDOT LineStrings → `item.path`; offline highway packs `public/*-roads.json` from `scripts/build-roads.mjs`), crashes/signals, neighbor reports, roadwork and Waze behind a tap | 2 min |
+| `/traffic` Roads | island map with every closed segment drawn (county + HDOT LineStrings → `item.path`; offline highway packs `public/*-roads.json` from `scripts/build-roads.mjs`), crashes/signals, neighbor reports, roadwork and Waze behind a tap. **Way around:** the county's `Alternate_Route` is matched to the named highway in the pack and drawn in the accent colour (`lib/roads.ts matchDetour`); when none is listed the page says so and offers a tap-to-call Civil Defense. Kilo never computes its own detour. **Near me:** opt-in location (never stored) sorts closures by distance | 2 min |
 | `/weather` | NWS obs + forecast per town, SRF surf by shore, NDBC buoys, AirNow PM2.5 | 15 min (forecast/surf/air hourly) |
 | `/quakes` | USGS M2+ 7 d, M3.5+ 30 d | 5 min |
 | `/volcano` | HVO HANS daily update + sections, DOH SO₂/PM2.5, webcams on tap | 15 min |

@@ -138,7 +138,7 @@ function road(item: Item, now: number): Plain {
   }
   const how = /both/.test(st) ? "closed both ways" : /one lane|partial/.test(st) ? "down to one lane" : /open/.test(st) && !/clos/.test(st) ? "open again" : "closed";
   const alt = item.fields?.alternate?.trim().replace(/\s+/g, " ");
-  const detour = !alt ? "No other route listed." : alt.split(" ").length <= 4 ? `Use ${highway(alt)} instead.` : `Detour: ${cap(alt.toLowerCase())}.`;
+  const detour = !alt ? "No way around listed yet." : alt.split(" ").length <= 4 ? `Use ${highway(alt)} instead.` : `Detour: ${cap(alt.toLowerCase())}.`;
   return {
     headline: `${highway(roadName)} ${how}${place}`,
     action: how === "open again" ? "" : detour,

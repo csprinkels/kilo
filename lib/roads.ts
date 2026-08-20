@@ -167,3 +167,42 @@ export function endsWord(path: LatLon[], island: Place["island"]): string {
   if (a.place.name === b.place.name || pathMiles(path) < 1) return `near ${a.place.name}`;
   return `between ${a.place.name} and ${b.place.name}`;
 }
+
+// ---------- detours: the county's named alternate route, drawn as that road ----------
+export type RoadLine = { n: string; r: number; p: LatLon[] };
+
+const STOP = new Set(["highway", "hwy", "road", "rd", "avenue", "ave", "drive", "dr", "street", "st", "route", "rte", "the", "or", "and", "via", "use", "to", "old"]);
+/** "Hawaii Belt Rd (Mamalahoa Hwy)" → ["hawaii", "belt", "mamalahoa"]; strips ʻokina, kahakō, punctuation and road words. */
+export function roadWords(s: string): string[] {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[ʻ'`’]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w) && !/^\d+$/.test(w));
+}
+const routeNumbers = (s: string) => [...s.matchAll(/\b(?:highway|hwy|route|rte|sr)\.?\s*(\d{1,3})\b|\((?:highway|hwy)\s*(\d{1,3})\)/gi)].map((m) => Number(m[1] ?? m[2]));
+
+/**
+ * Which roads in the pack the county means by "Highway 19", "Old Mamalahoa Highway", "Alii Drive or Highway 180".
+ * Matches by route number first, then by name words ("old mamalahoa" must all appear in the road's name). Never guesses a route.
+ */
+export function matchDetour(alternate: string | undefined, roads: RoadLine[]): RoadLine[] {
+  const alt = (alternate ?? "").trim();
+  if (!alt || /^(none|no|n\/a|not reported.*|unknown)$/i.test(alt)) return [];
+  const nums = new Set(routeNumbers(alt));
+  const out = new Set<RoadLine>();
+  for (const l of roads) if (l.r && nums.has(l.r)) out.add(l);
+  // each clause ("Alii Drive", "Old Mamalahoa Highway") by name
+  for (const clause of alt.split(/\bor\b|,|;|\//i)) {
+    const words = roadWords(clause);
+    const isOld = /\bold\b/i.test(clause);
+    if (!words.length) continue;
+    for (const l of roads) {
+      const lw = roadWords(l.n);
+      if (!lw.length) continue;
+      if (words.every((w) => lw.includes(w)) && (/\bold\b/i.test(l.n) === isOld)) out.add(l);
+    }
+  }
+  return [...out];
+}
+
+/** Straight-line miles from a point to the nearest vertex of a path (fine for "2.1 miles from you"). */
+export function milesToPath(p: LatLon, path: LatLon[]): number {
+  return Math.min(...path.map((q) => milesBetween(p, q)));
+}

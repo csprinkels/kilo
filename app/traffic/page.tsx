@@ -1,18 +1,18 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CarFront, ChevronDown, ChevronRight, ExternalLink, MapPin, Share2, TrafficCone } from "lucide-react";
+import { CarFront, ChevronDown, ChevronRight, ExternalLink, LocateFixed, MapPin, Phone, Share2, TrafficCone } from "lucide-react";
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell, { Section } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import OfficialWording from "@/components/OfficialWording";
-import RoadMap, { type Segment } from "@/components/RoadMap";
+import RoadMap, { useRoads, type Segment } from "@/components/RoadMap";
 import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
 import { LEVEL_WORD, plainAlert, type Plain } from "@/lib/plain";
-import { endsWord, milesWord, pathMidpoint, pathMiles, type LatLon } from "@/lib/roads";
+import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
 
 type IslandId = Exclude<Island, "state">;
 
@@ -26,6 +26,10 @@ const SOURCE: Record<IslandId, string> = {
   maui: "the state highways department", kauai: "the state highways department",
 };
 const islandName = (i: IslandId) => ISLAND_LABEL[i].split(" · ")[0];
+// Who to call when the county has not listed a way around. Only Hawaiʻi County publishes closures with detours today.
+const CIVIL_DEFENSE: Partial<Record<IslandId, { tel: string; shown: string }>> = { hawaii: { tel: "+18089350031", shown: "(808) 935-0031" } };
+const NEAR_MILES = 5;
+const APP_NOTE = "Kilo does not save your location.";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const isRoadwork = (i: Item) => i.source === "hdot";
 const isClosed = (i: Item) => /both|closed/i.test(i.status ?? "") && !/open|lane/i.test(i.status ?? "");
@@ -57,10 +61,19 @@ export default function RoadsPage() {
   const [showMap, setShowMap] = useState(false);
   const [showWork, setShowWork] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [you, setYou] = useState<LatLon | null>(null);
+  const [youMsg, setYouMsg] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const roadsPack = useRoads(island);
 
   const items = useMemo(() => (snap?.data?.items ?? []).filter((i) => i.type === "traffic" || i.type === "road_closure"), [snap]);
   const plain = useMemo(() => new Map(items.map((i) => [i.key, plainAlert(i, now, island)] as [string, Plain])), [items, now, island]);
-  const official = items.filter((i) => i.tier !== "community" && !isRoadwork(i)).sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level || b.issuedAt - a.issuedAt);
+  // Distance from the reader to each item, only after they asked ("2.1 miles from you"). Never stored.
+  const milesFrom = (i: Item): number | undefined => !you ? undefined : i.path?.length ? milesToPath(you, i.path) : i.lat != null && i.lon != null ? milesToPath(you, [[i.lat, i.lon]]) : undefined;
+  const official = items.filter((i) => i.tier !== "community" && !isRoadwork(i)).sort((a, b) => {
+    if (you) { const da = milesFrom(a) ?? 1e9, db = milesFrom(b) ?? 1e9; if (da !== db) return da - db; }
+    return plain.get(b.key)!.level - plain.get(a.key)!.level || b.issuedAt - a.issuedAt;
+  });
   const closures = official.filter((i) => i.type === "road_closure" && isClosed(i));
   const trouble = official.filter((i) => i.type === "traffic");
   const neighbors = items.filter((i) => i.tier === "community");
@@ -71,8 +84,19 @@ export default function RoadsPage() {
   const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon }] : []; });
   const drawn = { closed: segments.filter((g) => g.kind === "closed").length, lane: segments.filter((g) => g.kind === "lane").length, spot: segments.filter((g) => g.kind === "spot" && g.lat != null && g.lon != null).length };
   const legend = [drawn.closed && "Red: closed.", drawn.lane && "Orange: one lane or roadwork.", drawn.spot && "Dots: crashes or lights out."].filter(Boolean).join(" ");
-  const rows = showAll ? official : official.slice(0, 3);
+  const nearCount = you ? official.filter((i) => (milesFrom(i) ?? 1e9) <= NEAR_MILES).length : 0;
+  const rows = showAll ? official : official.slice(0, you ? Math.max(3, nearCount) : 3);
   const w = WAZE[island];
+
+  const locate = () => {
+    if (!("geolocation" in navigator)) { setYouMsg("This phone cannot share its location."); return; }
+    setLocating(true); setYouMsg(null);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => { setYou([coords.latitude, coords.longitude]); setLocating(false); },
+      () => { setLocating(false); setYouMsg("Your phone would not share its location. You can still read the list below."); },
+      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 },
+    );
+  };
 
   return (
     <PageShell title="Roads" sentence={loaded ? roadsSentence(island, closures, trouble, roadwork.length, plain) : undefined} island={island} onIsland={setIsland}
@@ -88,17 +112,29 @@ export default function RoadsPage() {
       {loaded && (
         <>
           <div className="picture mt-s4">
-            <RoadMap island={island} segments={segments} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+            <RoadMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
           </div>
-          {legend && <p className="mt-s3 text-small text-ink-2">{legend}</p>}
+          {legend && <p className="mt-s3 text-small text-ink-2">{legend}{you ? " Blue dot: you." : ""}</p>}
+
+          {official.length > 0 && (
+            you ? (
+              <p className="mt-s3 max-w-[36rem] text-body text-ink">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
+            ) : (
+              <>
+                <button className="btn mt-s3" onClick={locate} disabled={locating}><LocateFixed className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
+                <p className="mt-s1 text-small text-ink-2">{APP_NOTE}</p>
+              </>
+            )
+          )}
+          {youMsg && <p className="mt-s2 text-body text-ink-2">{youMsg}</p>}
 
           <Section title="Closed or blocked">
             {official.length ? (
-              <ul className="mt-s2 divide-y divide-line">{rows.map((i) => <RoadRow key={i.key} item={i} island={island} now={now} plain={plain.get(i.key)!} />)}</ul>
+              <ul className="mt-s2 divide-y divide-line">{rows.map((i) => <RoadRow key={i.key} item={i} island={island} now={now} plain={plain.get(i.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(i)} you={you ?? undefined} />)}</ul>
             ) : (
               <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
             )}
-            {official.length > 3 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {official.length - 3} more <ChevronDown className="size-5" aria-hidden /></button>}
+            {official.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {official.length - rows.length} more <ChevronDown className="size-5" aria-hidden /></button>}
           </Section>
 
           {island === "hawaii" && (
@@ -153,8 +189,12 @@ function roadName(item: Item) {
  * A closure or crash row, like ItemRow but with the closed stretch drawn when you open it.
  * Headline and action come from plainAlert so the words match the rest of the app.
  */
-function RoadRow({ item, island, now, plain: p }: { item: Item; island: IslandId; now: number; plain: Plain }) {
+function RoadRow({ item, island, now, plain: p, roads, miles, you }: { item: Item; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon }) {
   const [open, setOpen] = useState(false);
+  const alt = item.fields?.alternate?.trim();
+  const detour = useMemo(() => (open && alt ? matchDetour(alt, roads) : []), [open, alt, roads]);
+  const county = item.source.startsWith("hccda") && isClosed(item);
+  const cd = CIVIL_DEFENSE[island];
   const [copied, setCopied] = useState(false);
   const Icon = item.type === "traffic" ? CarFront : TrafficCone;
   const path: LatLon[] | undefined = item.path && item.path.length >= 2 ? item.path : undefined;
@@ -173,7 +213,7 @@ function RoadRow({ item, island, now, plain: p }: { item: Item; island: IslandId
           {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>
+          <span className="mt-1 block text-small text-ink-2 num">{miles != null ? `${milesWord(miles)} from you · ` : ""}{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(item.issuedAt, now)}</span>
         </span>
         <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
@@ -181,9 +221,22 @@ function RoadRow({ item, island, now, plain: p }: { item: Item; island: IslandId
         <div className="fade-up mb-s4 pl-9">
           {path && (
             <>
-              <div className="picture"><RoadMap island={island} segments={[{ key: item.key, kind: segmentKind(item) ?? "lane", path }]} focus={path} label={caption} /></div>
-              <p className="mt-s3 text-small text-ink-2">{caption}</p>
+              <div className="picture"><RoadMap island={island} segments={[{ key: item.key, kind: segmentKind(item) ?? "lane", path }]} focus={path} detour={detour} you={you} label={caption} /></div>
+              <p className="mt-s3 text-small text-ink-2">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
             </>
+          )}
+          {county && (
+            <div className="mt-s3">
+              <p className="text-body font-semibold text-ink">Way around</p>
+              {alt ? (
+                <p className="mt-1 text-body text-ink-2">Civil Defense says: use {alt}.{detour.length ? " It is the blue line on the map." : ""}</p>
+              ) : (
+                <>
+                  <p className="mt-1 text-body text-ink-2">Civil Defense has not listed a way around this yet. If you live nearby and need to get through, call them.</p>
+                  {cd && <a className="btn mt-s2" href={`tel:${cd.tel}`}><Phone className="size-5" aria-hidden /> Call Civil Defense {cd.shown}</a>}
+                </>
+              )}
+            </div>
           )}
           {item.body && !path && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
           {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}

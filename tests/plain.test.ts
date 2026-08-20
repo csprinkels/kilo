@@ -58,7 +58,7 @@ test("plain: the words a person reads for the big ones", () => {
   assert.match(sh.action, /medicine/);
   const rd = by((i) => i.type === "road_closure" && i.source.startsWith("hccda"));
   assert.match(rd.headline, /closed|one lane|open again/);
-  assert.ok(/^Use .* instead\.$|^No other route listed\.$|^$/.test(rd.action), rd.action);
+  assert.ok(/^Use .* instead\.$|^No way around listed yet\.$|^Detour: |^$/.test(rd.action), rd.action);
   const lane = by((i) => i.source === "hdot");
   assert.match(lane.headline, /^One lane on Highway \d+/);
   assert.equal(lane.level, 1);
@@ -88,4 +88,18 @@ test("plain: level words, source names and brand labels are jargon-free", () => 
   for (const s of [...Object.values(LEVEL_WORD), ...Object.values(SOURCE_NAME), ...Object.values(ISLAND_LABEL), ...Object.values(TYPE_LABEL)]) {
     assert.equal(banned(s), undefined, `banned word in "${s}"`);
   }
+});
+
+test("detours: the county's alternate-route wording matches roads in the offline pack, and never guesses", async () => {
+  const { matchDetour } = await import("../lib/roads.ts");
+  const pack = JSON.parse(readFileSync(new URL("../public/hawaii-roads.json", import.meta.url), "utf8")).lines;
+  const names = (alt: string) => [...new Set(matchDetour(alt, pack).map((l: { n: string; r: number }) => `${l.n}|${l.r}`))];
+  assert.ok(names("Highway 19").length > 0 && names("Highway 19").every((n) => n.endsWith("|19")));
+  assert.ok(names("Hawaii Belt Road (Highway 11)").some((n) => n.endsWith("|11")));
+  assert.ok(names("Hwy 190").every((n) => n.endsWith("|190")) && names("Hwy 190").length > 0);
+  assert.ok(names("Old Mamalahoa Highway").length > 0 && names("Old Mamalahoa Highway").every((n) => /Old Mamalahoa/.test(n)));
+  assert.ok(names("Saddle Road").some((n) => /Saddle/.test(n)));
+  assert.ok(names("Akoni Pule Highway").some((n) => /Akoni Pule/.test(n)));
+  assert.ok(names("Alii Drive or Highway 180").some((n) => n.endsWith("|180")));
+  for (const none of ["", "None", "none", "Non reported at this time", "Kamehameha or Kapiolani"]) assert.deepEqual(names(none).filter((n) => !/Kamehameha/.test(n)), [], none);
 });
