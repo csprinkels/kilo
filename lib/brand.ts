@@ -11,6 +11,13 @@ export const ISLAND_LABEL: Record<Island, string> = {
   state: "Statewide",
 };
 
+/** "Maui, Molokaʻi and Lānaʻi" — the full island group in a sentence. */
+export const islandName = (i: Island, full = false) => {
+  const parts = ISLAND_LABEL[i].split(" · ");
+  if (!full || parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+};
+
 export const TYPE_LABEL: Record<ItemType, string> = {
   advisory: "Weather", storm: "Hurricane or tropical storm", tsunami: "Tsunami", quake: "Earthquake", volcano: "Volcano",
   notice: "Notice", shelter: "Shelter", road_closure: "Road", evac: "Evacuation", hazard: "Hazard",
@@ -35,10 +42,10 @@ export const SEV_SECTION: Record<1 | 2 | 3 | 4, string> = {
 
 // Official sign-up for each county's own alert system: step one of onboarding, not a competitor.
 export const COUNTY_ALERTS: Record<Exclude<Island, "state">, { label: string; how: string; url: string }> = {
-  hawaii: { label: "Hawaiʻi County (HAWAIIALERTS)", how: "Text HAWAIIALERTS to 888777", url: "https://www.hawaiicounty.gov/departments/civil-defense" },
-  maui: { label: "Maui County (MEMA Alerts)", how: "Sign up at mauicounty.gov", url: "https://www.mauicounty.gov/983/MEMA-Alerts" },
-  oahu: { label: "Honolulu (HNL Alert)", how: "Text HNLALERT to 888777", url: "https://www.honolulu.gov/dem/hnl-alert/" },
-  kauai: { label: "Kauaʻi (KEMA Alerts)", how: "Sign up at kauai.gov", url: "https://www.kauai.gov/Government/Departments-Agencies/Emergency-Management-Agency" },
+  hawaii: { label: "Hawaiʻi County", how: "Text HAWAIIALERTS to 888777.", url: "https://www.hawaiicounty.gov/departments/civil-defense" },
+  maui: { label: "Maui County", how: "Sign up on the county website.", url: "https://www.mauicounty.gov/983/MEMA-Alerts" },
+  oahu: { label: "Honolulu", how: "Text HNLALERT to 888777.", url: "https://www.honolulu.gov/dem/hnl-alert/" },
+  kauai: { label: "Kauaʻi County", how: "Sign up on the county website.", url: "https://www.kauai.gov/Government/Departments-Agencies/Emergency-Management-Agency" },
 };
 
 /** Display faces lack U+02BB; the ʻokina is traditionally typeset as an opening single quote. */

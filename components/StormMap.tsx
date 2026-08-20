@@ -62,7 +62,7 @@ export default function StormMap({ storm, place, compact, className }: Props) {
 
   return (
     <div className={`relative ${className ?? ""}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: where it is and where the centre will probably go`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: where it is and where the center will probably go`}>
         <rect width={W} height={H} fill="var(--surface)" />
         {cone.length > 2 && <path d={path(cone)} fill="var(--brand)" fillOpacity={0.15} stroke="var(--brand)" strokeOpacity={0.6} strokeWidth={1.5} strokeDasharray="6 4" />}
         {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--ink-2)" fillOpacity={0.55} stroke="var(--ink)" strokeWidth={0.8} />)}

@@ -19,13 +19,12 @@ import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, feelsLike, summarize as weatherSentence, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, shakingVerb, stormLine, type Plain } from "@/lib/plain";
-import { APP_NAME, ISLAND_LABEL, fmtClock, fmtTime } from "@/lib/brand";
+import { APP_NAME, fmtClock, fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
   ...d, source: "digest", tier: "official", islands: [], lastConfirmedAt: at, hash: "",
 });
-const islandName = (i: Island) => ISLAND_LABEL[i].split(" · ")[0];
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function Home() {
@@ -51,7 +50,7 @@ function FirstRun({ onPick }: { onPick: (i: Island) => void }) {
       <h2 className="h-title mt-s7">Which island are you on?</h2>
       <div className="mt-s3 flex flex-col gap-s2">
         {ISLANDS.map((i) => (
-          <button key={i} onClick={() => onPick(i)} className="btn btn-big justify-start px-s5 text-left">{ISLAND_LABEL[i].replace(" · ", ", ").replace(" · ", " and ")}</button>
+          <button key={i} onClick={() => onPick(i)} className="btn btn-big justify-start px-s5 text-left">{islandName(i, true)}</button>
         ))}
       </div>
       <p className="mt-s4 text-small text-ink-2">You can change this any time at the top of the screen.</p>
@@ -156,7 +155,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
       )}
       {!loaded && !offline && <p className="mt-s7 text-body text-ink-2">Loading what is happening around {islandName(island)}…</p>}
 
-      <AlertsCard island={island} />
+      <AlertsCard island={island} compact />
 
       <footer className="mt-s7 text-small leading-relaxed text-ink-2">
         Free. No ads. No account. Not an emergency service — call 911. <Link className="font-semibold text-brand" href="/sources/">How {APP_NAME} works</Link>

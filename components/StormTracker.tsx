@@ -45,7 +45,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       {warn && <p className={`mt-s2 max-w-[36rem] text-body font-semibold ${warn.level >= 4 ? "text-danger" : "text-warn"}`}>A {warn.kind} is out for {place.label}.</p>}
 
       <div className="picture mt-s4"><StormMap storm={storm} place={place} /></div>
-      <p className="mt-s3 max-w-[36rem] text-small text-ink-2">The shaded shape is where the centre will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+      <p className="mt-s3 max-w-[36rem] text-small text-ink-2">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
 
       <Section title="What to do" sentence={todo} />
 
@@ -85,7 +85,7 @@ function Imagery({ id }: { id: string }) {
   return (
     <div className="mt-s5 grid gap-s4 sm:grid-cols-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <figure><div className="picture"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centred on the storm" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">Close-up of the storm. From NOAA.</figcaption></figure>
+      <figure><div className="picture"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centerd on the storm" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">Close-up of the storm. From NOAA.</figcaption></figure>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <figure><div className="picture"><img src={`${sector}?t=${stamp}`} alt="Satellite picture of the Hawaiian Islands" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">The Hawaiian Islands. From NOAA.</figcaption></figure>
     </div>

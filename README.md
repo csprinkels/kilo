@@ -35,18 +35,29 @@ npx convex run ingest:run # trigger one ingest by hand
 
 Sources live: NWS alerts, Hawaiʻi County Civil Defense ArcGIS (shelters, roads, evacuations, hazards, schools), HDOT lane closures, HI-EMA RSS, USGS quakes (HI bbox, M2.5+), HVO volcano status, PTWC tsunami bulletins.
 
+## Design (who this is for)
+
+Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a storm. Every screen follows one grammar — **heading → one sentence → one picture → one action** — and two levels only (Now → a topic page; an item opens once, inline). Rules, enforced by `tests/plain.test.ts` and the Playwright sweep:
+
+- Plain words, never agency labels: `lib/plain.ts` turns every item into *headline / what to do / how urgent* ("Roads may flood in Puna until 9 PM · Do not drive through water."). Level words are **Act now / Get ready / Heads up**. The agency's own text lives behind one "Official wording" disclosure.
+- Five text styles in `rem` (Merriweather headings, Inter body 19px, nothing under 16px) so the phone's text size applies; Kilo also has its own Normal / Large / Largest in Settings.
+- Every tap target ≥ 44 px; no icon-only controls; colour only in pictures and in danger/warn blocks; light and dark from the same tokens.
+- One freshness sentence in the same place on every page ("Checked 3:42 PM" · "No signal. Showing what your phone saved at 2:10 PM.").
+- Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`.
+- Tabs: Now · Weather · Roads · Neighbors. Storms, earthquakes, the volcano and tsunami are fixed rows on Now.
+
 ## Sections
 
 | Page | Data | Cadence |
 |---|---|---|
-| `/` Now | per-island feed: official items + neighbor reports, push digests, essentials | 2 min |
-| `/storms` | CPHC/NHC advisories → cone, timeline, per-island outlook | 2 min (re-parse on new advisory) |
-| `/traffic` | Honolulu 911 dispatch (crashes, signal problems), HCCDA/HDOT closures, Waze embed on tap | 2 min |
+| `/` Now | first run (pick your island) · warning block · Right now weather · one row per topic | 2 min |
+| `/storms` | CPHC/NHC advisories → one sentence for your island, cone map, what to do, where it will be | 2 min (re-parse on new advisory) |
+| `/traffic` Roads | island map with every closed segment drawn (county + HDOT LineStrings → `item.path`; offline highway packs `public/*-roads.json` from `scripts/build-roads.mjs`), crashes/signals, neighbor reports, roadwork and Waze behind a tap | 2 min |
 | `/weather` | NWS obs + forecast per town, SRF surf by shore, NDBC buoys, AirNow PM2.5 | 15 min (forecast/surf/air hourly) |
 | `/quakes` | USGS M2+ 7 d, M3.5+ 30 d | 5 min |
 | `/volcano` | HVO HANS daily update + sections, DOH SO₂/PM2.5, webcams on tap | 15 min |
 | `/tsunami` | PTWC CAP level, one-tap evacuation-zone lookup (state GIS), HI-EMA siren status | 5 min (sirens daily) |
-| `/report` | neighbor reports: 3-step form, auto-hold rules, votes; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
+| `/report` Neighbors | neighbor reports: one-screen form, plain hold reasons, Still there / Gone; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
 
 Optional env: `TURNSTILE_SECRET` + `NEXT_PUBLIC_TURNSTILE_SITEKEY` (Cloudflare Turnstile, free) turn on bot verification for reports; `DEVICE_SALT` hashes device ids.
 

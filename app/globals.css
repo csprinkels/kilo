@@ -11,15 +11,11 @@
   --surface-2: #ede8df;   /* neighbor rows, island/town button, secondary buttons */
   --ink: #1b1a17;
   --ink-2: #4a463f;       /* 8.3:1 — the floor for text */
-  --muted: var(--ink-2);  /* legacy alias: nothing is quieter than ink-2 */
   --line: #d6cdbd;        /* row dividers only, never card borders */
   --brand: #0b6b72;
   --brand-ink: #ffffff;
   --danger: #b3261e;  --danger-bg: #fbe9e7;
   --warn: #9a3d00;    --warn-bg: #fdeee3;
-  /* legacy severity aliases (removed page by page) */
-  --sev4: var(--danger); --sev3: var(--warn); --sev2: #7c5a00; --sev1: #5b6270;
-  --sev4-bg: var(--danger-bg); --sev3-bg: var(--warn-bg); --sev2-bg: #fbf4df;
 
   /* data + condition colours (marks in pictures only, never text) */
   --precip: #0b7a90;
@@ -40,7 +36,6 @@
     --brand-ink: #0a2a2c;
     --danger: #ff6b5e;  --danger-bg: #3a1512;
     --warn: #fb923c;    --warn-bg: #3a1f0c;
-    --sev2: #e3b341; --sev1: #9ca3af; --sev2-bg: #332a0c;
     --precip: #4fb8cc;
     --night-band: rgb(255 255 255 / .07);
     --cond-clear: #f2c14e; --cond-cloud: #b4bcc8; --cond-showers: #6cc4dc; --cond-rain: #5aa6e6;
@@ -54,7 +49,6 @@
   --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
-  --color-muted: var(--muted);
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
@@ -62,13 +56,6 @@
   --color-danger-bg: var(--danger-bg);
   --color-warn: var(--warn);
   --color-warn-bg: var(--warn-bg);
-  --color-sev4: var(--sev4);
-  --color-sev3: var(--sev3);
-  --color-sev2: var(--sev2);
-  --color-sev1: var(--sev1);
-  --color-sev4-bg: var(--sev4-bg);
-  --color-sev3-bg: var(--sev3-bg);
-  --color-sev2-bg: var(--sev2-bg);
   --color-precip: var(--precip);
   --color-night-band: var(--night-band);
   --color-cond-clear: var(--cond-clear); --color-cond-cloud: var(--cond-cloud); --color-cond-showers: var(--cond-showers);
@@ -86,12 +73,6 @@
   --text-title: 1.5rem;       --text-title--line-height: 1.2;
   --text-body: 1.1875rem;     --text-body--line-height: 1.5;
   --text-small: 1rem;         --text-small--line-height: 1.4;
-  /* legacy size aliases (removed page by page) */
-  --text-hero: 3.5rem;        --text-hero--line-height: 1;       --text-hero--letter-spacing: -0.03em;
-  --text-h2: 1.5rem;          --text-h2--line-height: 1.2;
-  --text-lead: 1.1875rem;     --text-lead--line-height: 1.5;
-  --text-label: 1rem;         --text-label--line-height: 1.4;
-  --text-micro: 1rem;         --text-micro--line-height: 1.4;
 
   /* 8-pt spacing + two radii */
   --spacing-s1: 0.25rem; --spacing-s2: 0.5rem; --spacing-s3: 0.75rem; --spacing-s4: 1rem; --spacing-s5: 1.5rem; --spacing-s6: 2rem; --spacing-s7: 2.5rem;
@@ -102,9 +83,7 @@
 @utility num { font-variant-numeric: tabular-nums; }
 @utility h-display { @apply font-display text-display font-bold text-ink; }
 @utility h-title { @apply font-display text-title font-bold text-ink; }
-@utility h2-display { @apply font-display text-title font-bold text-ink; }           /* legacy alias */
-@utility card { @apply rounded-card bg-surface p-s4; }                                 /* legacy: borderless now */
-@utility card-hero { @apply rounded-card p-s5; background: color-mix(in oklab, var(--cond, var(--surface)) 8%, var(--surface)); }
+@utility card { @apply rounded-card bg-surface p-s4; }
 @utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-surface-2 px-5 text-body font-semibold text-ink num; }
 @utility btn-primary { @apply bg-brand text-brand-ink; }
 @utility btn-big { @apply min-h-14 w-full; }

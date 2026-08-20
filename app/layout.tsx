@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${body.variable} ${heading.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${body.variable} ${heading.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col">
         {/* Kilo's own text size (Normal/Large/Largest) — applied before paint so nothing jumps. Standalone PWAs have no Safari aA button. */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("text");if(t)document.documentElement.dataset.text=t}catch(e){}` }} />

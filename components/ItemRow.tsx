@@ -94,7 +94,7 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
     <li id={`item-${hashOf(item.key)}`} className="my-s2 rounded-card border-l-[3px] border-dashed border-ink-2 bg-surface-2 px-s4">
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className="min-w-0 flex-1">
-          <span className="block text-small font-bold text-ink-2">Neighbor report · not checked</span>
+          <span className="block text-small font-semibold text-ink-2">Neighbor report · not checked</span>
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           <span className="mt-1 block text-small text-ink-2 num">{confirms + 1} {confirms ? "neighbors say it is still there" : "neighbor reported it"} · {fmtClock(item.lastConfirmedAt, now)}</span>
         </span>
