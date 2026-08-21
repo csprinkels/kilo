@@ -40,7 +40,7 @@ function frameFor(box: [number, number, number, number], aspect: number) {
 }
 
 /**
- * The Roads picture: coastline, grey highways, town names, and every closed road drawn on top.
+ * The Roads picture: Google-maps geography, yellow numbered highways, and live closures on top.
  * `focus` zooms to one segment with about 3 miles of road around it. `detour` draws the county's named alternate route in the accent colour.
  * `you` marks the reader's own spot when they asked for it. Renders with coast only if a roads file is missing.
  */
@@ -81,7 +81,10 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
   const lines = segments.filter((g) => g.path && g.path.length >= 2);
   const spots = segments.filter((g) => !(g.path && g.path.length >= 2) && g.lat != null && g.lon != null && inside(g.lat, g.lon));
   const coastPaths = coast?.coordinates.map((poly) => d(poly[0].map(([lon, lat]) => [lat, lon]), true)) ?? [];
-  const roadWidth = focus ? 5 : 3.5;
+  const highways = (roads?.lines ?? []).filter((l) => l.r > 0);
+  const locals = (roads?.lines ?? []).filter((l) => l.r === 0);
+  const localW = focus ? 4 : 2.4;
+  const hwyW = focus ? 6 : 4;
   const [artSouth, artNorth, artWest, artEast] = FRAME[island];
   const [artX, artY] = f(artNorth, artWest), [artRight, artBottom] = f(artSouth, artEast);
   const art = { x: artX, y: artY, width: artRight - artX, height: artBottom - artY };
@@ -90,11 +93,8 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
     <div className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
         <defs>
-          <pattern id={`${id}-water`} width="72" height="36" patternUnits="userSpaceOnUse">
-            <path d="M-18 18 Q0 8 18 18 T54 18 T90 18" fill="none" stroke="var(--map-water-line)" strokeWidth="1" />
-          </pattern>
           <filter id={`${id}-street-case`} colorInterpolationFilters="sRGB">
-            <feMorphology in="SourceAlpha" operator="dilate" radius="1.1" result="wide" />
+            <feMorphology in="SourceAlpha" operator="dilate" radius="0.9" result="wide" />
             <feFlood floodColor="var(--map-road-case)" result="color" />
             <feComposite in="color" in2="wide" operator="in" />
           </filter>
@@ -107,20 +107,18 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
           </clipPath>
         </defs>
         <rect width={W} height={H} fill="var(--map-water)" />
-        <rect width={W} height={H} fill={`url(#${id}-water)`} />
-        {/* A soft shoreline separates land from water even when the phone is dim. */}
-        {coastPaths.map((p, i) => <path key={`halo-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.65} strokeWidth={10} strokeLinejoin="round" />)}
-        {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.75} strokeLinejoin="round" />)}
+        {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={0.8} strokeLinejoin="round" />)}
         {!focus && (
           <g clipPath={`url(#${id}-land)`}>
             <image href={`/maps/${island}-terrain.png`} {...art} preserveAspectRatio="none" className="map-terrain" />
-            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-case)`} opacity={0.58} />
-            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-fill)`} opacity={0.82} />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-case)`} opacity={0.5} />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-fill)`} opacity={0.9} />
           </g>
         )}
-        {/* Roads use a dark casing and light center, like a printed road atlas. */}
-        {roads?.lines.map((l, i) => <path key={`case-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeOpacity={0.72} strokeWidth={roadWidth + 3.5} strokeLinejoin="round" strokeLinecap="round" />)}
-        {roads?.lines.map((l, i) => <path key={`road-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road)" strokeWidth={roadWidth} strokeLinejoin="round" strokeLinecap="round" />)}
+        {locals.map((l, i) => <path key={`lc-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeWidth={localW + 2.2} strokeLinejoin="round" strokeLinecap="round" />)}
+        {locals.map((l, i) => <path key={`lf-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road)" strokeWidth={localW} strokeLinejoin="round" strokeLinecap="round" />)}
+        {highways.map((l, i) => <path key={`hc-${i}`} d={d(l.p)} fill="none" stroke="var(--map-highway-case)" strokeWidth={hwyW + 2.4} strokeLinejoin="round" strokeLinecap="round" />)}
+        {highways.map((l, i) => <path key={`hf-${i}`} d={d(l.p)} fill="none" stroke="var(--map-highway)" strokeWidth={hwyW} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`dc${i}`} d={d(l.p)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 13 : 9} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
         {lines.filter((g) => g.kind === "lane").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 11 : 9} strokeLinecap="round" strokeLinejoin="round" />)}
@@ -128,10 +126,15 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         {lines.filter((g) => g.kind === "closed").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 14 : 13} strokeLinecap="round" strokeLinejoin="round" />)}
         {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={focus ? 9 : 8} strokeLinecap="round" strokeLinejoin="round" />)}
         {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); const c = g.kind === "lane" ? "var(--warn)" : "var(--danger)"; return g.approx
-          ? <circle key={g.key} cx={x} cy={y} r={16} fill={c} fillOpacity={0.25} stroke={c} strokeWidth={2} strokeDasharray="4 4" />  /* "about here": neighborhood only */
-          : <circle key={g.key} cx={x} cy={y} r={9} fill={c} stroke="var(--surface)" strokeWidth={3} />; })}
-        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4.5} fill="var(--map-town)" stroke="var(--map-label-halo)" strokeWidth={2.5} />; })}
-        {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return <g><circle cx={x} cy={y} r={14} fill="var(--brand)" fillOpacity={0.2} /><circle cx={x} cy={y} r={7} fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} /></g>; })()}
+          ? <circle key={g.key} cx={x} cy={y} r={16} fill={c} fillOpacity={0.25} stroke={c} strokeWidth={2} strokeDasharray="4 4" />
+          : <circle key={g.key} cx={x} cy={y} r={9} fill={c} stroke="var(--map-mark-halo)" strokeWidth={3} />; })}
+        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={3.5} fill="var(--map-town)" stroke="var(--map-label-halo)" strokeWidth={2} />; })}
+        {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return (
+          <g>
+            <circle cx={x} cy={y} r={16} fill="var(--map-you)" fillOpacity={0.22}><animate attributeName="r" values="12;20;12" dur="2.2s" repeatCount="indefinite" /><animate attributeName="opacity" values="0.28;0;0.28" dur="2.2s" repeatCount="indefinite" /></circle>
+            <circle cx={x} cy={y} r={8} fill="var(--map-you)" stroke="var(--map-mark-halo)" strokeWidth={3} />
+          </g>
+        ); })()}
       </svg>
       {/* Town names as HTML so they follow the reader's text size instead of the picture's scale */}
       {places.map((p) => {

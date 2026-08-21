@@ -27,7 +27,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${body.variable} ${heading.variable} h-full antialiased`}>
       <body className="relative min-h-full flex flex-col">

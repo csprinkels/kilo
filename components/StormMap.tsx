@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { conePolygon, type Storm } from "@/lib/storm";
-import { fmtDayTime } from "@/lib/brand";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
 let coastCache: Coast | null = null;
@@ -13,28 +12,45 @@ type Props = {
   className?: string;
 };
 
-/** Monochrome track + cone. Labels are HTML (not SVG text) so they follow the user's text size. */
-export default function StormMap({ storm, place, compact, className }: Props) {
+type Pt = { hour: number; at: number; lat: number; lon: number; windKt: number; outlook?: boolean };
+type Mark = { x: number; y: number; above: boolean; text: string };
+
+const HST = "Pacific/Honolulu";
+const dayKey = (ms: number) => new Intl.DateTimeFormat("en-US", { timeZone: HST, weekday: "short", day: "numeric" }).format(ms);
+const dayShort = (ms: number) => new Intl.DateTimeFormat("en-US", { timeZone: HST, weekday: "short" }).format(ms);
+
+/** Picture-only: steel → gold → orange → red as the wind picks up. */
+function windColor(kt: number) {
+  if (kt >= 96) return "var(--storm-mh)";
+  if (kt >= 64) return "var(--storm-hu)";
+  if (kt >= 34) return "var(--storm-ts)";
+  return "var(--storm-td)";
+}
+
+/** Ocean, sand islands, a path that is the story, dots that get hotter as the wind does. */
+export default function StormMap({ storm, place, className }: Props) {
   const [coast, setCoast] = useState<Coast | null>(coastCache);
   useEffect(() => {
     if (coastCache) return;
     fetch("/hawaii-coast.json").then((r) => r.json()).then((c) => { coastCache = c; setCoast(c); }).catch(() => {});
   }, []);
 
-  const W = 800, H = compact ? 420 : 560;
-  const points = useMemo(() => [{ hour: 0, at: storm.issuedAt, lat: storm.lat, lon: storm.lon, windKt: storm.windKt, outlook: false }, ...storm.forecast], [storm]);
+  const W = 800, H = 440;
+  const points: Pt[] = useMemo(
+    () => [{ hour: 0, at: storm.issuedAt, lat: storm.lat, lon: storm.lon, windKt: storm.windKt, outlook: false }, ...storm.forecast],
+    [storm],
+  );
   const cone = useMemo(() => conePolygon(points), [points]);
 
   // Bounds: main islands + the decision window of the forecast, padded. The past track and far outlook
   // points are still drawn (SVG clips them) but don't drive the zoom, or the islands shrink to specks.
-  // Equirectangular with cos(lat) x-scale is fine at these latitudes.
   const proj = useMemo(() => {
     let minLon = -160.6, maxLon = -154.6, minLat = 18.6, maxLat = 22.4;
     const eat = (lon: number, lat: number) => { minLon = Math.min(minLon, lon); maxLon = Math.max(maxLon, lon); minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat); };
     const islandsLat = 20.5, islandsLon = -157.5;
     const d2 = (p: { lat: number; lon: number }) => (p.lat - islandsLat) ** 2 + ((p.lon - islandsLon) * 0.94) ** 2;
     const dNow = d2(points[0]);
-    const inWindow = points.filter((p) => p.hour <= 72 || d2(p) < dNow); // later points only if they come closer than today
+    const inWindow = points.filter((p) => p.hour <= 72 || d2(p) < dNow);
     for (const p of inWindow) eat(p.lon, p.lat);
     const lastHour = inWindow[inWindow.length - 1].hour;
     for (const [lon, lat] of conePolygon(points.filter((p) => p.hour <= lastHour))) eat(lon, lat);
@@ -53,57 +69,131 @@ export default function StormMap({ storm, place, compact, className }: Props) {
   const line = (pts: { lon: number; lat: number }[]) => pts.map((p, i) => `${i ? "L" : "M"}${f(p.lon, p.lat).map((n) => n.toFixed(1)).join(",")}`).join(" ");
 
   const past = storm.track.filter((t) => t.adv < storm.advNum).sort((a, b) => a.at - b.at);
-  const last = points[points.length - 1];
   const [nowX, nowY] = f(points[0].lon, points[0].lat);
-  const [lastX, lastY] = f(last.lon, last.lat);
-  const [placeX, placeY] = place ? f(place.lon, place.lat) : [NaN, NaN];
-  const nearPlace = Math.hypot(nowX - placeX, nowY - placeY) < 200; // labels would collide; the pulsing ring still says "now"
-  const scalePx = 200 / 1.15078 / proj.nmPerPx; // 200 statute miles
+  const scalePx = 200 / 1.15078 / proj.nmPerPx;
+
+  const firm = points.filter((p) => !p.outlook);
+  const later = points.filter((p) => p.outlook);
+  const outlookRun = firm.length && later.length ? [firm[firm.length - 1], ...later] : [];
+
+  const days = dayMarksFor(points).map((p) => {
+    const [x, y] = f(p.lon, p.lat);
+    return { x, y, text: dayShort(p.at) };
+  });
+  const labels = placeLabels(nowX, nowY, days, H);
 
   return (
     <div className={`relative ${className ?? ""}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: where it is and where the center will probably go`}>
-        <rect width={W} height={H} fill="var(--surface)" />
-        {cone.length > 2 && <path d={path(cone)} fill="var(--brand)" fillOpacity={0.15} stroke="var(--brand)" strokeOpacity={0.6} strokeWidth={1.5} strokeDasharray="6 4" />}
-        {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--ink-2)" fillOpacity={0.55} stroke="var(--ink)" strokeWidth={0.8} />)}
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: the path it is on, and how strong the wind is along the way`}>
+        <rect width={W} height={H} fill="var(--map-water)" />
+        {[0.28, 0.5, 0.72].map((t) => (
+          <line key={t} x1={0} y1={H * t} x2={W} y2={H * t} stroke="var(--map-water-line)" strokeWidth={1.25} />
+        ))}
 
-        {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--ink-2)" strokeWidth={2} strokeDasharray="3 5" />}
-        {past.map((t) => { const [x, y] = f(t.lon, t.lat); return <circle key={t.adv} cx={x} cy={y} r={3} fill="var(--ink-2)" />; })}
+        {coast?.coordinates.map((poly, i) => (
+          <path key={`halo-${i}`} d={path(poly[0])} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.7} strokeWidth={8} strokeLinejoin="round" />
+        ))}
+        {coast?.coordinates.map((poly, i) => (
+          <path key={`land-${i}`} d={path(poly[0])} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.4} strokeLinejoin="round" />
+        ))}
 
-        <path d={line(points)} fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
+        {cone.length > 2 && (
+          <path d={path(cone)} fill="var(--storm-hu)" fillOpacity={0.12} stroke="var(--storm-hu)" strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="7 6" />
+        )}
+
+        {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--map-coast)" strokeWidth={1.5} strokeDasharray="2 5" strokeLinecap="round" />}
+
+        {firm.length > 1 && <path d={line(firm)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={5} strokeLinejoin="round" strokeLinecap="round" />}
+        {firm.slice(1).map((p, i) => (
+          <path key={`f-${i}`} d={line([firm[i], p])} fill="none" stroke={windColor(firm[i].windKt)} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        ))}
+        {outlookRun.length > 1 && <path d={line(outlookRun)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />}
+        {outlookRun.slice(1).map((p, i) => (
+          <path key={`o-${i}`} d={line([outlookRun[i], p])} fill="none" stroke={windColor(outlookRun[i].windKt)} strokeWidth={2} strokeDasharray="6 7" strokeLinecap="round" strokeOpacity={0.7} />
+        ))}
+
+        {past.map((t) => {
+          const [x, y] = f(t.lon, t.lat);
+          return <circle key={t.adv} cx={x} cy={y} r={3} fill="var(--map-coast)" />;
+        })}
+
         {points.map((p, i) => {
           const [x, y] = f(p.lon, p.lat);
-          const r = 4 + Math.min(p.windKt, 140) / 14; // dot size says how strong the wind is
+          const r = 5 + Math.min(p.windKt, 140) / 16;
+          const fill = p.outlook ? "var(--map-water)" : windColor(p.windKt);
           return (
             <g key={i}>
-              {i === 0 && <circle cx={x} cy={y} r={18} fill="var(--ink)" opacity={0.25}><animate attributeName="r" values="12;26;12" dur="2.4s" repeatCount="indefinite" /><animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" /></circle>}
-              <circle cx={x} cy={y} r={r} fill={p.outlook ? "var(--surface)" : "var(--ink)"} stroke="var(--ink)" strokeWidth={2} />
+              {i === 0 && (
+                <circle cx={x} cy={y} r={18} fill={windColor(p.windKt)} opacity={0.28}>
+                  <animate attributeName="r" values="12;26;12" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+              )}
+              <circle cx={x} cy={y} r={r} fill={fill} stroke={windColor(p.windKt)} strokeWidth={2.25} />
             </g>
           );
         })}
-
-        {place && <circle cx={placeX} cy={placeY} r={6} fill="var(--brand)" stroke="var(--surface)" strokeWidth={2} />}
       </svg>
 
-      {/* HTML labels: real rem text, positioned by percentage so they ride along with the picture. */}
-      {!nearPlace && <Label x={nowX} y={nowY} h={H} above className="font-semibold text-ink">Now</Label>}
-      {!compact && storm.forecast.length > 0 && <Label x={lastX} y={lastY} h={H} className="text-ink">{fmtDayTime(last.at)}</Label>}
-      {/* The island's name goes on the side away from the storm, so it never sits on the track or the cone. */}
-      {place && <Label x={placeX} y={placeY} h={H} above={nowY > placeY} className="font-semibold text-brand">{place.label}</Label>}
-      <p className="flex items-center justify-end gap-s2 px-s4 pb-s3 text-small text-ink-2 num"><span className="inline-block h-0.5 bg-ink" style={{ width: `${(scalePx / W) * 100}%` }} aria-hidden /> 200 miles</p>
+      {labels.map((l) => (
+        <Label key={l.text} x={l.x} y={l.y} h={H} above={l.above} className="font-semibold text-ink">{l.text}</Label>
+      ))}
+
+      <p className="storm-map-key num">
+        <span className="storm-map-swatches" title="Dot color is how strong the wind is">
+          <i aria-hidden style={{ background: "var(--storm-td)" }} />
+          <i aria-hidden style={{ background: "var(--storm-ts)" }} />
+          <i aria-hidden style={{ background: "var(--storm-hu)" }} />
+          <i aria-hidden style={{ background: "var(--storm-mh)" }} />
+          <span className="ml-s2">weaker → stronger</span>
+        </span>
+        <span className="inline-flex items-center gap-s2"><span className="inline-block h-0.5 bg-ink" style={{ width: `${Math.max(18, (scalePx / W) * 100)}%` }} aria-hidden /> 200 miles</span>
+      </p>
     </div>
   );
 }
 
-/** A text label pinned to a map point; anchored so it never runs past the picture's edge. */
+/** One label per new calendar day on the forecast. Tight pairs are dropped later, not shoved aside. */
+function dayMarksFor(points: Pt[]): Pt[] {
+  const out: Pt[] = [];
+  let lastDay = dayKey(points[0].at);
+  for (const p of points.slice(1)) {
+    if (p.hour > 120) break;
+    const d = dayKey(p.at);
+    if (d === lastDay) continue;
+    out.push(p);
+    lastDay = d;
+  }
+  return out;
+}
+
+/** Sit each name on its dot. If it would collide or hang off the picture, skip it. */
+function placeLabels(nowX: number, nowY: number, days: { x: number; y: number; text: string }[], H: number): Mark[] {
+  const W = 800;
+  const taken: Mark[] = [];
+  const fits = (x: number, y: number, above: boolean) => {
+    if (x < 40 || x > W - 40) return false;
+    if (above && y < 32) return false;
+    if (!above && y > H - 28) return false;
+    const ax = x, ay = above ? y - 28 : y + 24;
+    return taken.every((t) => Math.hypot(ax - t.x, ay - (t.above ? t.y - 28 : t.y + 24)) >= 96);
+  };
+  const add = (x: number, y: number, text: string, preferAbove: boolean) => {
+    const above = preferAbove || y > H * 0.78;
+    if (!fits(x, y, above)) return;
+    taken.push({ x, y, above, text });
+  };
+  add(nowX, nowY, "Now", true);
+  for (const d of days) add(d.x, d.y, d.text, false);
+  return taken;
+}
+
 function Label({ x, y, h, above, className, children }: { x: number; y: number; h: number; above?: boolean; className: string; children: React.ReactNode }) {
   const W = 800, H = h;
-  if (x < 0 || x > W || y < 0 || y > H) return null; // point is off the picture
-  const side = x < W * 0.2 ? "start" : x > W * 0.8 ? "end" : "mid";
-  const tx = side === "start" ? "0" : side === "end" ? "-100%" : "-50%";
+  if (x < 0 || x > W || y < 0 || y > H) return null;
   return (
-    <span className={`pointer-events-none absolute whitespace-nowrap text-small [text-shadow:0_0_0.25rem_var(--surface)] ${className}`}
-      style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, transform: `translate(${tx}, ${above ? "calc(-100% - 0.9rem)" : "0.7rem"})` }}>
+    <span className={`pointer-events-none absolute whitespace-nowrap text-small ${className}`}
+      style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, transform: `translate(-50%, ${above ? "calc(-100% - 0.55rem)" : "0.55rem"})`, textShadow: "0 0 4px var(--map-label-halo), 0 0 8px var(--map-label-halo)" }}>
       {children}
     </span>
   );

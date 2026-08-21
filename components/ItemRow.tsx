@@ -4,7 +4,6 @@ import {
   Activity, CarFront, ChevronDown, CloudRainWind, ExternalLink, MapPin, Megaphone, Mountain, School,
   Share2, Siren, Tent, TrafficCone, TriangleAlert, Waves, Wind, ZapOff, type LucideIcon,
 } from "lucide-react";
-import OfficialWording from "./OfficialWording";
 import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
@@ -38,7 +37,6 @@ function Actions({ item }: { item: Item }) {
 
 /**
  * One official item: [level word] · plain headline · what to do · who said it. Tap the whole row for the details.
- * Never shows the agency's title unless you open "Official wording".
  */
 export default function ItemRow({ item, now, focus, showSource = true }: { item: Item; now: number; focus?: boolean; showSource?: boolean }) {
   if (item.tier === "community") return <NeighborRow item={item} now={now} focus={focus} />;
@@ -70,7 +68,6 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
           {item.body && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
           {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
           <Actions item={item} />
-          <OfficialWording title={item.title} body={item.body} />
         </div>
       )}
     </li>

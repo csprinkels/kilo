@@ -1,5 +1,5 @@
 // Plain language for every item: what is happening, what to do, how urgent — never what the agency called it.
-// The official wording stays in item.title/body and is shown only behind "Official wording".
+// The official wording lives in item.title/body and is shown on the card, not behind a disclosure.
 // Rules: ≤ 20 words a sentence, 6th-grade words, clock times only, no acronyms, never invent a fact the feed didn't give.
 import type { Island, Item } from "./types.ts";
 import { ISLAND_LABEL, fmtDateTime, fmtDayTime, fmtTime } from "./brand.ts";

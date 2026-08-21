@@ -5,7 +5,6 @@ import { CarFront, ChevronDown, ChevronRight, ExternalLink, LocateFixed, MapPin,
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell, { Section } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
-import OfficialWording from "@/components/OfficialWording";
 import TileMap from "@/components/TileMap";
 import { useRoads, type Segment } from "@/components/RoadMap";
 import type { Island, Item } from "@/lib/types";
@@ -289,7 +288,6 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
             {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" aria-hidden /> Read it on their site</a>}
             <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Share2 className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
           </p>
-          <OfficialWording title={item.title} body={item.body} />
         </div>
       )}
     </li>

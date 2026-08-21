@@ -25,18 +25,28 @@
   --cond-clear: #b7791f; --cond-cloud: #6b7280; --cond-showers: #2f7f9e; --cond-rain: #1d5f93;
   --cond-storm: #5b4a9e; --cond-fog: #8a6f4e; --cond-windy: #3f7a5e; --cond-night: #3b4a7a;
 
-  /* offline road atlas: calm geography, high-contrast live conditions */
-  --map-water: #c9e0df;
-  --map-water-line: rgb(51 111 113 / .09);
-  --map-shore: #e8f1ed;
-  --map-land: #e4e2c8;
-  --map-coast: #667266;
-  --map-relief: #747b62;
-  --map-road-case: #5a605a;
-  --map-road: #fffdf9;
-  --map-mark-halo: #fffdf9;
-  --map-town: #2d332e;
-  --map-label-halo: #f2f0dd;
+  /* geography in pictures: Google-maps family, live conditions stay high-contrast on top */
+  --map-water: #aadaff;
+  --map-water-line: rgb(70 140 180 / .06);
+  --map-shore: #aadaff;
+  --map-land: #eef2e4;
+  --map-coast: #b7c4b0;
+  --map-relief: #7a8f62;
+  --map-road-case: #d0d4d8;
+  --map-road: #ffffff;
+  --map-highway: #ffe680;
+  --map-highway-case: #e8c547;
+  --map-mark-halo: #ffffff;
+  --map-town: #3c4043;
+  --map-label-halo: #ffffff;
+  --map-you: #1a73e8;
+
+  /* storm track marks (pictures only): weaker → stronger */
+  --storm-td: #4f7d8c;
+  --storm-ts: #c49212;
+  --storm-hu: #c24d24;
+  --storm-mh: #922818;
+  --storm-cone: rgb(154 61 0 / .18);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,17 +67,25 @@
     --night-band: rgb(255 255 255 / .07);
     --cond-clear: #f2c14e; --cond-cloud: #b4bcc8; --cond-showers: #6cc4dc; --cond-rain: #5aa6e6;
     --cond-storm: #a99af0; --cond-fog: #c9ad86; --cond-windy: #7fc8a4; --cond-night: #8fa0d8;
-    --map-water: #173b3e;
-    --map-water-line: rgb(140 207 209 / .08);
-    --map-shore: #254d4b;
-    --map-land: #42483a;
-    --map-coast: #9ba58e;
+    --map-water: #163448;
+    --map-water-line: rgb(140 190 220 / .08);
+    --map-shore: #1e4a5c;
+    --map-land: #3d4a32;
+    --map-coast: #8aa47a;
     --map-relief: #aab28d;
-    --map-road-case: #111512;
-    --map-road: #d8d6c8;
-    --map-mark-halo: #20241f;
+    --map-road-case: #2a2e30;
+    --map-road: #d8d4c8;
+    --map-highway: #c9a227;
+    --map-highway-case: #8a7018;
+    --map-mark-halo: #1a2224;
     --map-town: #f1ede6;
-    --map-label-halo: #42483a;
+    --map-label-halo: #3d4a32;
+    --map-you: #8ab4f8;
+    --storm-td: #7eb0c0;
+    --storm-ts: #e0b84a;
+    --storm-hu: #e07a4a;
+    --storm-mh: #f09080;
+    --storm-cone: rgb(240 160 144 / .22);
   }
 }
 
@@ -126,18 +144,18 @@
 /* A picture inside a card row (the zoomed road map): an inset, never a card in a card. */
 @utility well { @apply overflow-hidden rounded-[0.625rem] bg-surface-2; }
 
-/* The small label above a card or a run of cards ("Needs a look"). */
-@utility now-label { @apply px-1 font-sans text-small font-semibold tracking-wide text-ink-2; }
+/* Quiet section label on Now — Inter, not the newspaper title. */
+@utility now-label { @apply font-sans text-small font-semibold text-ink-2; }
 
 .map-terrain {
-  opacity: 0.34;
-  filter: saturate(0.5) contrast(0.9);
+  opacity: 0.18;
+  filter: saturate(0.7) contrast(1.02);
   mix-blend-mode: multiply;
 }
 @media (prefers-color-scheme: dark) {
   .map-terrain {
-    opacity: 0.2;
-    filter: grayscale(1) brightness(1.35);
+    opacity: 0.16;
+    filter: saturate(0.4) brightness(1.2);
     mix-blend-mode: screen;
   }
 }
@@ -168,6 +186,163 @@ body {
 .fade-up { animation: fade-up 0.15s ease-out both; }
 .grow-y { animation: none; }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }
+
+/* Now page — island cards. Other pages keep the paper tokens. */
+.now-island {
+  --now-bg: #efe8dc;
+  --now-sand: #fff8ee;
+  --now-hot: #f8ebe6;
+  --now-storm: #e4eef5;
+  --now-road: #f5eadf;
+  --now-wx: #eaf4ef;
+  --now-coral: #9a3d2c;
+  --now-sky: #35597a;
+  --now-earth: #8a4b22;
+  --now-mint: #2a6b56;
+  --now-lagoon: #d9e8ea;
+  background: var(--now-bg);
+  color: var(--ink);
+}
+@media (prefers-color-scheme: dark) {
+  .now-island {
+    --now-bg: #141210;
+    --now-sand: #1e1b17;
+    --now-hot: #3a221c;
+    --now-storm: #1a2830;
+    --now-road: #2a2218;
+    --now-wx: #1a2824;
+    --now-coral: #f0a090;
+    --now-sky: #9ec0dc;
+    --now-earth: #e0b48a;
+    --now-mint: #8fd0b4;
+    --now-lagoon: #243436;
+  }
+}
+.now-island .isl-story {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+.now-island .isl-sub { margin: 0 0 1.1rem; color: var(--ink-2); }
+.now-island .isl-stack { display: flex; flex-direction: column; gap: 0.85rem; }
+.now-island .isl-card {
+  display: block;
+  background: var(--now-sand);
+  border-radius: 1.35rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  box-shadow: 0 1px 0 rgb(28 25 21 / 0.04), 0 10px 28px -18px rgb(28 25 21 / 0.28);
+  color: inherit;
+  text-decoration: none;
+}
+.now-island .isl-hot { background: var(--now-hot); }
+.now-island .isl-storm { background: var(--now-storm); }
+.now-island .isl-road { background: var(--now-road); }
+.now-island .isl-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.now-island .isl-hot .isl-kicker { color: var(--now-coral); }
+.now-island .isl-storm .isl-kicker { color: var(--now-sky); }
+.now-island .isl-road .isl-kicker { color: var(--now-earth); }
+.now-island .isl-wx .isl-kicker { color: var(--now-mint); }
+.now-island .isl-bubble {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.85rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.now-island .isl-bubble svg { width: 1.2rem; height: 1.2rem; }
+.now-island .isl-hot .isl-bubble { background: #f4c7b8; color: var(--now-coral); }
+.now-island .isl-storm .isl-bubble { background: #c5d9ea; color: var(--now-sky); }
+.now-island .isl-road .isl-bubble { background: #f0c9a8; color: var(--now-earth); }
+.now-island .isl-wx .isl-bubble { background: #d3ebe0; color: var(--now-mint); }
+.now-island .isl-mini .isl-bubble { background: var(--now-lagoon); color: #3a6a6e; }
+@media (prefers-color-scheme: dark) {
+  .now-island .isl-hot .isl-bubble { background: #5a3228; }
+  .now-island .isl-storm .isl-bubble { background: #2a4050; }
+  .now-island .isl-road .isl-bubble { background: #4a3828; }
+  .now-island .isl-wx .isl-bubble { background: #2a443c; }
+  .now-island .isl-mini .isl-bubble { color: var(--now-sky); }
+}
+.now-island .isl-h {
+  margin: 0.55rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.now-island .isl-p { margin: 0.4rem 0 0; }
+.now-island .isl-note {
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--now-coral) 25%, transparent);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--now-coral);
+}
+.now-island .isl-more {
+  margin: 0.65rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--now-earth);
+}
+.now-island .isl-wx-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
+.now-island .isl-wx-row img { flex-shrink: 0; }
+.now-island .isl-deg {
+  font-size: 2.35rem;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--now-mint);
+}
+.now-island .isl-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+.now-island .isl-mini {
+  background: color-mix(in srgb, var(--now-bg) 70%, var(--now-sand));
+  border-radius: 1.1rem;
+  padding: 0.85rem 0.9rem 0.95rem;
+  color: inherit;
+  text-decoration: none;
+  min-height: 6.5rem;
+}
+.now-island .isl-mini h3 { margin: 0.5rem 0 0; font-size: 1rem; font-weight: 700; }
+.now-island .isl-mini p { margin: 0.15rem 0 0; font-size: 1rem; color: var(--ink-2); line-height: 1.35; }
+.now-island .isl-map {
+  margin: 0.9rem -0.15rem -0.15rem;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+.storm-map-key {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.9rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--map-town);
+  background: var(--map-water);
+}
+.storm-map-swatches { display: flex; align-items: center; gap: 0.28rem; }
+.storm-map-swatches i {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 99px;
+  display: block;
+  box-shadow: 0 0 0 2px var(--map-mark-halo);
+}
 
 /* Leaflet (the real street map on Roads): buttons at 44px, our colours, attribution readable but quiet. */
 .leaflet-container { font: inherit; background: var(--surface-2); color: var(--ink); }

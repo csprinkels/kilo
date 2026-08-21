@@ -28,7 +28,7 @@ export default function TopBar({ island: islandProp, onIsland: onIslandProp, qui
         ? <span className="display text-title text-ink">{APP_NAME}</span>
         : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><ChevronLeft className="size-5" aria-hidden /> Now</Link>}
       {(
-        <label className={`relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-4 text-small font-semibold text-ink @max-[20rem]:order-3 @max-[20rem]:basis-full @max-[20rem]:justify-between ${quiet ? "bg-transparent ring-1 ring-line" : "bg-surface-2"}`}>
+        <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full bg-surface-2 px-4 text-small font-semibold text-ink @max-[20rem]:order-3 @max-[20rem]:basis-full @max-[20rem]:justify-between">
           {label} <ChevronDown className="size-4 text-ink-2" aria-hidden />
           <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
             {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
