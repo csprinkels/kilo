@@ -89,5 +89,7 @@ Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-l
 ## Not yet (by design)
 
 - Big Island Video News RSS (ask permission first), county CivicPlus pages (403 to bots), HECO outage map (token-gated), Everbridge/Genasys (no feed).
-- Push, offline shelter/zone pack, Capacitor wrap: Phase 2. Reporters and help board: Phase 3.
+- Capacitor wrap: Phase 2. Reporters on the other islands and a help board: Phase 3.
+- Switched on but not yet configured: Turnstile (set `TURNSTILE_SECRET` in Convex and `NEXT_PUBLIC_TURNSTILE_SITEKEY` in Vercel), the R2/CDN mirror (four `R2_*` vars). Until then the report form has only the honeypot and timer, and data is served straight from Convex.
+- Operations: `/mod/?key=…` is the moderation page; the watchdog and held-report alerts push to whoever has tapped "Notify me" there.
 - The name. `APP_NAME` in `lib/brand.ts` and `public/manifest.webmanifest` are placeholders; icons are generated squares.
