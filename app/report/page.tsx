@@ -2,12 +2,11 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { CarFront, Check, ChevronRight, LightbulbOff, PawPrint, Waves, type LucideIcon } from "lucide-react";
+import Icon, { type IconName } from "@/components/Icon";
 import PageShell, { H2, Section } from "@/components/PageShell";
 import { NeighborRow } from "@/components/ItemRow";
 import { Notice } from "@/components/AlertBlock";
 import EmptyState from "@/components/EmptyState";
-import { TopicIcon, type Topic } from "@/components/ConditionIcon";
 import { HAWAII_DISTRICTS, districtFor } from "@/lib/places";
 import { HELD_BY_DEFAULT, LOC_MAX, REPORT_TYPES, REPORT_TYPE_KEYS, TEXT_MAX, holdReason, validateReport, type HoldReason, type ReportType } from "@/lib/reportRules";
 import { submitReport, type SubmitResult } from "@/lib/report";
@@ -19,14 +18,14 @@ const TURNSTILE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
 const SENTENCE = "What people nearby are seeing. Not checked by anyone official. Hurt or in danger? Call 911 first.";
 
 /** Tile words and pictures. Labels are the everyday words, not the form's internal names. */
-const TILE: Record<ReportType, { label: string; icon: LucideIcon | Topic }> = {
-  crash: { label: "Crash", icon: CarFront },
-  signal_out: { label: "Traffic light out", icon: LightbulbOff },
-  road_flooded: { label: "Road flooded", icon: Waves },
-  road_blocked: { label: "Road blocked", icon: "road" },
-  outage: { label: "Power or water out", icon: "power" },
-  lost_pet: { label: "Lost or found pet", icon: PawPrint },
-  other: { label: "Something else", icon: "neighbors" },
+const TILE: Record<ReportType, { label: string; icon: IconName }> = {
+  crash: { label: "Crash", icon: "car" },
+  signal_out: { label: "Traffic light out", icon: "lightbulb-filament" },
+  road_flooded: { label: "Road flooded", icon: "waves" },
+  road_blocked: { label: "Road blocked", icon: "traffic-cone" },
+  outage: { label: "Power or water out", icon: "lightning-slash" },
+  lost_pet: { label: "Lost or found pet", icon: "paw-print" },
+  other: { label: "Something else", icon: "question" },
 };
 const HOLD_WHY: Record<HoldReason, string> = {
   plate: "This mentions a license plate", phone: "This has a phone number", contact: "This has an email or a link",
@@ -82,7 +81,7 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
           )}
           <Link href="/guidelines/" className="row mt-s5 border-t border-line">
             <span className="flex-1 text-body font-semibold text-ink">Rules for reports</span>
-            <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+            <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
           </Link>
         </>
       )}
@@ -163,8 +162,8 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
             return (
               <button key={k} type="button" onClick={() => setD({ ...d, type: k })} aria-pressed={on}
                 className={`flex min-h-24 flex-col items-center justify-center gap-s2 rounded-card px-s2 py-s3 text-center text-body font-semibold ${on ? "bg-brand text-brand-ink" : "bg-surface-2 text-ink"}`}>
-                {typeof t.icon === "string" ? <TopicIcon topic={t.icon} size={32} /> : <t.icon className="size-8" strokeWidth={1.75} aria-hidden />}
-                <span className="inline-flex items-center gap-1">{on && <Check className="size-5" aria-hidden />}{t.label}</span>
+                <Icon name={`${t.icon}-fill`} size={30} />
+                <span className="inline-flex items-center gap-1">{on && <Icon name="check" className="size-5" aria-hidden />}{t.label}</span>
               </button>
             );
           })}
@@ -200,7 +199,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       </Section>
 
       <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="row mt-s6 items-start">
-        <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${d.agreed ? "border-brand bg-brand text-brand-ink" : "border-ink-2"}`} aria-hidden>{d.agreed && <Check className="size-5" />}</span>
+        <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${d.agreed ? "border-brand bg-brand text-brand-ink" : "border-ink-2"}`} aria-hidden>{d.agreed && <Icon name="check" className="size-5" />}</span>
         <span className="text-body text-ink">This is not an emergency and I am 18 or older.</span>
       </button>
       <Link href="/guidelines/" className="inline-flex min-h-11 items-center text-body font-semibold text-brand">Neighbor rules</Link>

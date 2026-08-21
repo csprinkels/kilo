@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import Icon from "@/components/Icon";
 import PageShell, { Section } from "@/components/PageShell";
 import DotMap from "@/components/DotMap";
 import EmptyState from "@/components/EmptyState";
@@ -77,9 +77,9 @@ function QuakesBody({ retry }: { retry: () => void }) {
 
           <ul className="list mt-s6">
             {tell && (
-              <li><a className="row font-semibold text-brand" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it <ChevronRight className="size-5 shrink-0" aria-hidden /></a></li>
+              <li><a className="row font-semibold text-brand" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it <Icon name="caret-right" className="size-5 shrink-0" aria-hidden /></a></li>
             )}
-            <li><a className="row font-semibold text-brand" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <ChevronRight className="size-5 shrink-0" aria-hidden /></a></li>
+            <li><a className="row font-semibold text-brand" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <Icon name="caret-right" className="size-5 shrink-0" aria-hidden /></a></li>
           </ul>
         </>
       )}

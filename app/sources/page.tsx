@@ -1,7 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import Icon from "@/components/Icon";
 import PageShell, { Section } from "@/components/PageShell";
 import AlertsCard from "@/components/AlertsCard";
 import { ISLANDS, type Island } from "@/lib/types";
@@ -81,7 +81,7 @@ export default function Settings() {
       <AlertsCard island={island} />
 
       <Section title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
-        <a className="btn mt-s3" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <ChevronRight className="size-5" aria-hidden /></a>
+        <a className="btn mt-s3" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <Icon name="caret-right" className="size-5" aria-hidden /></a>
       </Section>
 
       <Section title={`Add ${APP_NAME} to your Home Screen`} sentence={
@@ -105,7 +105,7 @@ export default function Settings() {
       <Section title={`What ${APP_NAME} will never do`} sentence="Show ads. Ask you to sign up. Sell or share where you are. Let a computer write an alert. Make a neighbor's post look official." />
 
       <Link href="/guidelines/" className="row mt-s6 border-t border-line font-semibold text-brand">
-        <span className="flex-1">Neighbor rules</span><ChevronRight className="size-5 shrink-0" aria-hidden />
+        <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
       </Link>
       <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
     </PageShell>

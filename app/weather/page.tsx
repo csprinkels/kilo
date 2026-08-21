@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import Icon from "@/components/Icon";
 import PageShell, { Section } from "@/components/PageShell";
 import ConditionIcon from "@/components/ConditionIcon";
 import HourlyChart from "@/components/HourlyChart";
@@ -52,7 +52,7 @@ export default function WeatherPage() {
   const title = !d || !town ? "Weather" : (
     <>Weather in{" "}
       <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full bg-surface-2 px-4 align-middle font-sans text-body font-semibold text-ink">
-        {town.name} <ChevronDown className="size-5 text-ink-2" aria-hidden />
+        {town.name} <Icon name="caret-down" className="size-5 text-ink-2" aria-hidden />
         <select aria-label="Town" value={town.id} onChange={(e) => setTownId(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
           {d.towns.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
@@ -73,7 +73,7 @@ export default function WeatherPage() {
       {d && town && h && meta && (
         <>
           <RightNow town={town} meta={meta} now={now} />
-          {storm && <p className="mt-s3 max-w-[36rem] text-body text-ink"><span className="font-semibold">{storm.text}</span> <Link href="/storms/" className="inline-flex min-h-11 items-center font-semibold text-brand">See the storm <ChevronRight className="size-5" aria-hidden /></Link></p>}
+          {storm && <p className="mt-s3 max-w-[36rem] text-body text-ink"><span className="font-semibold">{storm.text}</span> <Link href="/storms/" className="inline-flex min-h-11 items-center font-semibold text-brand">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link></p>}
 
           <Section title="Next 24 hours" sentence={`${trendSentence(h)}${sunburn(d.surf?.uv, now)}`}>
             <HourlyChart h={h} />
@@ -89,7 +89,7 @@ export default function WeatherPage() {
 
           {d.air.length > 0 && (
             <Section title="Air" sentence={airSentence(d.air, town.name, island)}>
-              {island === "hawaii" && <Link href="/volcano/" className="mt-s2 inline-flex min-h-11 items-center text-body font-semibold text-brand">Vog details <ChevronRight className="size-5" aria-hidden /></Link>}
+              {island === "hawaii" && <Link href="/volcano/" className="mt-s2 inline-flex min-h-11 items-center text-body font-semibold text-brand">Vog details <Icon name="caret-right" className="size-5" aria-hidden /></Link>}
             </Section>
           )}
 

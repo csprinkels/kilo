@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CarFront, ChevronDown, ChevronRight, ExternalLink, LocateFixed, MapPin, Phone, Share2, TrafficCone } from "lucide-react";
+import Icon, { type IconName } from "@/components/Icon";
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell, { Section } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
@@ -139,7 +139,7 @@ export default function RoadsPage() {
               <p className="mt-s3 max-w-[36rem] text-body text-ink">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
             ) : (
               <>
-                <button className="btn mt-s3" onClick={locate} disabled={locating}><LocateFixed className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
+                <button className="btn mt-s3" onClick={locate} disabled={locating}><Icon name="crosshair" className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
                 <p className="mt-s1 text-small text-ink-2">{APP_NOTE}</p>
               </>
             )
@@ -162,7 +162,7 @@ export default function RoadsPage() {
             ) : (
               <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
             )}
-            {grouped.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <ChevronDown className="size-5" aria-hidden /></button>}
+            {grouped.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-down" className="size-5" aria-hidden /></button>}
           </Section>
 
           {island === "hawaii" && (
@@ -180,7 +180,7 @@ export default function RoadsPage() {
                   <ul className="list mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
                 </>
               ) : (
-                <button className="btn btn-big" onClick={() => setShowWork(true)}><TrafficCone className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
+                <button className="btn btn-big" onClick={() => setShowWork(true)}><Icon name="traffic-cone" className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
               )}
             </section>
           )}
@@ -191,14 +191,14 @@ export default function RoadsPage() {
                 <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
               </div>
             ) : (
-              <button className="btn btn-big" onClick={() => setShowMap(true)}><CarFront className="size-5" aria-hidden /> Open the live traffic map (needs a good signal)</button>
+              <button className="btn btn-big" onClick={() => setShowMap(true)}><Icon name="car" className="size-5" aria-hidden /> Open the live traffic map (needs a good signal)</button>
             )}
           </section>
 
           {island === "hawaii" && (
             <Link href="/report/?type=road_blocked" className="row mt-s4 border-t border-line">
               <span className="flex-1 text-body font-semibold text-ink">Saw something on the road? Tell your neighbors</span>
-              <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+              <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
             </Link>
           )}
         </>
@@ -225,7 +225,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   const county = item.source.startsWith("hccda") && isClosed(item);
   const cd = CIVIL_DEFENSE[island];
   const [copied, setCopied] = useState(false);
-  const Icon = item.type === "traffic" ? CarFront : TrafficCone;
+  const glyph: IconName = item.type === "traffic" ? "car" : "traffic-cone";
   // The same colours as the map: red = closed, orange = one lane, so the list and the picture say the same thing.
   const kind = segmentKind(item);
   const tone = kind === "lane" ? "text-warn" : kind ? "text-danger" : LEVEL_TEXT[p.level];
@@ -252,13 +252,13 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   return (
     <li id={`item-${hashOf(item.key)}`}>
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <Icon className={`mt-1 size-6 shrink-0 ${tone}`} strokeWidth={2} aria-hidden />
+        <span className={`tile mt-0.5 ${kind === "closed" ? "bg-danger-bg" : kind === "lane" ? "bg-warn-bg" : ""}`}><Icon name={`${glyph}-fill`} size={20} className={tone} /></span>
         <span className="min-w-0 flex-1">
           {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{title}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
           <span className="mt-0.5 block text-small text-ink-2 num">{meta}</span>
         </span>
-        <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {open && (
         <div className="fade-up mb-s4 pl-9">
@@ -276,7 +276,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
               ) : (
                 <>
                   <p className="mt-1 text-body text-ink-2">Civil Defense has not listed a way around this yet. If you live nearby and need to get through, call them.</p>
-                  {cd && <a className="btn mt-s2" href={`tel:${cd.tel}`}><Phone className="size-5" aria-hidden /> Call Civil Defense {cd.shown}</a>}
+                  {cd && <a className="btn mt-s2" href={`tel:${cd.tel}`}><Icon name="phone" className="size-5" aria-hidden /> Call Civil Defense {cd.shown}</a>}
                 </>
               )}
             </div>
@@ -284,9 +284,9 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
           {item.body && !path && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
           {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
           <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
-            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.fields?.approx === "area" ? `https://maps.apple.com/?q=${encodeURIComponent(`${item.title.split(/:|—/).slice(1).join(" ").trim()}, Oahu`)}` : `https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><MapPin className="size-4" aria-hidden /> Open in Maps</a>}
-            {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" aria-hidden /> Read it on their site</a>}
-            <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Share2 className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
+            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.fields?.approx === "area" ? `https://maps.apple.com/?q=${encodeURIComponent(`${item.title.split(/:|—/).slice(1).join(" ").trim()}, Oahu`)}` : `https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><Icon name="map-pin" className="size-4" aria-hidden /> Open in Maps</a>}
+            {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><Icon name="arrow-square-out" className="size-4" aria-hidden /> Read it on their site</a>}
+            <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Icon name="share-network" className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
           </p>
         </div>
       )}

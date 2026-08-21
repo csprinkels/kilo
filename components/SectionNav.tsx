@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CarFront, CloudSun, Home, Users } from "lucide-react";
+import Icon, { type IconName } from "@/components/Icon";
 
 /** Four destinations. Storms, earthquakes, the volcano and tsunami are rows on Now, so Now stays lit on those pages. */
-const TABS = [
-  { href: "/", label: "Now", icon: Home, also: ["/storms/", "/quakes/", "/volcano/", "/tsunami/"] },
-  { href: "/weather/", label: "Weather", icon: CloudSun, also: [] },
-  { href: "/traffic/", label: "Roads", icon: CarFront, also: [] },
-  { href: "/report/", label: "Neighbors", icon: Users, also: ["/guidelines/"] },
+const TABS: { href: string; label: string; icon: IconName; also: string[] }[] = [
+  { href: "/", label: "Now", icon: "house", also: ["/storms/", "/quakes/", "/volcano/", "/tsunami/"] },
+  { href: "/weather/", label: "Weather", icon: "cloud-sun", also: [] },
+  { href: "/traffic/", label: "Roads", icon: "car", also: [] },
+  { href: "/report/", label: "Neighbors", icon: "users-three", also: ["/guidelines/"] },
 ];
 const isOn = (path: string, t: (typeof TABS)[number]) => path === t.href || t.also.some((a) => path.startsWith(a));
 
@@ -19,7 +19,7 @@ export default function SectionNav() {
       {/* wide screens: the same four, as pills under the top bar */}
       <nav aria-label="Sections" className="mt-s3 hidden gap-s2 md:flex">
         {TABS.map((t) => (
-          <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined} className={`btn ${isOn(path, t) ? "chip-active" : ""}`}><t.icon className="size-5" aria-hidden /> {t.label}</Link>
+          <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined} className={`btn ${isOn(path, t) ? "chip-active" : ""}`}><Icon name={isOn(path, t) ? `${t.icon}-fill` : t.icon} size={20} /> {t.label}</Link>
         ))}
       </nav>
       {/* phones: a floating frosted pill above the home indicator; the lit tab sits on its own pill inside it */}
@@ -32,7 +32,7 @@ export default function SectionNav() {
               <li key={t.href}>
                 <Link href={t.href} aria-current={on ? "page" : undefined}
                   className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-[2px] font-semibold leading-tight transition-colors [font-size:clamp(10px,3cqi,12px)] ${on ? "bg-surface-2 text-brand" : "text-ink-2"}`}>
-                  <t.icon className="size-6" strokeWidth={on ? 2.25 : 1.75} aria-hidden /> {t.label}
+                  <Icon name={on ? `${t.icon}-fill` : t.icon} size={24} px /> {t.label}
                 </Link>
               </li>
             );

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Satellite } from "lucide-react";
+import Icon from "@/components/Icon";
 import StormMap from "./StormMap";
 import OfficialWording from "./OfficialWording";
 import { Section } from "./PageShell";
@@ -88,7 +88,7 @@ function Imagery({ id }: { id: string }) {
   const floater = `https://cdn.star.nesdis.noaa.gov/FLOATER/data/${id.toUpperCase()}/GEOCOLOR/1000x1000.jpg`;
   const sector = "https://cdn.star.nesdis.noaa.gov/GOES18/ABI/SECTOR/hi/GEOCOLOR/1200x1200.jpg";
   if (stamp === null) {
-    return <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="btn btn-big mt-s5"><Satellite className="size-5" aria-hidden /> See the satellite picture (big download)</button>;
+    return <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="btn btn-big mt-s5"><Icon name="camera" className="size-5" aria-hidden /> See the satellite picture (big download)</button>;
   }
   return (
     <div className="mt-s5 grid gap-s4 sm:grid-cols-2">

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronRight, Siren } from "lucide-react";
+import Icon from "@/components/Icon";
 import PageShell, { H2 } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import OfficialWording from "@/components/OfficialWording";
@@ -106,7 +106,7 @@ export default function TsunamiPage() {
     >
       {d && warning && (
         <section role="alert" aria-label="Tsunami warning" className="card mt-s4 bg-danger-bg pl-6 shadow-[inset_4px_0_0_var(--danger),var(--card-shadow)]">
-          <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><Siren className="size-6" aria-hidden /> Act now</p>
+          <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><Icon name="siren" className="size-6" aria-hidden /> Act now</p>
           <h2 className="mt-s2 font-display text-display font-bold leading-tight text-ink">Tsunami warning</h2>
           <p className="mt-s2 text-body font-semibold text-ink">{WARNING_ACTION}</p>
           <p className="mt-s2 text-small text-ink-2 num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>
@@ -127,7 +127,7 @@ export default function TsunamiPage() {
         </p>
       )}
       {sirenLine && <p className="mt-s2 text-body font-semibold text-ink">{sirenLine}</p>}
-      <a className="mt-s2 inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={map.url} target="_blank" rel="noreferrer">{map.label} <ChevronRight className="size-5" aria-hidden /></a>
+      <a className="mt-s2 inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" className="size-5" aria-hidden /></a>
 
       <H2>What to do</H2>
       <ol className="list mt-s3">
@@ -142,7 +142,7 @@ export default function TsunamiPage() {
 
       {d && (
         <OfficialWording title={d.status.event || "No tsunami message in effect"} body={[d.status.headline, d.status.issued ? `Issued ${fmtClock(d.status.issued, now)}` : ""].filter(Boolean).join("\n")}>
-          <a className="mt-s2 inline-flex min-h-11 items-center gap-1 font-semibold text-brand" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <ChevronRight className="size-4" aria-hidden /></a>
+          <a className="mt-s2 inline-flex min-h-11 items-center gap-1 font-semibold text-brand" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="caret-right" className="size-4" aria-hidden /></a>
         </OfficialWording>
       )}
     </PageShell>

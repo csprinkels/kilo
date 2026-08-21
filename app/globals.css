@@ -145,7 +145,10 @@
 @utility well { @apply overflow-hidden rounded-[0.625rem] bg-surface-2; }
 
 /* Quiet section label on Now — Inter, not the newspaper title. */
-@utility now-label { @apply font-sans text-small font-semibold text-ink-2; }
+/* The small label above a card or a run of cards ("Needs a look", "Ka‘ū"): micro caps, like a form section. */
+@utility now-label { @apply px-1 font-sans text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-ink-2; }
+/* An icon in a tinted rounded square, the way the topic cards do it. */
+@utility tile { @apply grid size-9 shrink-0 place-items-center rounded-[0.7rem] bg-surface-2; }
 
 .map-terrain {
   opacity: 0.18;

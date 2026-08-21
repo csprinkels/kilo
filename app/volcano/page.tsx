@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import Icon from "@/components/Icon";
 import PageShell, { Section } from "@/components/PageShell";
 import OfficialWording from "@/components/OfficialWording";
 import EmptyState from "@/components/EmptyState";
@@ -101,12 +101,12 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
               </ul>
             )}
             <p className="mt-s3 max-w-[36rem] text-body text-ink-2">If vog bothers you, stay inside with the windows closed and keep your medicine close. Dust masks do not stop vog.</p>
-            <a className="inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health <ChevronRight className="size-5" aria-hidden /></a>
+            <a className="inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health <Icon name="caret-right" className="size-5" aria-hidden /></a>
           </Section>
 
           {k && (
             <Section title="From the observatory" sentence={prose || "The observatory's latest update is in the official wording below."}>
-              <a className="inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update <ChevronRight className="size-5" aria-hidden /></a>
+              <a className="inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update <Icon name="caret-right" className="size-5" aria-hidden /></a>
             </Section>
           )}
 
@@ -123,7 +123,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
                 <button onClick={() => setCam(d.cams[0].id)} className="btn btn-big mt-s3 text-center">See a photo of the crater (uses a little data)</button>
               ) : (
                 <label className="btn relative mt-s3 cursor-pointer">
-                  Other cameras <ChevronDown className="size-5 text-ink-2" aria-hidden />
+                  Other cameras <Icon name="caret-down" className="size-5 text-ink-2" aria-hidden />
                   <select aria-label="Camera" value={cam} onChange={(e) => setCam(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
                     {d.cams.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import Icon from "@/components/Icon";
 import EmptyState from "@/components/EmptyState";
 import PageShell from "@/components/PageShell";
 import StormTracker from "@/components/StormTracker";
@@ -46,7 +46,7 @@ export default function StormsPage() {
       {storms.filter((s) => s !== shown).map((s) => (
         <button key={s.id} className="row mt-s4 border-t border-line text-body text-ink num" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
           <span className="min-w-0 flex-1">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
-          <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+          <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
         </button>
       ))}
     </PageShell>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Activity, ChevronRight, CloudSun, Mountain, Tent, TrafficCone, Users, Waves, Wind, type LucideIcon } from "lucide-react";
+import Icon, { type IconName } from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
 import AlertsCard from "@/components/AlertsCard";
 import Freshness from "@/components/Freshness";
@@ -115,7 +115,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
         <div className="isl-stack">
           {lead && !(approaching && (lead.type === "storm" || lead.type === "advisory")) && (
-            <ItemCard tone="hot" icon={lead.type === "tsunami" ? Waves : lead.type === "shelter" ? Tent : Wind} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} now={now} focus={lead.key === focusKey}>
+            <ItemCard tone="hot" icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} now={now} focus={lead.key === focusKey}>
               {plain.get(lead.key)!.action && <p className="isl-p">{plain.get(lead.key)!.action}</p>}
               {staleLine(lead, now) && <p className="isl-note">{staleLine(lead, now)}</p>}
               {(extraWarnings.length > 0 || headlinesOnly.length > 0) && (
@@ -124,13 +124,13 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                   {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
                 </ul>
               )}
-              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <ChevronRight className="size-4" aria-hidden /></button>}
+              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" className="size-4" aria-hidden /></button>}
             </ItemCard>
           )}
 
           {approaching && mainStorm && (
             <Link href="/storms/" className="isl-card isl-storm" aria-label={mainStorm.text}>
-              <p className="isl-kicker"><span className="isl-bubble"><Wind aria-hidden /></span>{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
+              <p className="isl-kicker"><span className="isl-bubble"><Icon name="wind" aria-hidden /></span>{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
               <h2 className="isl-h">{stormName(mainStorm.s).replace(/-/g, "\u2011")}</h2>{/* non-breaking hyphen: never "Two-" / "C" */}
               <p className="isl-p">{mainStorm.text}</p>
               {mainStorm.level >= 3 && <p className="isl-note" style={{ color: "var(--now-sky)", borderColor: "color-mix(in srgb, var(--now-sky) 25%, transparent)" }}>Finish getting ready. Follow Civil Defense.</p>}
@@ -145,14 +145,14 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                 {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
                 {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
               </ul>
-              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <ChevronRight className="size-4" aria-hidden /></button>}
+              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" className="size-4" aria-hidden /></button>}
             </article>
           )}
 
           {shelters.map((i) => {
             const p = plain.get(i.key)!;
             return (
-              <ItemCard key={i.key} tone="hot" icon={Tent} kicker={p.word ?? "Shelter open"} title={p.headline} item={i} now={now} focus={i.key === focusKey}>
+              <ItemCard key={i.key} tone="hot" icon="tent" kicker={p.word ?? "Shelter open"} title={p.headline} item={i} now={now} focus={i.key === focusKey}>
                 {p.action && <p className="isl-p">{p.action}</p>}
                 {staleLine(i, now) && <p className="isl-note">{staleLine(i, now)}</p>}
               </ItemCard>
@@ -161,7 +161,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
           {!roads.quiet && (
             <Link href="/traffic/" className="isl-card isl-road">
-              <p className="isl-kicker"><span className="isl-bubble"><TrafficCone aria-hidden /></span> Roads</p>
+              <p className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone" aria-hidden /></span> Roads</p>
               <h2 className="isl-h">{roads.text.replace(/\s+\d+ more\.$/, "")}</h2>
               <p className="isl-p">Tap for the map and detours.</p>
               {/\d+ more/.test(roads.text) && <p className="isl-more">{roads.text.match(/(\d+ more)\.?$/)?.[1]}</p>}
@@ -182,10 +182,10 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
               <p className="isl-kicker" style={{ color: "var(--ink-2)" }}>Also today</p>
               <div className="isl-grid">
                 {alsoToday.map((r) => {
-                  const Icon = MINI_ICON[r.key] ?? CloudSun;
+                  const glyph = MINI_ICON[r.key] ?? "cloud-sun";
                   return (
                     <Link key={r.key} href={r.href} className="isl-mini">
-                      <span className="isl-bubble"><Icon aria-hidden /></span>
+                      <span className="isl-bubble"><Icon name={`${glyph}-fill`} size={20} /></span>
                       <h3>{r.label}</h3>
                       <p>{r.text}</p>
                     </Link>
@@ -208,15 +208,15 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   );
 }
 
-const MINI_ICON: Record<string, LucideIcon> = {
-  storms: Wind, quakes: Activity, volcano: Mountain, tsunami: Waves, neighbors: Users, roads: TrafficCone,
+const MINI_ICON: Record<string, IconName> = {
+  storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", neighbors: "users-three", roads: "traffic-cone",
 };
 
 type Row = { key: string; label: string; text: string; href: string; quiet: boolean };
 
-function ItemCard({ tone, icon: Icon, kicker, title, children, item, focus }: {
+function ItemCard({ tone, icon, kicker, title, children, item, focus }: {
   tone: "hot" | "storm" | "road" | "wx";
-  icon: LucideIcon;
+  icon: IconName;
   kicker: string;
   title: string;
   children?: React.ReactNode;
@@ -228,7 +228,7 @@ function ItemCard({ tone, icon: Icon, kicker, title, children, item, focus }: {
   useEffect(() => { if (focus && item) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item]);
   return (
     <article id={item ? `item-${hashOf(item.key)}` : undefined} className={`isl-card isl-${tone}`} aria-label={title}>
-      <p className="isl-kicker"><span className="isl-bubble"><Icon aria-hidden /></span> {kicker}</p>
+      <p className="isl-kicker"><span className="isl-bubble"><Icon name={`${icon}-fill`} size={20} /></span> {kicker}</p>
       <h2 className="isl-h">{title}</h2>
       {children}
       {extra && <p className="isl-p text-ink-2">{extra}</p>}

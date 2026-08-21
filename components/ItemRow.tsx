@@ -1,18 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  Activity, CarFront, ChevronDown, CloudRainWind, ExternalLink, MapPin, Megaphone, Mountain, School,
-  Share2, Siren, Tent, TrafficCone, TriangleAlert, Waves, Wind, ZapOff, type LucideIcon,
-} from "lucide-react";
+import Icon, { type IconName } from "@/components/Icon";
 import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 
-export const ICON: Record<ItemType, LucideIcon> = {
-  shelter: Tent, road_closure: TrafficCone, school: School, advisory: CloudRainWind, storm: Wind, tsunami: Waves,
-  quake: Activity, volcano: Mountain, notice: Megaphone, evac: Siren, hazard: TriangleAlert, outage: ZapOff, traffic: CarFront,
+export const ICON: Record<ItemType, IconName> = {
+  shelter: "tent", road_closure: "traffic-cone", school: "student", advisory: "drop", storm: "wind", tsunami: "waves",
+  quake: "pulse", volcano: "mountains", notice: "megaphone", evac: "siren", hazard: "warning", outage: "lightning-slash", traffic: "car",
 };
 export const LEVEL_TEXT: Record<number, string> = { 4: "text-danger", 3: "text-warn", 2: "text-ink", 1: "text-ink-2", 0: "text-ink-2" };
 
@@ -28,9 +25,9 @@ function Actions({ item }: { item: Item }) {
   };
   return (
     <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
-      {item.lat && item.lon && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer"><MapPin className="size-4" aria-hidden /> Open in Maps</a>}
-      {item.srcUrl && item.tier !== "community" && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" aria-hidden /> Read it on their site</a>}
-      <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Share2 className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
+      {item.lat && item.lon && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer"><Icon name="map-pin" className="size-4" aria-hidden /> Open in Maps</a>}
+      {item.srcUrl && item.tier !== "community" && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><Icon name="arrow-square-out" className="size-4" aria-hidden /> Read it on their site</a>}
+      <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Icon name="share-network" className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
     </p>
   );
 }
@@ -48,12 +45,12 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
   const [open, setOpen] = useState(!!focus);
   const p = plainAlert(item, now);
   const stale = staleLine(item, now);
-  const Icon = ICON[item.type] ?? Megaphone;
+  const glyph = ICON[item.type] ?? "megaphone";
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   return (
     <li id={`item-${hashOf(item.key)}`} className={focus ? "bg-surface-2" : ""}>
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
+        <span className={`tile mt-0.5 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : ""}`}><Icon name={`${glyph}-fill`} size={20} className={LEVEL_TEXT[p.level]} /></span>
         <span className="min-w-0 flex-1">
           {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
@@ -61,7 +58,7 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
           <span className="mt-1 block text-small text-ink-2 num">{showSource ? `${p.source[0].toUpperCase() + p.source.slice(1)} · ` : ""}{fmtClock(lastUpdated(item, now).at, now)}</span>
           {stale && <span className="mt-1 block text-small font-semibold text-ink">{stale}</span>}
         </span>
-        <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {open && (
         <div className="fade-up mb-s4 pl-9">
@@ -98,7 +95,7 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           <span className="mt-1 block text-small text-ink-2 num">{confirms + 1} {confirms ? "neighbors say it is still there" : "neighbor reported it"} · {fmtClock(item.lastConfirmedAt, now)}</span>
         </span>
-        <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {open && (
         <div className="fade-up pb-s4">
