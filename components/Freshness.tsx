@@ -19,5 +19,5 @@ export default function Freshness({ gen, checkedAt, offline, weak }: FreshnessPr
   else if (checkedAt - gen > STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}.`; cls = "text-ink"; }
   else text = `Checked ${fmtClock(gen, checkedAt)}`;
   if (weak && gen && !offline) text += " Weak signal, short version.";
-  return <p role="status" className={`mt-s3 text-small num ${cls}`}>{text}</p>;
+  return <p role="status" className={`mt-s2 px-1 text-[0.8125rem] num ${cls}`}>{text}</p>;
 }

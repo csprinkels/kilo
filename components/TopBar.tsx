@@ -21,21 +21,25 @@ export default function TopBar({ island: islandProp, onIsland: onIslandProp, qui
   const onIsland = onIslandProp ?? setStored;
   const label = ISLAND_LABEL[island].split(" · ")[0];
   return (
-    // @container: when the bar is narrower than 20rem (large text sizes), the island button takes its own row instead of clipping.
+    // One row: the wordmark, then the two controls together on the right. @container: at the largest text
+    // sizes the controls take their own row instead of squeezing the wordmark.
     <header className="@container pt-s2">
-      <div className="flex min-h-14 flex-wrap items-center justify-between gap-x-s2 gap-y-s1">
-      {isTab
-        ? <span className="display text-title text-ink">{APP_NAME}</span>
-        : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><Icon name="caret-left" className="size-5" aria-hidden /> Now</Link>}
-      {(
-        <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full bg-surface-2 px-4 text-small font-semibold text-ink @max-[20rem]:order-3 @max-[20rem]:basis-full @max-[20rem]:justify-between">
-          {label} <Icon name="caret-down" className="size-4 text-ink-2" aria-hidden />
-          <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
-            {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
-          </select>
-        </label>
-      )}
-      <Link href="/sources/" className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-small font-semibold text-brand">Settings</Link>
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-s3 gap-y-s2">
+        {isTab
+          ? <span className="display text-[1.375rem] leading-none text-ink">{APP_NAME}</span>
+          : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><Icon name="caret-left" size={18} /> Now</Link>}
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-s2 gap-y-s1 @max-[19rem]:w-full @max-[19rem]:justify-between">
+          {/* A native <select> behind a quiet chip: iPhones show their wheel, and it stops shouting over the wordmark. */}
+          <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-s3 text-small font-semibold text-ink ring-1 ring-line">
+            {label} <Icon name="caret-down" size={14} className="text-ink-2" />
+            <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
+              {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
+            </select>
+          </label>
+          <Link href="/sources/" className="inline-flex min-h-11 shrink-0 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2">
+            <Icon name="gear" size={18} /> Settings
+          </Link>
+        </div>
       </div>
     </header>
   );
