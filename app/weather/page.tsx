@@ -7,13 +7,14 @@ import ConditionIcon from "@/components/ConditionIcon";
 import HourlyChart from "@/components/HourlyChart";
 import DailyRows, { rowsFromPeriods } from "@/components/DailyRows";
 import ItemRow from "@/components/ItemRow";
+import RadarMap from "@/components/RadarMap";
 import EmptyState from "@/components/EmptyState";
 import type { Hourly, Period, TownWx, Weather } from "@/lib/pages";
 import type { Island } from "@/lib/types";
 import { useFeed, useJson, useStoredIsland } from "@/lib/data";
 import { TOWNS } from "@/lib/towns";
 import { clock, condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
-import { dirWord, plainAlert, stormLine } from "@/lib/plain";
+import { LEVEL_WORD, dirWord, plainAlert, stormLine } from "@/lib/plain";
 import { ISLAND_POINTS, type StormsSnapshot } from "@/lib/storm";
 import { ISLAND_LABEL, fmtTime } from "@/lib/brand";
 
@@ -61,7 +62,13 @@ export default function WeatherPage() {
   );
 
   // Official weather items worth a "heads up" (level 2) and an approaching storm, if any.
-  const headsUp = (snap?.data?.items ?? []).filter((i) => i.tier !== "community" && (i.type === "advisory" || i.type === "storm") && plainAlert(i, now, island).level === 2);
+  const weatherItems = (snap?.data?.items ?? []).filter((i) => i.tier !== "community" && (i.type === "advisory" || i.type === "storm"));
+  const headsUp = weatherItems.filter((i) => plainAlert(i, now, island).level === 2);
+  // Watches and warnings in effect: the pill under the hero, like Acme's "Flood Watch". Level 2 and up; worst first.
+  const alerts = weatherItems.map((i) => ({ i, p: plainAlert(i, now, island) })).filter((x) => x.p.level >= 2).sort((a, b) => b.p.level - a.p.level);
+  // The rain map opens by itself when there is a weather alert or rain is likely soon; otherwise it is one tap away.
+  const rainSoon = !!h && (h.p.slice(0, 6).some((pp) => pp >= 40) || h.c.slice(0, 3).some((c) => c >= 5 && c <= 7));
+  const [showRadar, setShowRadar] = useState(false);
   const storm = (stormsSnap?.data?.storms ?? []).map((s) => stormLine(s, ISLAND_POINTS[island])).find((l) => l.approaching && l.level >= 3);
 
   return (
@@ -73,6 +80,18 @@ export default function WeatherPage() {
       {d && town && h && meta && (
         <>
           <RightNow town={town} meta={meta} now={now} />
+
+          {alerts.map(({ i, p }) => (
+            <a key={i.key} href="#heads-up" className={`card mt-s4 flex items-center gap-s3 py-s3 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : "bg-surface-2"}`}>
+              <span className={`tile ${p.level >= 4 ? "bg-danger/15 text-danger" : p.level >= 3 ? "bg-warn/15 text-warn" : "text-ink-2"}`}><Icon name="warning-fill" size={20} /></span>
+              <span className="min-w-0 flex-1 text-body font-semibold text-ink">{p.word ?? LEVEL_WORD[p.level]}: {p.headline}</span>
+              <Icon name="caret-right" size={18} className="text-ink-2" />
+            </a>
+          ))}
+
+          {(alerts.length > 0 || rainSoon || showRadar)
+            ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
+            : <button className="btn mt-s4" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>}
           {storm && <p className="mt-s3 max-w-[36rem] text-body text-ink"><span className="font-semibold">{storm.text}</span> <Link href="/storms/" className="inline-flex min-h-11 items-center font-semibold text-brand">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link></p>}
 
           <section className="mt-s7">
@@ -96,7 +115,7 @@ export default function WeatherPage() {
           )}
 
           {headsUp.length > 0 && (
-            <Section title="Heads up" sentence="Nothing dangerous, but good to know.">
+            <Section id="heads-up" title="Heads up" sentence="Nothing dangerous, but good to know.">
               <ul className="list mt-s3">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((h) => h.source)).size > 1} />)}</ul>
             </Section>
           )}

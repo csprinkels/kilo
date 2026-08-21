@@ -42,8 +42,8 @@ export const H2 = ({ children, sentence, right }: { children: React.ReactNode; s
   </>
 );
 
-export const Section = ({ title, sentence, children }: { title: React.ReactNode; sentence?: React.ReactNode; children?: React.ReactNode }) => (
-  <section className="mt-s7">
+export const Section = ({ title, sentence, children, id }: { title: React.ReactNode; sentence?: React.ReactNode; children?: React.ReactNode; id?: string }) => (
+  <section id={id} className="mt-s7 scroll-mt-s4">
     <h2 className="h-title">{title}</h2>
     {sentence && <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{sentence}</p>}
     {children}
