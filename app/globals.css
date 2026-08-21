@@ -345,6 +345,16 @@ body {
   box-shadow: 0 0 0 2px var(--map-mark-halo);
 }
 
+/* Frosted glass for floating chrome (the tab bar): translucent card colour over a blur, a hairline ring, the card's shadow. */
+.glass {
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 70%, transparent), 0 10px 30px -10px rgb(27 26 23 / .28);
+}
+@supports not (backdrop-filter: blur(1px)) { .glass { background: var(--card); } }
+@media (prefers-color-scheme: dark) { .glass { box-shadow: 0 0 0 1px rgb(255 255 255 / .09), 0 10px 30px -10px rgb(0 0 0 / .6); } }
+
 /* Leaflet (the real street map on Roads): buttons at 44px, our colours, attribution readable but quiet. */
 .leaflet-container { font: inherit; background: var(--surface-2); color: var(--ink); }
 .leaflet-bar a { width: 2.75rem; height: 2.75rem; line-height: 2.75rem; font-size: 1.375rem; color: var(--ink); background: var(--card); border-color: var(--line); }

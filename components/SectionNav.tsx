@@ -22,15 +22,16 @@ export default function SectionNav() {
           <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined} className={`btn ${isOn(path, t) ? "chip-active" : ""}`}><t.icon className="size-5" aria-hidden /> {t.label}</Link>
         ))}
       </nav>
-      {/* phones: fixed bottom bar, labels always visible */}
-      <nav aria-label="Sections" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <ul className="mx-auto grid max-w-2xl grid-cols-4">
+      {/* phones: a floating frosted pill above the home indicator; the lit tab sits on its own pill inside it */}
+      <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
+        <ul className="glass pointer-events-auto grid w-full max-w-md grid-cols-4 gap-1 rounded-full p-1">
           {TABS.map((t) => {
             const on = isOn(path, t);
             return (
               <li key={t.href}>
-                <Link href={t.href} aria-current={on ? "page" : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 text-small font-semibold ${on ? "text-brand" : "text-ink-2"}`}>
-                  <t.icon className="size-7" strokeWidth={on ? 2.25 : 1.75} aria-hidden /> {t.label}
+                <Link href={t.href} aria-current={on ? "page" : undefined}
+                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-small font-semibold transition-colors ${on ? "bg-surface-2 text-brand" : "text-ink-2"}`}>
+                  <t.icon className="size-6" strokeWidth={on ? 2.25 : 1.75} aria-hidden /> {t.label}
                 </Link>
               </li>
             );
