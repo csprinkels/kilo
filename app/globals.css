@@ -7,11 +7,13 @@
 */
 :root {
   --bg: #f5f1ea;
-  --surface: #fffdf9;     /* picture containers + tab bar only */
-  --surface-2: #ede8df;   /* neighbor rows, island/town button, secondary buttons */
+  --surface: #fffdf9;     /* map fills + tab bar only */
+  --surface-2: #ede8df;   /* island/town button, secondary buttons, the quiet card */
+  --card: #ffffff;        /* one card per thing on Now, one card per list everywhere else */
+  --card-shadow: 0 1px 2px rgb(27 26 23 / .06), 0 6px 20px -8px rgb(27 26 23 / .14);
   --ink: #1b1a17;
   --ink-2: #4a463f;       /* 8.3:1 — the floor for text */
-  --line: #d6cdbd;        /* row dividers only, never card borders */
+  --line: #d6cdbd;        /* row dividers inside cards, never card borders */
   --brand: #0b6b72;
   --brand-ink: #ffffff;
   --danger: #b3261e;  --danger-bg: #fbe9e7;
@@ -42,6 +44,8 @@
     --bg: #121311;
     --surface: #1b1c19;
     --surface-2: #24251f;
+    --card: #1e1f1c;
+    --card-shadow: 0 0 0 1px rgb(255 255 255 / .07);  /* dark: a hairline ring, no shadow */
     --ink: #f1ede6;
     --ink-2: #cdc7bb;
     --line: #35362f;
@@ -71,6 +75,8 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --shadow-card: var(--card-shadow);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-line: var(--line);
@@ -107,13 +113,21 @@
 @utility num { font-variant-numeric: tabular-nums; }
 @utility h-display { @apply font-display text-display font-bold text-ink; }
 @utility h-title { @apply font-display text-title font-bold text-ink; }
-@utility card { @apply rounded-card bg-surface p-s4; }
+@utility card { @apply relative overflow-hidden rounded-card bg-card p-5 shadow-card; }
+/* A card holding rows: no padding of its own, hairlines between rows, rows pad themselves (see .list > *). */
+@utility list { @apply overflow-hidden rounded-card bg-card shadow-card divide-y divide-line; }
+.list > * { padding-left: 1.25rem; padding-right: 1.25rem; }
 @utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-surface-2 px-5 text-body font-semibold text-ink num; }
 @utility btn-primary { @apply bg-brand text-brand-ink; }
 @utility btn-big { @apply min-h-14 w-full; }
 @utility chip-active { @apply bg-ink text-bg; }
 @utility row { @apply flex min-h-14 w-full items-center gap-s3 py-s3 text-left; }
-@utility picture { @apply overflow-hidden rounded-card bg-surface; }
+@utility picture { @apply overflow-hidden rounded-card bg-card shadow-card; }
+/* A picture inside a card row (the zoomed road map): an inset, never a card in a card. */
+@utility well { @apply overflow-hidden rounded-[0.625rem] bg-surface-2; }
+
+/* The small label above a card or a run of cards ("Needs a look"). */
+@utility now-label { @apply px-1 font-sans text-small font-semibold tracking-wide text-ink-2; }
 
 .map-terrain {
   opacity: 0.34;

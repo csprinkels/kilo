@@ -11,7 +11,7 @@ import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
-import { LEVEL_WORD, lastUpdated, plainAlert, staleLine, type Plain } from "@/lib/plain";
+import { LEVEL_WORD, lastUpdated, plainAlert, staleLine, type Plain, highway } from "@/lib/plain";
 import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
 
 type IslandId = Exclude<Island, "state">;
@@ -138,7 +138,7 @@ export default function RoadsPage() {
 
           <Section title="Closed or blocked">
             {official.length ? (
-              <ul className="mt-s2 divide-y divide-line">{rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} />)}</ul>
+              <ul className="list mt-s3">{rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} />)}</ul>
             ) : (
               <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
             )}
@@ -147,7 +147,7 @@ export default function RoadsPage() {
 
           {island === "hawaii" && (
             <Section title="What neighbors say">
-              {neighbors.length ? <ul className="mt-s2">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s2 text-body text-ink-2">Nothing from neighbors today.</p>}
+              {neighbors.length ? <ul className="list mt-s3">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s2 text-body text-ink-2">Nothing from neighbors today.</p>}
             </Section>
           )}
 
@@ -157,7 +157,7 @@ export default function RoadsPage() {
                 <>
                   <h2 className="h-title">Roadwork</h2>
                   <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Planned work. Expect a wait, not a closed road.</p>
-                  <ul className="mt-s2 divide-y divide-line">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
+                  <ul className="list mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
                 </>
               ) : (
                 <button className="btn btn-big" onClick={() => setShowWork(true)}><TrafficCone className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
@@ -190,7 +190,7 @@ export default function RoadsPage() {
 /** Short road name people say: "Highway 130", "Wood Valley Road". */
 function roadName(item: Item) {
   const raw = isRoadwork(item) ? item.title.split(":")[0] : item.title.split(" — ")[0];
-  return raw.replace(/_.*$/, "").replace(/\b(Route|Rte\.?|Hwy\.?|State Route|SR)\s*(H-?\d+|\d+)/i, (_, __, n: string) => (/^H/i.test(n) ? `the ${n.toUpperCase()}` : `Highway ${n}`)).trim();
+  return highway(raw.replace(/_.*$/, "")).trim();
 }
 
 /**
@@ -233,7 +233,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you }: 
         <div className="fade-up mb-s4 pl-9">
           {path && (
             <>
-              <div className="picture"><RoadMap island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
+              <div className="well"><RoadMap island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
               <p className="mt-s3 text-small text-ink-2">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
             </>
           )}

@@ -92,7 +92,7 @@ export default function Settings() {
       } />
 
       <Section title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
-        <ul className="mt-s2 divide-y divide-line">
+        <ul className="list mt-s3">
           {SOURCES.map(([name, what]) => (
             <li key={name} className="py-s2 text-body"><span className="font-semibold text-ink">{name}</span> <span className="text-ink-2">— {what}</span></li>
           ))}

@@ -105,7 +105,7 @@ export default function TsunamiPage() {
       fetchedAt={d ? t?.fetchedAt : undefined} gen={d?.upd} offline={t?.offline} source={SOURCE}
     >
       {d && warning && (
-        <section role="alert" aria-label="Tsunami warning" className="mt-s4 rounded-card border-l-4 border-danger bg-danger-bg px-s4 py-s4">
+        <section role="alert" aria-label="Tsunami warning" className="card mt-s4 bg-danger-bg pl-6 shadow-[inset_4px_0_0_var(--danger),var(--card-shadow)]">
           <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><Siren className="size-6" aria-hidden /> Act now</p>
           <h2 className="mt-s2 font-display text-display font-bold leading-tight text-ink">Tsunami warning</h2>
           <p className="mt-s2 text-body font-semibold text-ink">{WARNING_ACTION}</p>
@@ -130,7 +130,7 @@ export default function TsunamiPage() {
       <a className="mt-s2 inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={map.url} target="_blank" rel="noreferrer">{map.label} <ChevronRight className="size-5" aria-hidden /></a>
 
       <H2>What to do</H2>
-      <ul className="mt-s2 divide-y divide-line">
+      <ul className="list mt-s3">
         {WHAT_TO_DO.map((s) => <li key={s} className="py-s3 text-body text-ink">{s}</li>)}
       </ul>
       <p className="mt-s3 text-small text-ink-2">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>

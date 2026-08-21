@@ -29,7 +29,7 @@ export default function Error({ error, retry }: { error: Error & { digest?: stri
 
   return (
     <main className="relative z-[1] mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-s7 pt-s7">
-      <section className="rounded-card border-l-4 border-danger bg-danger-bg px-s4 py-s3">
+      <section className="card bg-danger-bg py-s3 pl-6 shadow-[inset_4px_0_0_var(--danger),var(--card-shadow)]">
         <p className="text-body font-semibold text-ink">Hurt or in danger? Call 911.</p>
         <p className="mt-1 text-body text-ink-2">Do not wait for this screen.</p>
       </section>

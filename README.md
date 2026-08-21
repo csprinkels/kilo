@@ -29,7 +29,7 @@ npx convex run ingest:run # trigger one ingest by hand
 | `convex/parsers/*.ts` | One pure `parseX(body, now): Item[]` per feed. Add a feed = add a parser + one line in `SOURCES` |
 | `convex/ingest.ts` | Fetch all sources (8 s timeout each, failures isolated), upsert, deactivate vanished rows, build per-island snapshots, mirror to R2 |
 | `convex/http.ts` | `GET /v1/{island}.json`, `/v1/manifest.json` with ETag + CORS |
-| `app/page.tsx` | Island picker, severity sections, offline / stale / watch banners, expandable cards |
+| `app/page.tsx` | Now: weather card, one tinted notice, topic cards (storm map inside), quiet card, push card |
 | `lib/data.ts` | Fetch with `If-None-Match`, last copy in localStorage, poll every 2 min + on foreground |
 | `public/sw.js` | Precaches the shell and `/_next/static` chunks so the page opens with no signal |
 
@@ -44,7 +44,8 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 - Every tap target ≥ 44 px; no icon-only controls; colour only in pictures and in danger/warn blocks; light and dark from the same tokens.
 - One freshness sentence in the same place on every page ("Checked 3:42 PM" · "No signal. Showing what your phone saved at 2:10 PM.").
 - Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`.
-- Tabs: Now · Weather · Roads · Neighbors. Storms, earthquakes, the volcano and tsunami are fixed rows on Now.
+- Tabs: Now · Weather · Roads · Neighbors. Storms, earthquakes, the volcano and tsunami are fixed cards on Now.
+- Cards on paper: a card holds one thing on Now (the weather, a shelter, one topic) and one whole list everywhere else (`.card` / `.list` / `.picture` in `globals.css`; `--card` white with a soft shadow in light, a hairline ring in dark). One tinted card per page at most; never a card inside a card (pictures inside a row use `.well`).
 
 ## Sections
 

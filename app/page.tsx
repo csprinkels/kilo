@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import ItemRow from "@/components/ItemRow";
 import AlertBlock from "@/components/AlertBlock";
 import AlertsCard from "@/components/AlertsCard";
@@ -68,6 +68,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const offline = !!ess?.offline && !!snap?.offline;
   const loaded = !!(snap?.data || ess?.data);
   const [showAll, setShowAll] = useState(false);
+  const [showQuiet, setShowQuiet] = useState(false);
 
   const items = useMemo(() => {
     const base = snap?.data?.items ?? [];
@@ -84,9 +85,9 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const plain = useMemo(() => new Map(items.map((i) => [i.key, plainAlert(i, now, island)] as [string, Plain])), [items, now, island]);
   const official = items.filter((i) => i.tier !== "community");
   const warnings = official.filter((i) => plain.get(i.key)!.level >= 3).sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level || b.issuedAt - a.issuedAt);
-  // A shelter is news, not a warning: it leads only when nothing else is shouting, and then as plain rows.
-  const leadIdx = warnings.findIndex((i) => i.type !== "shelter");
-  const lead = leadIdx >= 0 ? warnings[leadIdx] : undefined;
+  // True urgent lead only — shelters are news, not the page hero.
+  const lead = warnings.find((i) => i.type !== "shelter");
+  const shelters = official.filter((i) => i.type === "shelter" && plain.get(i.key)!.level >= 2);
   const rest = warnings.filter((i) => i !== lead);
   // A deep link from a notification must never land behind "All warnings".
   const alsoRows = showAll || (focusKey && rest.some((i) => i.key === focusKey)) ? rest : rest.slice(0, 3);
@@ -97,79 +98,162 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const stormLines = rankStorms(storms, place);
   const coming = stormLines.filter((x) => x.approaching);
   const mainStorm = coming[0];
+  const approaching = !!mainStorm;
 
   // A storm that is moving away or staying far out never shares the row with one that is coming.
-  const rows = topicRows(items, plain, island, now, (coming.length ? coming : stormLines).map((x) => x.short), !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
+  const rows = topicRows(items, plain, island, now, (coming.length ? coming : stormLines).map((x) => x.short), !!(lead && lead.type === "tsunami"), approaching, quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
+  const needsLook = rows.filter((r) => !r.quiet);
+  const quietRows = rows.filter((r) => r.quiet);
+  // Soft notices (shelters, leftover warnings when there is no hero alert) sit in Needs a look.
+  const softNotices = lead ? [] : [...shelters, ...rest.filter((i) => i.type !== "shelter")];
+  const focusInSoft = !!(focusKey && softNotices.some((i) => i.key === focusKey));
+  const softShown = showAll || focusInSoft ? softNotices : softNotices.slice(0, 3);
+  const hasAttention = needsLook.length > 0 || softNotices.length > 0 || headlinesOnly.length > 0;
+  const headsUpLines = headsUp.map((i) => (
+    <p key={i.key} className="mt-s3 text-body text-ink">
+      <span className="font-semibold">Heads up:</span> {plain.get(i.key)!.headline}. <span className="text-ink-2">{plain.get(i.key)!.action}</span>
+    </p>
+  ));
+  // One tinted card per page: the first soft notice; the rest are rows in a plain card.
+  const [softLead, ...softRows] = softShown;
 
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
-      <TopBar island={island} onIsland={setIsland} />
-      <SectionNav />
-      <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
+    <main className="relative z-[1] min-h-dvh w-full">
+      <div className="mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
+        <TopBar island={island} onIsland={setIsland} quiet />
+        <SectionNav />
+        <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
 
-      {/* Warnings: the only coloured block, only when there is one */}
-      {lead && (
-        <AlertBlock item={lead} now={now}>
-          {(alsoRows.length > 0 || headlinesOnly.length > 0) && (
-            <div className="mt-s4">
-              <p className="text-small font-bold text-ink">Also in effect</p>
-              <ul className="divide-y divide-line">
-                {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
-                {alsoRows.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-              </ul>
-              {rest.length > 3 && !showAll && <button className="btn mt-s2" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <ChevronRight className="size-4" aria-hidden /></button>}
-            </div>
-          )}
-        </AlertBlock>
-      )}
-      {!lead && (headlinesOnly.length > 0 || rest.length > 0) && (
-        <ul className="mt-s4 divide-y divide-line">
-          {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
-          {rest.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-        </ul>
-      )}
+        {/* One hero: true urgent alert replaces weather; otherwise weather leads. */}
+        {lead ? (
+          <div className="mt-s4">
+            <AlertBlock item={lead} now={now} className="mt-0">
+              {(alsoRows.length > 0 || headlinesOnly.length > 0) && (
+                <div className="mt-s4">
+                  <p className="text-small font-bold text-ink">Also in effect</p>
+                  <ul className="divide-y divide-line">
+                    {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
+                    {alsoRows.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
+                  </ul>
+                  {rest.length > 3 && !showAll && <button className="btn mt-s2" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <ChevronRight className="size-4" aria-hidden /></button>}
+                </div>
+              )}
+            </AlertBlock>
+            {mode === "low" || offline
+              ? <p className="mt-s3 text-body text-ink-2">Weather loads when the signal is better.</p>
+              : <WeatherNow island={island} variant="compact" />}
+          </div>
+        ) : (
+          <div className="mt-s4">
+            {mode === "low" || offline
+              ? <p className="text-body text-ink-2">Weather loads when the signal is better.</p>
+              : <WeatherNow island={island} variant="hero">{headsUpLines}</WeatherNow>}
+          </div>
+        )}
+        {lead && headsUpLines}
 
-      {/* Right now: the weather, like a weather app */}
-      <h1 className="h-title mt-s6">Right now</h1>
-      {mode === "low" || offline ? <p className="mt-s2 text-body text-ink-2">Weather loads when the signal is better.</p> : <WeatherNow island={island} />}
-      {headsUp.map((i) => <p key={i.key} className="mt-s2 text-body text-ink"><span className="font-bold">Heads up:</span> {plain.get(i.key)!.headline}. <span className="text-ink-2">{plain.get(i.key)!.action}</span></p>)}
-
-      {/* Around the island: one row per topic, always the same order */}
-      {loaded && (
-        <section className="mt-s7" aria-label={`Around ${islandName(island)}`}>
-          <h2 className="h-title">Around {islandName(island)}</h2>
-          <ul className="mt-s2 divide-y divide-line">
-            {rows.map((r) => (
-              <li key={r.key}>
-                <Link href={r.href} className="row">
-                  <TopicIcon topic={r.icon} size={32} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-body font-semibold text-ink">{r.label}</span>
-                    <span className="block text-body leading-snug text-ink-2">{r.text}</span>
-                  </span>
-                  <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
-                </Link>
-                {r.key === "storms" && mainStorm && (
-                  <Link href="/storms/" className="picture mb-s3 block"><StormMap storm={mainStorm.s} place={place} compact /></Link>
+        {loaded && (
+          <section className="mt-s6" aria-label={`Around ${islandName(island)}`}>
+            {hasAttention && (
+              <>
+                <h2 className="now-label">Needs a look</h2>
+                {softLead && <AlertBlock item={softLead} now={now} compact className="mt-s2" focus={softLead.key === focusKey} />}
+                {(softRows.length > 0 || headlinesOnly.length > 0) && (
+                  <ul className="list mt-s3">
+                    {headlinesOnly.map((a) => (
+                      <li key={a.h} className="py-s3 text-body font-semibold">
+                        {a.title}
+                        <span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span>
+                      </li>
+                    ))}
+                    {softRows.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
+                  </ul>
                 )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {!loaded && !offline && <p className="mt-s7 text-body text-ink-2">Loading what is happening around {islandName(island)}…</p>}
+                {softNotices.length > 3 && !showAll && !focusInSoft && (
+                  <button className="btn mt-s3" onClick={() => setShowAll(true)}>All notices ({softNotices.length}) <ChevronRight className="size-4" aria-hidden /></button>
+                )}
+                {needsLook.map((r) => (
+                  <TopicCard key={r.key} row={r}>
+                    {r.key === "storms" && mainStorm && (
+                      <div className="-mx-5 -mb-5 mt-s4 border-t border-line"><StormMap storm={mainStorm.s} place={place} compact /></div>
+                    )}
+                  </TopicCard>
+                ))}
+              </>
+            )}
 
-      <AlertsCard island={island} compact />
+            {quietRows.length > 0 && (
+              <div className={`card bg-surface-2 p-0 shadow-none ${hasAttention ? "mt-s3" : ""}`}>
+                <button type="button" className="flex min-h-15 w-full items-center gap-s3 px-5 py-s3 text-left" aria-expanded={showQuiet} onClick={() => setShowQuiet((v) => !v)}>
+                  <Check className="size-6 shrink-0 text-brand" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body font-semibold text-ink">{hasAttention ? "Everything else looks quiet" : "All quiet around your island"}</span>
+                    <span className="block text-small text-ink-2">{quietRows.map((r, i) => (i ? r.label.toLowerCase() : r.label)).join(", ")}</span>
+                  </span>
+                  <ChevronDown className={`size-5 shrink-0 text-ink-2 transition-transform ${showQuiet ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {showQuiet && (
+                  <ul className="divide-y divide-line border-t border-line">
+                    {quietRows.map((r) => (
+                      <li key={r.key}>
+                        <Link href={r.href} className="row px-5">
+                          <TopicIcon topic={r.icon} size={32} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-body font-semibold text-ink">{r.label}</span>
+                            <span className="block text-body leading-snug text-ink-2">{r.text}</span>
+                          </span>
+                          <ChevronRight className="size-5 shrink-0 text-ink-2" aria-hidden />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+        {!loaded && !offline && <p className="mt-s7 text-body text-ink-2">Loading what is happening around {islandName(island)}…</p>}
 
-      <footer className="mt-s7 text-small leading-relaxed text-ink-2">
-        Free. No ads. No account. Not an emergency service — call 911. <Link className="font-semibold text-brand" href="/sources/">How {APP_NAME} works</Link>
-      </footer>
+        <AlertsCard island={island} compact />
+
+        <footer className="mt-s6 px-1 pb-s4 text-small leading-relaxed text-ink-2">
+          Free. No ads. No account. Not an emergency service — call 911. <Link className="font-semibold text-brand" href="/sources/">How {APP_NAME} works</Link>
+        </footer>
+      </div>
     </main>
   );
 }
 
-type Row = { key: string; label: string; icon: Topic; text: string; href: string };
-function topicRows(items: Item[], plain: Map<string, Plain>, island: Exclude<Island, "state">, now: number, stormTexts: string[], tsunamiAbove: boolean, quakeText?: string): Row[] {
+type Row = { key: string; label: string; icon: Topic; text: string; href: string; quiet: boolean };
+
+/** One topic, one card: illustrated icon · serif label · the whole sentence · chevron. The card is the link; a picture may sit under the text. */
+function TopicCard({ row, children }: { row: Row; children?: React.ReactNode }) {
+  return (
+    <Link href={row.href} className="card mt-s3 block pr-10 @container">
+      <ChevronRight className="absolute right-4 top-5 size-6 text-ink-2" aria-hidden />
+      {/* On a 320px phone at the largest text size the icon moves above the title so "Earthquakes" never meets the chevron. */}
+      <span className="flex items-start gap-s3 @max-[13.5rem]:flex-col">
+        <TopicIcon topic={row.icon} size={40} />
+        <span className="min-w-0 flex-1">
+          <span className="h-title block">{row.label}</span>
+          <span className="mt-s1 block text-body leading-snug text-ink-2">{row.text}</span>
+        </span>
+      </span>
+      {children}
+    </Link>
+  );
+}
+
+function topicRows(
+  items: Item[],
+  plain: Map<string, Plain>,
+  island: Exclude<Island, "state">,
+  now: number,
+  stormTexts: string[],
+  tsunamiAbove: boolean,
+  approachingStorm: boolean,
+  quakeText?: string,
+): Row[] {
   const of = (f: (i: Item) => boolean) => items.filter((i) => i.tier !== "community" && f(i));
   const roads = of((i) => i.type === "road_closure" && i.source !== "hdot");
   const traffic = of((i) => i.type === "traffic");
@@ -194,28 +278,33 @@ function topicRows(items: Item[], plain: Map<string, Plain>, island: Exclude<Isl
   }
 
   const volcanoText = volcano.length ? volcano.map((v) => plain.get(v.key)!.headline).join(". ") + "." : "Kīlauea is quiet.";
-  const tsunamiText = tsunamiAbove ? "See the warning above." : tsunami.some((t) => plain.get(t.key)!.level >= 3) ? plain.get(tsunami[0].key)!.headline : "No danger.";
+  const tsunamiHot = tsunami.some((t) => plain.get(t.key)!.level >= 3);
+  const tsunamiText = tsunamiAbove ? "See the warning above." : tsunamiHot ? plain.get(tsunami[0].key)!.headline : "No danger.";
   const neighborsText = community.length ? `${plural(community.length, "report")} today. Latest: ${plain.get(community[0].key)!.headline}.` : "Nothing reported today.";
 
+  const quakeQuiet = quakeText.startsWith("Nothing big") || (!/\b\d\.\d\b/.test(quakeText) && !/shook|felt/i.test(quakeText));
+
   const rows: Row[] = [
-    { key: "roads", label: "Roads", icon: "road", text: roadsText, href: "/traffic/" },
-    { key: "storms", label: "Storms", icon: "storm", text: stormTexts.length ? stormTexts.join(" ") : "None near Hawaiʻi.", href: "/storms/" },
-    { key: "quakes", label: "Earthquakes", icon: "quake", text: quakeText, href: "/quakes/" },
-    { key: "volcano", label: "Volcano", icon: "volcano", text: volcanoText, href: "/volcano/" },
-    { key: "tsunami", label: "Tsunami", icon: "tsunami", text: tsunamiText, href: "/tsunami/" },
+    { key: "roads", label: "Roads", icon: "road", text: roadsText, href: "/traffic/", quiet: !(roads.length || traffic.length) },
+    { key: "storms", label: "Storms", icon: "storm", text: stormTexts.length ? stormTexts.join(" ") : "None near Hawaiʻi.", href: "/storms/", quiet: !approachingStorm },
+    { key: "quakes", label: "Earthquakes", icon: "quake", text: quakeText, href: "/quakes/", quiet: quakeQuiet },
+    { key: "volcano", label: "Volcano", icon: "volcano", text: volcanoText, href: "/volcano/", quiet: volcanoText === "Kīlauea is quiet." },
+    { key: "tsunami", label: "Tsunami", icon: "tsunami", text: tsunamiText, href: "/tsunami/", quiet: !tsunamiHot && !tsunamiAbove },
   ];
-  if (island === "hawaii") rows.push({ key: "neighbors", label: "Neighbors", icon: "neighbors", text: neighborsText, href: "/report/" });
+  if (island === "hawaii") {
+    rows.push({ key: "neighbors", label: "Neighbors", icon: "neighbors", text: neighborsText, href: "/report/", quiet: community.length === 0 });
+  }
   return rows;
 }
 
-/** The weather picture: big icon, temperature, feels like, high/low, one sentence. Whole thing opens Weather. */
-function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
+/** Weather as the Acme hero, or one compact line under an urgent alert. */
+function WeatherNow({ island, variant, children }: { island: Exclude<Island, "state">; variant: "hero" | "compact"; children?: React.ReactNode }) {
   const w = useJson<Weather>(`v1/${island}/weather.json`);
   const townId = useSyncExternalStore(() => () => {}, () => localStorage.getItem("town"), () => null);
   const town = w?.data?.towns.find((t) => t.id === townId) ?? w?.data?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
-  if (!w) return <p className="mt-s2 text-body text-ink-2">Loading the weather…</p>;
-  if (!town?.hourly) return <p className="mt-s2 text-body text-ink-2">Weather is not available right now.</p>;
+  if (!w) return <p className="text-body text-ink-2">Loading the weather…</p>;
+  if (!town?.hourly) return <p className="text-body text-ink-2">Weather is not available right now.</p>;
   const h = town.hourly;
   const obsFresh = town.obs && w.fetchedAt - town.obs.at < 2 * 3_600_000;
   const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0], night = !!h.n[0];
@@ -225,17 +314,37 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const d0 = Math.floor((w.fetchedAt - 10 * 3_600_000) / 86_400_000) * 86_400_000 + 10 * 3_600_000; // HST midnight
   const sun = meta ? sunTimes(d0, meta.lat, meta.lon) : undefined;
   const nextSun = sun ? (sun.rise > w.fetchedAt ? { k: "Sunrise", at: sun.rise } : sun.set > w.fetchedAt ? { k: "Sunset", at: sun.set } : undefined) : undefined;
+  const tempLabel = temp != null ? `${temp}°` : "—";
+  const line = `${tempLabel} · ${condWord(code)} in ${town.name}`;
+
+  if (variant === "compact") {
+    return (
+      <Link href="/weather/" className="mt-s3 block text-body text-ink-2">
+        <span className="font-semibold text-ink num">{tempLabel}</span>
+        {" · "}{condWord(code)} in {town.name}
+      </Link>
+    );
+  }
+
   return (
-    <Link href="/weather/" className="mt-s3 block">
-      <div className="flex items-center gap-s4">
+    <section className="card" aria-label={line}>
+      <p className="text-small font-semibold text-ink-2">{town.name}</p>
+      <div className="mt-s2 flex items-start gap-s4">
         <ConditionIcon code={code} night={night} size={88} />
-        <div className="min-w-0">
-          <p className="text-number font-semibold text-ink num">{temp != null ? `${temp}°` : "—"}</p>
-          <p className="text-body text-ink-2 num">{fl != null && Math.abs(fl - (temp ?? fl)) >= 3 ? `Feels like ${fl}°. ` : ""}{hi != null && lo != null ? `High ${hi}°, low ${lo}°.` : ""}</p>
-          <p className="text-body font-semibold text-ink">{town.name} · {condWord(code)}</p>
+        <div className="min-w-0 pt-s1">
+          <p className="text-number font-semibold tracking-tight text-ink num">{tempLabel}</p>
+          <p className="h-title mt-s1">{condWord(code)}</p>
+          <p className="mt-s1 text-body text-ink-2 num">
+            {fl != null && Math.abs(fl - (temp ?? fl)) >= 3 ? `Feels like ${fl}°. ` : ""}
+            {hi != null && lo != null ? `High ${hi}°, low ${lo}°.` : ""}
+          </p>
         </div>
       </div>
-      <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{nowAndLater(obsFresh ? code : undefined, h)}{nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}</p>
-    </Link>
+      <p className="mt-s4 border-t border-line pt-s4 text-body text-ink-2">
+        {nowAndLater(obsFresh ? code : undefined, h)}
+        {nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}
+      </p>
+      {children}
+    </section>
   );
 }

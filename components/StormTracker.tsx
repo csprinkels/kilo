@@ -50,7 +50,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       <Section title="What to do" sentence={todo} />
 
       <Section title="Where it will be">
-        <ul className="mt-s2 divide-y divide-line">
+        <ul className="list mt-s3">
           {where.map((p) => (
             <li key={p.hour} className="py-s2 text-body num">
               {fmtDayTime(p.at)} · {nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon)).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))} · winds {round5(ktToMph(p.windKt))} mph{p.outlook ? " (less certain)" : ""}

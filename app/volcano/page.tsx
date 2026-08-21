@@ -89,7 +89,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
         <>
           <Section title="Vog" sentence={airSentence(air, islandName)}>
             {air.length > 0 && (
-              <ul className="mt-s2 divide-y divide-line">
+              <ul className="list mt-s3">
                 {air.map((a) => (
                   <li key={a.name} className="row text-body text-ink">
                     <span className="font-semibold">{a.name}</span> · <span className="text-ink-2">{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>

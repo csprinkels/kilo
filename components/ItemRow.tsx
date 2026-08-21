@@ -52,7 +52,7 @@ function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: bo
   const Icon = ICON[item.type] ?? Megaphone;
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   return (
-    <li id={`item-${hashOf(item.key)}`} className={focus ? "-mx-3 rounded-card bg-surface px-3" : ""}>
+    <li id={`item-${hashOf(item.key)}`} className={focus ? "bg-surface-2" : ""}>
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
         <span className="min-w-0 flex-1">
@@ -93,7 +93,7 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   const p = plainAlert(item, now);
   return (
-    <li id={`item-${hashOf(item.key)}`} className="my-s2 rounded-card border-l-[3px] border-dashed border-ink-2 bg-surface-2 px-s4">
+    <li id={`item-${hashOf(item.key)}`} className="border-l-[3px] border-dashed border-ink-2 bg-surface-2">
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-ink-2">Neighbor report · not checked</span>

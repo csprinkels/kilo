@@ -28,7 +28,7 @@ export default function DailyRows({ fc }: { fc: Period[] }) {
   const rows = rowsFromPeriods(fc);
   if (!rows.length) return null;
   return (
-    <ul className="mt-s3 divide-y divide-line">
+    <ul className="list mt-s3">
       {rows.map((r) => (
         <li key={r.name} className="flex min-h-14 items-center gap-s3 py-s3">
           <ConditionIcon code={r.code} night={r.night} size={32} />

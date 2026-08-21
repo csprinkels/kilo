@@ -56,7 +56,8 @@ export function placeOf(item: Item, island?: Island): string {
 }
 
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
-const highway = (s: string) =>
+/** "Mamalahoa Highway Route 190" → "Mamalahoa Highway 190"; "Route 130" → "Highway 130"; "Route H-1" → "the H-1". */
+export const highway = (s: string) =>
   /highway/i.test(s) ? s.replace(/\b(Route|Rte\.?|Hwy\.?)\s*(\d+)/i, "$2") : s.replace(/\b(Route|Rte\.?|Hwy\.?|State Route|SR)\s*(H-?\d+|\d+)/i, (_, __, n: string) => (/^H/i.test(n) ? `the ${n.toUpperCase()}` : `Highway ${n}`));
 
 // ---------- NWS events ----------
@@ -363,7 +364,7 @@ export function lastUpdated(item: Item, now = Date.now()): { at: number; stale: 
 }
 export const staleLine = (item: Item, now = Date.now()) => {
   const u = lastUpdated(item, now);
-  return u.stale ? `Civil Defense has not updated this since ${fmtClockLong(u.at, now)}. Check before you go.` : undefined;
+  return u.stale ? `Not updated since ${fmtClockLong(u.at, now)}. Check before you go.` : undefined;
 };
 const fmtClockLong = (ms: number, now: number) => (now - ms > 6 * 86_400_000 ? fmtDateTime(ms) : new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long", hour: "numeric", minute: "2-digit" }).format(ms));
 

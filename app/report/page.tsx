@@ -78,7 +78,7 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
           ) : posts.length === 0 ? (
             <p className="mt-s2 text-body text-ink-2">Nothing reported today.</p>
           ) : (
-            <ul className="mt-s2">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
+            <ul className="list mt-s3">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
           )}
           <Link href="/guidelines/" className="row mt-s5 border-t border-line">
             <span className="flex-1 text-body font-semibold text-ink">Rules for reports</span>

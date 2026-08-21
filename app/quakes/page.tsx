@@ -55,7 +55,7 @@ function QuakesBody({ retry }: { retry: () => void }) {
 
           <Section title="Ones people felt" sentence={felt.length ? undefined : "None this month."}>
             {felt.length > 0 && (
-              <ul className="mt-s2 divide-y divide-line">
+              <ul className="list mt-s3">
                 {felt.map((e) => (
                   <li key={e.i} className="py-s3">
                     <span className="block text-body font-semibold text-ink">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
@@ -68,7 +68,7 @@ function QuakesBody({ retry }: { retry: () => void }) {
 
           <p className="mt-s7 max-w-[36rem] border-l-4 border-warn pl-s4 text-body text-ink">If the ground shakes hard near the coast, go uphill right away. Do not wait for a siren.</p>
 
-          <ul className="mt-s6 divide-y divide-line">
+          <ul className="list mt-s6">
             {tell && (
               <li><a className="row font-semibold text-brand" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it <ChevronRight className="size-5 shrink-0" aria-hidden /></a></li>
             )}

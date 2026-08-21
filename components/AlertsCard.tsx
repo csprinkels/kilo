@@ -34,7 +34,7 @@ export default function AlertsCard({ island, compact }: { island: Exclude<Island
   if (compact && dismissed) return null;
   const name = ISLAND_LABEL[island].split(" · ")[0];
   return (
-    <section className="mt-s7" aria-label="Warnings on this phone">
+    <section className={compact ? "card mt-s6" : "mt-s7"} aria-label="Warnings on this phone">
       <h2 className="h-title">Warnings on this phone</h2>
       <p className="mt-s2 max-w-[36rem] text-body text-ink-2">
         {status === "on" && <>On for {name}. The whole message is in the notification, so you can read it with no signal.</>}
@@ -45,7 +45,7 @@ export default function AlertsCard({ island, compact }: { island: Exclude<Island
       </p>
       {err && <p className="mt-s2 max-w-[36rem] text-body text-danger">{err}</p>}
       {(status === "on" || status === "off" || compact) && (
-        <div className="mt-s3 flex flex-wrap items-center gap-s3">
+        <div className="mt-s4 flex flex-wrap items-center gap-s3">
           {(status === "on" || status === "off") && (
             <button onClick={toggle} disabled={busy} className={`btn disabled:opacity-50 ${status === "off" ? "btn-primary" : ""}`}>
               {busy ? "One moment…" : status === "on" ? "Turn off" : "Turn on"}

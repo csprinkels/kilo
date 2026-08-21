@@ -88,7 +88,8 @@ export default function StormMap({ storm, place, compact, className }: Props) {
       {/* HTML labels: real rem text, positioned by percentage so they ride along with the picture. */}
       {!nearPlace && <Label x={nowX} y={nowY} h={H} above className="font-semibold text-ink">Now</Label>}
       {!compact && storm.forecast.length > 0 && <Label x={lastX} y={lastY} h={H} className="text-ink">{fmtDayTime(last.at)}</Label>}
-      {place && <Label x={placeX} y={placeY} h={H} className="font-semibold text-brand">{place.label}</Label>}
+      {/* The island's name goes on the side away from the storm, so it never sits on the track or the cone. */}
+      {place && <Label x={placeX} y={placeY} h={H} above={nowY > placeY} className="font-semibold text-brand">{place.label}</Label>}
       <p className="flex items-center justify-end gap-s2 px-s4 pb-s3 text-small text-ink-2 num"><span className="inline-block h-0.5 bg-ink" style={{ width: `${(scalePx / W) * 100}%` }} aria-hidden /> 200 miles</p>
     </div>
   );
