@@ -317,7 +317,7 @@ function topicRows(
     { key: "tsunami", label: "Tsunami", text: tsunamiText, href: "/tsunami/", quiet: !tsunamiHot && !tsunamiAbove },
   ];
   if (island === "hawaii") {
-    rows.push({ key: "neighbors", label: "Neighbors", text: neighborsText, href: "/report/", quiet: community.length === 0 });
+    rows.push({ key: "neighbors", label: "Reports", text: neighborsText, href: "/report/", quiet: community.length === 0 });
   }
   return rows;
 }

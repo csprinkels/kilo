@@ -47,7 +47,7 @@ export default function NeighborsPage() {
   const [island, setIsland] = useStoredIsland();
   const onHawaii = island === "hawaii" || island === "state";
   if (!onHawaii) {
-    return <PageShell title="Neighbors" sentence="Neighbor reports are Hawaiʻi Island only for now." island={island} onIsland={setIsland}>{null}</PageShell>;
+    return <PageShell title="Reports" sentence="Neighbor reports are Hawaiʻi Island only for now." island={island} onIsland={setIsland}>{null}</PageShell>;
   }
   return <HawaiiNeighbors island={island} setIsland={setIsland} />;
 }
@@ -63,7 +63,7 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
   const posts = (snap?.data?.items ?? []).filter((i) => i.tier === "community").sort((a, b) => b.lastConfirmedAt - a.lastConfirmedAt);
 
   return (
-    <PageShell title="Neighbors" sentence={SENTENCE} island={island} onIsland={setIsland} fetchedAt={snap?.fetchedAt ?? ess?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source="your neighbors">
+    <PageShell title="Reports" sentence={SENTENCE} island={island} onIsland={setIsland} fetchedAt={snap?.fetchedAt ?? ess?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source="your neighbors">
       {open ? (
         <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
       ) : (
@@ -144,7 +144,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
         <h2 className="h-title">{r.status === "pending" ? "Saved for a person to read" : r.merged ? "Already reported" : "Posted"}</h2>
         <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{line}</p>
         <div className="mt-s4 flex flex-col gap-s2">
-          <button className="btn btn-primary btn-big" onClick={onClose}>Back to Neighbors</button>
+          <button className="btn btn-primary btn-big" onClick={onClose}>Back to Reports</button>
           <button className="btn btn-big" onClick={again}>Report another</button>
         </div>
       </section>
@@ -217,7 +217,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       {result && !result.r.ok && <p className="mt-s4 text-body font-semibold text-danger" role="alert">{result.r.error}</p>}
       <div className="mt-s4 flex flex-col gap-s2">
         <button type="submit" disabled={busy || checking} className="btn btn-primary btn-big disabled:opacity-60">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
-        <button type="button" className="btn btn-big" onClick={onClose}>Back to Neighbors</button>
+        <button type="button" className="btn btn-big" onClick={onClose}>Back to Reports</button>
       </div>
     </form>
   );

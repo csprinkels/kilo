@@ -19,7 +19,7 @@ const SOURCES = [
   ["Hawaiʻi Department of Health and AirNow", "air and vog"],
   ["Honolulu 911 dispatch", "crashes on Oʻahu"],
   ["Hawaiʻi Statewide GIS Program and USGS", "map roads, coastlines, and elevation"],
-  ["Neighbors", "their own reports"],
+  ["Neighbors", "their own reports, on the Reports page"],
 ] as const;
 
 const SIZES = [["", "Normal"], ["large", "Large"], ["largest", "Largest"]] as const;

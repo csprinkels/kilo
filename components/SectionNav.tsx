@@ -8,7 +8,7 @@ const TABS: { href: string; label: string; icon: IconName; also: string[] }[] = 
   { href: "/", label: "Now", icon: "house", also: ["/storms/", "/quakes/", "/volcano/", "/tsunami/"] },
   { href: "/weather/", label: "Weather", icon: "cloud-sun", also: [] },
   { href: "/traffic/", label: "Roads", icon: "car", also: [] },
-  { href: "/report/", label: "Neighbors", icon: "users-three", also: ["/guidelines/"] },
+  { href: "/report/", label: "Reports", icon: "users-three", also: ["/guidelines/"] },
 ];
 const isOn = (path: string, t: (typeof TABS)[number]) => path === t.href || t.also.some((a) => path.startsWith(a));
 
@@ -24,7 +24,7 @@ export default function SectionNav() {
       </nav>
       {/* phones: a floating frosted pill above the home indicator; the lit tab sits on its own pill inside it */}
       <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
-        {/* Four even quarters; the label sizes itself to the bar's width so "Neighbors" always clears the edge. */}
+        {/* Four even quarters; the label sizes itself to the bar's width so the longest label always clears the edge. */}
         <ul className="glass pointer-events-auto @container grid w-full max-w-md grid-cols-4 gap-[4px] rounded-full p-[4px]">
           {TABS.map((t) => {
             const on = isOn(path, t);

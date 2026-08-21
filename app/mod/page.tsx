@@ -70,7 +70,7 @@ export default function ModPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-s7">
       <h1 className="h-display">Neighbor reports to read</h1>
-      <p className="mt-s2 text-body text-ink-2">Show puts a report on the Neighbors page for six hours. Hide takes it down for good. Nothing here is automatic.</p>
+      <p className="mt-s2 text-body text-ink-2">Show puts a report on the Reports page for six hours. Hide takes it down for good. Nothing here is automatic.</p>
 
       {err && <Notice title={err} icon="warning" />}
 
@@ -92,7 +92,7 @@ export default function ModPage() {
       {data && (data.live.length === 0 ? <p className="mt-s3 text-body text-ink-2">Nothing went live today.</p>
         : <ul className="list mt-s2">{data.live.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>)}
 
-      <p className="mt-s7 text-small text-ink-2">A shown report appears on the Neighbors page within about two minutes. Hidden reports are gone for good; the neighbor is not told.</p>
+      <p className="mt-s7 text-small text-ink-2">A shown report appears on the Reports page within about two minutes. Hidden reports are gone for good; the neighbor is not told.</p>
     </main>
   );
 }

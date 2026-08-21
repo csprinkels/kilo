@@ -44,7 +44,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 - Every tap target ≥ 44 px; no icon-only controls; colour only in pictures and in danger/warn blocks; light and dark from the same tokens.
 - One freshness sentence in the same place on every page ("Checked 3:42 PM" · "No signal. Showing what your phone saved at 2:10 PM.").
 - Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`.
-- Tabs: Now · Weather · Roads · Neighbors. Storms, earthquakes, the volcano and tsunami are fixed cards on Now.
+- Tabs: Now · Weather · Roads · Reports. Storms, earthquakes, the volcano and tsunami are fixed cards on Now.
 - Cards on paper: a card holds one thing on Now (the weather, a shelter, one topic) and one whole list everywhere else (`.card` / `.list` / `.picture` in `globals.css`; `--card` white with a soft shadow in light, a hairline ring in dark). One tinted card per page at most; never a card inside a card (pictures inside a row use `.well`).
 
 ## Sections
@@ -58,7 +58,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 | `/quakes` | USGS M2+ 7 d, M3.5+ 30 d; Now's quake row reads the same file so they never disagree | 5 min |
 | `/volcano` | HVO HANS daily update + sections, DOH SO₂/PM2.5, webcams on tap | 15 min |
 | `/tsunami` | PTWC CAP level, one-tap evacuation-zone lookup — **offline**: `public/zones/{island}.json` (state GIS polygons, ~50 m, from `scripts/build-zones.mjs`, fetched once and kept by the service worker; live layer is the fallback), HI-EMA siren status | 5 min (sirens daily) |
-| `/report` Neighbors | neighbor reports: one-screen form, plain hold reasons, Still there / Gone; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
+| `/report` Reports | neighbor reports: one-screen form, plain hold reasons, Still there / Gone; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
 
 Optional env: `TURNSTILE_SECRET` + `NEXT_PUBLIC_TURNSTILE_SITEKEY` (Cloudflare Turnstile, free) turn on bot verification for reports; `DEVICE_SALT` hashes device ids.
 
