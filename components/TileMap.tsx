@@ -49,7 +49,7 @@ function Tiles({ island, segments, focus, detour, you, label, className }: Props
 
       map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.5 });
       map.attributionControl.setPrefix(false);
-      L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 18, attribution: "© OpenStreetMap, © CARTO" }).addTo(map);
+      L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © CARTO' }).addTo(map);
 
       for (const l of detour ?? []) L.polyline(l.p, { color: color("--brand"), weight: zoomed ? 7 : 5, opacity: 0.95 }).addTo(map);
       for (const g of segments) {

@@ -173,6 +173,7 @@ body {
 .leaflet-container { font: inherit; background: var(--surface-2); color: var(--ink); }
 .leaflet-bar a { width: 2.75rem; height: 2.75rem; line-height: 2.75rem; font-size: 1.375rem; color: var(--ink); background: var(--card); border-color: var(--line); }
 .leaflet-bar a:hover, .leaflet-bar a:focus { background: var(--surface-2); }
-.leaflet-control-attribution { font-size: .8125rem; background: color-mix(in srgb, var(--card) 80%, transparent); color: var(--ink-2); }
-.leaflet-control-attribution a { color: var(--brand); }
+/* Required credit (OpenStreetMap ODbL + CARTO terms): keep it legible, make it a watermark, not a label. */
+.leaflet-control-attribution { font-size: .75rem; line-height: 1.2; padding: .125rem .375rem; background: transparent; color: var(--ink); opacity: .55; }
+.leaflet-container .leaflet-control-attribution a { color: inherit; text-decoration: none; }
 @media (prefers-color-scheme: dark) { .leaflet-container .leaflet-tile { filter: brightness(.82) saturate(.9); } }
