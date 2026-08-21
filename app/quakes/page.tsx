@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import { Notice } from "@/components/AlertBlock";
 import PageShell, { Section } from "@/components/PageShell";
 import DotMap from "@/components/DotMap";
 import EmptyState from "@/components/EmptyState";
@@ -73,7 +74,7 @@ function QuakesBody({ retry }: { retry: () => void }) {
             )}
           </Section>
 
-          <p className="mt-s7 max-w-[36rem] border-l-4 border-warn pl-s4 text-body text-ink">If the ground shakes hard near the coast, go uphill right away. Do not wait for a siren.</p>
+          <div className="mt-s6"><Notice title="If the ground shakes hard near the coast, go uphill right away." icon="waves">Do not wait for a siren.</Notice></div>
 
           <ul className="list mt-s6">
             {tell && (

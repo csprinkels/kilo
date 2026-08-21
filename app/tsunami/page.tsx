@@ -105,8 +105,8 @@ export default function TsunamiPage() {
       fetchedAt={d ? t?.fetchedAt : undefined} gen={d?.upd} offline={t?.offline} source={SOURCE}
     >
       {d && warning && (
-        <section role="alert" aria-label="Tsunami warning" className="card mt-s4 bg-danger-bg pl-6 shadow-[inset_4px_0_0_var(--danger),var(--card-shadow)]">
-          <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><Icon name="siren" className="size-6" aria-hidden /> Act now</p>
+        <section role="alert" aria-label="Tsunami warning" className="card mt-s4 bg-danger-bg">
+          <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><span className="tile bg-danger/15"><Icon name="siren-fill" size={20} /></span> Act now</p>
           <h2 className="mt-s2 font-display text-display font-bold leading-tight text-ink">Tsunami warning</h2>
           <p className="mt-s2 text-body font-semibold text-ink">{WARNING_ACTION}</p>
           <p className="mt-s2 text-small text-ink-2 num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>

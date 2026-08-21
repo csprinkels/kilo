@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { APP_NAME } from "@/lib/brand";
+import { Notice } from "@/components/AlertBlock";
 
 // Everything this app is for happens when other things are already going wrong, so a blank screen is the one
 // outcome to design against. Anything that throws while rendering lands here instead.
@@ -29,10 +30,7 @@ export default function Error({ error, retry }: { error: Error & { digest?: stri
 
   return (
     <main className="relative z-[1] mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-s7 pt-s7">
-      <section className="card bg-danger-bg py-s3 pl-6 shadow-[inset_4px_0_0_var(--danger),var(--card-shadow)]">
-        <p className="text-body font-semibold text-ink">Hurt or in danger? Call 911.</p>
-        <p className="mt-1 text-body text-ink-2">Do not wait for this screen.</p>
-      </section>
+      <Notice title="Hurt or in danger? Call 911.">Do not wait for this screen.</Notice>
 
       <h1 className="h-display mt-s6">{APP_NAME} could not show this page</h1>
       <p className="mt-s3 max-w-[36rem] text-body text-ink-2">
