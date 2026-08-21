@@ -26,13 +26,6 @@ export const useRoads = (island: IslandId) => useStatic<Roads>(`/${island}-roads
 const FRAME: Record<IslandId, [number, number, number, number]> = {
   hawaii: [18.85, 20.33, -156.15, -154.73], maui: [20.45, 21.3, -157.4, -155.9], oahu: [21.2, 21.77, -158.35, -157.58], kauai: [21.8, 22.3, -159.88, -159.22],
 };
-/** Broad relief rings, clipped to land. They provide orientation without downloading terrain tiles. */
-const PEAKS: Record<IslandId, LatLon[]> = {
-  hawaii: [[19.82, -155.47], [19.48, -155.61], [19.42, -155.29]],
-  maui: [[20.71, -156.25], [20.89, -156.59], [21.13, -156.92]],
-  oahu: [[21.48, -157.90], [21.48, -158.14]],
-  kauai: [[22.07, -159.50]],
-};
 const W = 800;
 const MILE_LAT = 1 / 69; // degrees of latitude per mile
 
@@ -68,6 +61,11 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
       const near = pts.reduce((a, b) => (Math.hypot(b[0] - c[0], b[1] - c[1]) < Math.hypot(a[0] - c[0], a[1] - c[1]) ? b : a));
       box = [Math.min(box[0], near[0] - pad), Math.max(box[1], near[0] + pad), Math.min(box[2], near[1] - kpad), Math.max(box[3], near[1] + kpad)];
     }
+  } else {
+    // Leave enough water around the island to read its shape instead of filling the card edge to edge.
+    const [south, north, west, east] = box;
+    const latPad = (north - south) * 0.09, lonPad = (east - west) * 0.09;
+    box = [south - latPad, north + latPad, west - lonPad, east + lonPad];
   }
   const kx0 = Math.cos(((box[0] + box[1]) / 2) * (Math.PI / 180));
   const natural = (box[1] - box[0]) / ((box[3] - box[2]) * kx0);
@@ -83,7 +81,7 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
   const lines = segments.filter((g) => g.path && g.path.length >= 2);
   const spots = segments.filter((g) => !(g.path && g.path.length >= 2) && g.lat != null && g.lon != null && inside(g.lat, g.lon));
   const coastPaths = coast?.coordinates.map((poly) => d(poly[0].map(([lon, lat]) => [lat, lon]), true)) ?? [];
-  const roadWidth = focus ? 4.5 : 2.75;
+  const roadWidth = focus ? 5 : 3.5;
 
   return (
     <div className="relative">
@@ -92,6 +90,16 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
           <pattern id={`${id}-water`} width="72" height="36" patternUnits="userSpaceOnUse">
             <path d="M-18 18 Q0 8 18 18 T54 18 T90 18" fill="none" stroke="var(--map-water-line)" strokeWidth="1" />
           </pattern>
+          <filter id={`${id}-terrain`} x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="3" seed="17" />
+            <feColorMatrix type="saturate" values="0" />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="0.7" intercept="0.25" />
+              <feFuncG type="linear" slope="0.7" intercept="0.25" />
+              <feFuncB type="linear" slope="0.55" intercept="0.2" />
+              <feFuncA type="table" tableValues="0 0.2" />
+            </feComponentTransfer>
+          </filter>
           <clipPath id={`${id}-land`}>
             {coastPaths.map((p, i) => <path key={i} d={p} />)}
           </clipPath>
@@ -102,16 +110,12 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         {coastPaths.map((p, i) => <path key={`halo-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.65} strokeWidth={10} strokeLinejoin="round" />)}
         {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.75} strokeLinejoin="round" />)}
         {!focus && (
-          <g clipPath={`url(#${id}-land)`} fill="none" stroke="var(--map-relief)" strokeWidth={1.15}>
-            {PEAKS[island].flatMap(([lat, lon], peak) => {
-              if (!inside(lat, lon)) return [];
-              const [x, y] = f(lat, lon);
-              return [28, 48, 70, 94, 122].map((r, ring) => <circle key={`${peak}-${ring}`} cx={x} cy={y} r={r} opacity={0.24 - ring * 0.025} />);
-            })}
+          <g clipPath={`url(#${id}-land)`}>
+            <rect width={W} height={H} fill="var(--map-relief)" filter={`url(#${id}-terrain)`} opacity={0.65} />
           </g>
         )}
         {/* Roads use a dark casing and light center, like a printed road atlas. */}
-        {roads?.lines.map((l, i) => <path key={`case-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeOpacity={0.7} strokeWidth={roadWidth + 3} strokeLinejoin="round" strokeLinecap="round" />)}
+        {roads?.lines.map((l, i) => <path key={`case-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeOpacity={0.72} strokeWidth={roadWidth + 3.5} strokeLinejoin="round" strokeLinecap="round" />)}
         {roads?.lines.map((l, i) => <path key={`road-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road)" strokeWidth={roadWidth} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`dc${i}`} d={d(l.p)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 13 : 9} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
