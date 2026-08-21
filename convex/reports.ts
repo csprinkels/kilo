@@ -1,4 +1,5 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import {
@@ -49,6 +50,8 @@ export const submit = internalMutation({
       deviceHash: a.deviceHash, confirmCount: 0, goneCount: 0, flagCount: 0, voters: [],
       createdAt: now, lastConfirmedAt: now, expiresAt,
     });
+    // Tell whoever moderates that something is waiting (no-op until a moderator has subscribed).
+    if (held) await ctx.scheduler.runAfter(0, internal.push.sendModerator, { text: `${a.type.replace(/_/g, " ")} · ${locText || a.district}: ${text.slice(0, 80)}` });
     return { id, status: held ? "pending" : "live", merged: false, expiresAt, holdReason: reason };
   },
 });
@@ -92,5 +95,35 @@ export const expire = internalMutation({
         if (r.expiresAt < now - 30 * DAY) await ctx.db.delete(r._id);
       }
     }
+  },
+});
+
+// ---- moderation: one person, one key (MOD_KEY in the Convex env), checked in the HTTP route ----
+
+/** What the moderator sees: everything held, plus what went live in the last day (so a bad one can be pulled). */
+export const forModerator = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const since = Date.now() - DAY;
+    const pending = await ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "pending")).collect();
+    const live = (await ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "live")).collect()).filter((r) => r.createdAt > since);
+    const pick = (r: (typeof pending)[number]) => ({
+      id: r._id, type: r.type, text: r.text, locText: r.locText, island: r.island, district: r.district, status: r.status,
+      holdReason: r.holdReason, createdAt: r.createdAt, expiresAt: r.expiresAt, confirms: r.confirmCount, flags: r.flagCount,
+    });
+    return { pending: pending.sort((a, b) => b.createdAt - a.createdAt).map(pick), live: live.sort((a, b) => b.createdAt - a.createdAt).map(pick) };
+  },
+});
+
+/** Show (pending → live) or hide (anything → hidden). A shown report gets a fresh 6 hours from now, not from when it was written. */
+export const moderate = internalMutation({
+  args: { id: v.id("reports"), action: v.union(v.literal("show"), v.literal("hide")) },
+  handler: async (ctx, { id, action }) => {
+    const r = await ctx.db.get(id);
+    if (!r) throw new ConvexError({ code: 404, message: "That report is gone." });
+    const now = Date.now();
+    if (action === "show") await ctx.db.patch(id, { status: "live", holdReason: undefined, lastConfirmedAt: now, expiresAt: Math.max(r.expiresAt, now + 6 * HOUR) });
+    else await ctx.db.patch(id, { status: "hidden" });
+    return { id, status: action === "show" ? "live" : "hidden" };
   },
 });

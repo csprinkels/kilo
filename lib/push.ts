@@ -24,7 +24,7 @@ const b64ToU8 = (s: string) => {
 };
 
 /** Subscribe this browser to the island digest. Returns the new status. */
-export async function enablePush(island: Exclude<Island, "state">, minSev = 3): Promise<PushStatus> {
+export async function enablePush(island: Exclude<Island, "state"> | "mod", minSev = 3): Promise<PushStatus> {
   const st = await pushStatus();
   if (st === "unsupported" || st === "needs-install" || st === "denied") return st;
   if ((await Notification.requestPermission()) !== "granted") return "denied";

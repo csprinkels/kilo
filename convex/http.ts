@@ -133,4 +133,33 @@ http.route({
   }),
 });
 
+// ---- Moderation: one shared secret (MOD_KEY in the Convex env). No key set = no moderation endpoint at all. ----
+const modOk = (req: Request, body?: Record<string, unknown>) => {
+  const key = process.env.MOD_KEY;
+  const given = new URL(req.url).searchParams.get("key") ?? (typeof body?.key === "string" ? body.key : "");
+  if (!key || !given || given.length !== key.length) return false;
+  let diff = 0; // constant-time compare
+  for (let i = 0; i < key.length; i++) diff |= key.charCodeAt(i) ^ given.charCodeAt(i);
+  return diff === 0;
+};
+http.route({ path: "/v1/mod/reports", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: PUSH_CORS })) });
+http.route({
+  path: "/v1/mod/reports", method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    if (!process.env.MOD_KEY) return json({ ok: false, error: "Moderation is not set up yet." }, 503);
+    if (!modOk(req)) return json({ ok: false, error: "That key does not work." }, 403);
+    return json({ ok: true, ...(await ctx.runQuery(internal.reports.forModerator, {})) });
+  }),
+});
+http.route({
+  path: "/v1/mod/reports", method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!modOk(req, body)) return json({ ok: false, error: "That key does not work." }, 403);
+    if (typeof body.id !== "string" || !["show", "hide"].includes(String(body.action))) return json({ ok: false, error: "Bad request." }, 400);
+    try { return json({ ok: true, ...(await ctx.runMutation(internal.reports.moderate, { id: body.id as never, action: body.action as "show" })) }); }
+    catch (e) { return errJson(e); }
+  }),
+});
+
 export default http;

@@ -61,5 +61,27 @@ export const sendDigest = internalAction({
   },
 });
 
+/** "Something is waiting for you": a plain notification to every moderator subscription (pushSubs with island "mod"). */
+export const sendModerator = internalAction({
+  args: { text: v.string() },
+  handler: async (ctx, { text }) => {
+    if (!vapid()) return;
+    const subs = await ctx.runQuery(internal.pushStore.forIsland, { island: "mod", minSev: 4 });
+    if (!subs.length) return;
+    const site = (process.env.SITE_URL ?? "").replace(/\/$/, "");
+    const payload = JSON.stringify({
+      web_push: 8030,
+      notification: { title: "A neighbor report is waiting", body: text, navigate: `${site}/mod/`, tag: "mod", lang: "en", silent: false },
+    });
+    const dead: string[] = [];
+    let sent = 0;
+    await Promise.all(subs.map(async (s) => {
+      try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, { TTL: 24 * 3600, urgency: "normal", topic: "mod" }); sent++; }
+      catch (e) { const code = (e as { statusCode?: number }).statusCode; if (code === 404 || code === 410) dead.push(s.endpoint); }
+    }));
+    await ctx.runMutation(internal.pushStore.afterSend, { island: "mod", trigger: "report held", sent, failed: subs.length - sent, dead, at: Date.now() });
+  },
+});
+
 /** Public VAPID key for the client's pushManager.subscribe(). */
 export const publicKey = internalAction({ args: {}, handler: async () => vapid() });
