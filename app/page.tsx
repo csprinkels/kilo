@@ -187,7 +187,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                 <button type="button" className="flex min-h-15 w-full items-center gap-s3 px-5 py-s3 text-left" aria-expanded={showQuiet} onClick={() => setShowQuiet((v) => !v)}>
                   <Check className="size-6 shrink-0 text-brand" aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-body font-semibold text-ink">{hasAttention ? "Everything else looks quiet" : "All quiet around your island"}</span>
+                    <span className="block text-body font-semibold text-ink">{hasAttention ? "Everything else is quiet" : "All quiet around your island"}</span>
                     <span className="block text-small text-ink-2">{quietRows.map((r, i) => (i ? r.label.toLowerCase() : r.label)).join(", ")}</span>
                   </span>
                   <ChevronDown className={`size-5 shrink-0 text-ink-2 transition-transform ${showQuiet ? "rotate-180" : ""}`} aria-hidden />
