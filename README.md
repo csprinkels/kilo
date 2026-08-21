@@ -82,6 +82,18 @@ Never put the decision behind a fetch. Signaling survives a congested cell (push
 
 Verify: `curl -sD - https://data.yourdomain/v1/manifest.json | grep -i cf-cache-status` should say `HIT` on the second request.
 
+## The iOS and Android apps
+
+The same static export, wrapped with Capacitor (`capacitor.config.ts`; app id `com.csprinkels.kilohawaii`, name "Kilo Hawaiʻi"). Native projects live in `ios/` and `android/`; the web bundle is copied in and never committed.
+
+```
+pnpm build && npx cap sync      # rebuild the web app and copy it into both projects
+npx cap open ios                # Xcode → run on a simulator or device
+npx cap open android            # Android Studio (needs the SDK + a JDK installed)
+```
+
+What differs inside the app: no service worker (the bundle is already offline; WKWebView has none), Share goes through the native sheet (`lib/native.ts`), the status bar overlays the page (`env(safe-area-inset-top)`), and links into the app navigate client-side — the local server maps every extension-less URL to the root `index.html`, so nothing may do a full page load of a deep route. Web Push does not work in the iOS app; native push (APNs/FCM) is the next step. Icons and splash screens are rendered from `public/icon.svg` into `assets/` and the native catalogs.
+
 ## Deployments
 
 Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-lime-eta.vercel.app (`NEXT_PUBLIC_CONVEX_SITE_URL` in Vercel's production env). **Dev** `abundant-dotterel-415` is what `npx convex dev` pushes to; nothing public reads it. Ship backend changes with `npx convex deploy --yes`; secrets are set per deployment (`npx convex env set --prod …`). Both run the same crons on their own data.

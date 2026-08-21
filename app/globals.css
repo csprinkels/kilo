@@ -163,6 +163,7 @@
   }
 }
 
+body { padding-top: env(safe-area-inset-top); } /* the app draws under the status bar; browsers report 0 */
 html {
   background: var(--bg);
   font-size: 100%;                 /* never px: inherits the browser/OS text size */

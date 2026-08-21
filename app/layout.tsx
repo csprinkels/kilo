@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import Script from "next/script";
+import NativeBoot from "@/components/NativeBoot";
 import "./globals.css";
 import { APP_NAME, TAGLINE } from "@/lib/brand";
 
@@ -34,8 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Kilo's own text size (Normal/Large/Largest) — applied before paint so nothing jumps. Standalone PWAs have no Safari aA button. */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("text");if(t)document.documentElement.dataset.text=t}catch(e){}` }} />
         {children}
+        <NativeBoot />
+        {/* The service worker is for the web. Inside the app the bundle is already offline, and WKWebView has no service workers anyway. */}
         <Script id="sw" strategy="afterInteractive">
-          {`if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");`}
+          {`if ("serviceWorker" in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) navigator.serviceWorker.register("/sw.js");`}
         </Script>
       </body>
     </html>

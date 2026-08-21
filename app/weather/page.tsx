@@ -74,7 +74,7 @@ export default function WeatherPage() {
   return (
     <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
       {!d && (w || slow
-        ? <EmptyState kind="error" title="Can't load right now."><>Try again when you have signal. In an emergency call 911.<br /><button className="btn mt-s3" onClick={() => window.location.reload()}>Try again</button></></EmptyState>
+        ? <EmptyState kind="error" title="Can't load right now."><>Try again when you have signal. In an emergency call 911.<br /><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></></EmptyState>
         : <p className="mt-s4 text-body text-ink-2">Loading the weather…</p>)}
 
       {d && town && h && meta && (

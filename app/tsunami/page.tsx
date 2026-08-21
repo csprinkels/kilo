@@ -115,7 +115,7 @@ export default function TsunamiPage() {
       {t && !d && (
         <>
           <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
-          <button type="button" onClick={() => location.reload()} className="btn mt-s3">Try again</button>
+          <button type="button" onClick={() => window.dispatchEvent(new Event("online"))} className="btn mt-s3">Try again</button>
         </>
       )}
 

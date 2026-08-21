@@ -4,6 +4,7 @@ import Icon, { type IconName } from "@/components/Icon";
 import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
+import { shareText } from "@/lib/native";
 import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 
@@ -17,11 +18,7 @@ export const LEVEL_TEXT: Record<number, string> = { 4: "text-danger", 3: "text-w
 function Actions({ item }: { item: Item }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
-    const text = smsText(item);
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else { await navigator.clipboard.writeText(text); setCopied(true); }
-    } catch { /* cancelled */ }
+    if ((await shareText(smsText(item))) === "copied") setCopied(true);
   };
   return (
     <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">

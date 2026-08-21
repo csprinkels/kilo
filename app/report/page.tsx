@@ -72,7 +72,7 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
           <H2>Reported near you</H2>
           {!snap?.data ? (
             offline
-              ? <><EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState><button className="btn mt-s3" onClick={() => window.location.reload()}>Try again</button></>
+              ? <><EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></>
               : <p className="mt-s2 text-body text-ink-2">Loading what neighbors reported…</p>
           ) : posts.length === 0 ? (
             <p className="mt-s2 text-body text-ink-2">Nothing reported today.</p>

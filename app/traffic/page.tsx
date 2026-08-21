@@ -14,6 +14,7 @@ import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
 import { LEVEL_WORD, lastUpdated, plainAlert, type Plain, highway } from "@/lib/plain";
 import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
 import { districtName } from "@/lib/places";
+import { shareText } from "@/lib/native";
 
 type IslandId = Exclude<Island, "state">;
 
@@ -247,7 +248,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   const caption = path && verb ? `${roadName(item)} ${verb} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}${also.length ? ` in ${also.length + 1} stretches` : ""}` : path ? `${roadName(item)} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}` : "";
   const share = async () => {
     const text = smsText(item);
-    try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); setCopied(true); } } catch { /* cancelled */ }
+    if ((await shareText(text)) === "copied") setCopied(true);
   };
   return (
     <li id={`item-${hashOf(item.key)}`}>
