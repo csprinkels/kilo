@@ -16,8 +16,10 @@ function vapid() {
 
 /** Build the island digest from the published snapshot and fan it out to every subscriber of that island. */
 export const sendDigest = internalAction({
-  args: { island: v.string(), trigger: v.string() },
-  handler: async (ctx, { island, trigger }) => {
+  // `level` is plainAlert().level for the trigger item — the reader-facing urgency the Now page ranks on.
+  // Everything here keys off it, never off the feed's `sev`: a M6 quake reads "Act now" but is only sev 3.
+  args: { island: v.string(), trigger: v.string(), level: v.optional(v.number()) },
+  handler: async (ctx, { island, trigger, level }) => {
     if (!vapid()) return;
     const snapRow = await ctx.runQuery(internal.ingest.getSnapshot, { path: `v1/${island}.json` });
     if (!snapRow) return;
@@ -25,9 +27,10 @@ export const sendDigest = internalAction({
     const digest: Digest = buildDigest(island as Island, snap.items, snap.gen, trigger);
     const lead = digest.top[0];
     if (!lead) return;
+    const urgency = level ?? lead.sev; // called by hand without a level: fall back to the feed's own number
 
     const last = await ctx.runQuery(internal.pushStore.lastSend, { island });
-    if (last && lead.sev < 4 && Date.now() - last.at < MIN_GAP_MS) return;
+    if (last && urgency < 4 && Date.now() - last.at < MIN_GAP_MS) return;
 
     const site = (process.env.SITE_URL ?? "").replace(/\/$/, "");
     const navigate = `${site}/?island=${island}&item=${encodeURIComponent(lead.key)}`;
@@ -39,7 +42,7 @@ export const sendDigest = internalAction({
     });
     if (Buffer.byteLength(payload) > DIGEST_BUDGET) console.error(`[push] ${island} payload ${Buffer.byteLength(payload)} B over budget`);
 
-    const subs = await ctx.runQuery(internal.pushStore.forIsland, { island, minSev: lead.sev });
+    const subs = await ctx.runQuery(internal.pushStore.forIsland, { island, minSev: urgency });
     const dead: string[] = [];
     let sent = 0;
     await Promise.all(subs.map(async (s) => {

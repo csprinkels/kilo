@@ -84,6 +84,58 @@ test("plain: until is a clock time, never a duration", () => {
   assert.equal(fmtUntil(undefined, now), undefined);
 });
 
+// Every event type NWS Honolulu issues for the islands and the surrounding marine zones. This list is the
+// contract: an event that reaches a reader as the agency's own label is a bug, so a new one fails here first.
+const HFO_EVENTS = [
+  "Hurricane Warning", "Hurricane Watch", "Hurricane Local Statement", "Hurricane Force Wind Warning",
+  "Tropical Storm Warning", "Tropical Storm Watch", "Tropical Cyclone Statement", "Tropical Cyclone Local Statement",
+  "Tsunami Warning", "Tsunami Advisory", "Tsunami Watch",
+  "Flash Flood Warning", "Flash Flood Watch", "Flash Flood Statement",
+  "Flood Warning", "Flood Watch", "Flood Advisory", "Flood Statement", "Hydrologic Outlook",
+  "Coastal Flood Warning", "Coastal Flood Advisory", "Coastal Flood Statement",
+  "High Wind Warning", "High Wind Watch", "Wind Advisory", "Extreme Wind Warning",
+  "High Surf Warning", "High Surf Advisory", "Beach Hazards Statement", "Rip Current Statement",
+  "Red Flag Warning", "Fire Weather Watch",
+  "Heat Advisory", "Excessive Heat Warning", "Extreme Heat Warning", "Extreme Heat Watch",
+  "Air Quality Alert", "Ashfall Advisory", "Ashfall Warning", "Volcanic Ashfall Advisory", "Brown Water Advisory",
+  "Dense Fog Advisory", "Frost Advisory",
+  "Winter Weather Advisory", "Winter Storm Warning", "Blizzard Warning",
+  "Small Craft Advisory", "Gale Warning", "Gale Watch", "Storm Warning", "Hazardous Seas Warning",
+  "Special Marine Warning", "Marine Weather Statement", "Special Weather Statement",
+  "Severe Thunderstorm Warning", "Tornado Warning",
+];
+const nwsItem = (event: string): Item => ({
+  key: `nws:${event}`, source: "nws", type: /Tsunami/.test(event) ? "tsunami" : "advisory", tier: "official",
+  sev: 2, islands: ["oahu"], districts: [], title: `${event}: Oahu North Shore`, body: "…", srcUrl: "",
+  fields: { event, areaDesc: "Oahu North Shore" }, issuedAt: NOW, lastConfirmedAt: NOW, hash: "x",
+});
+
+test("plain: every NWS event has plain words, never the agency's label, and something to do when it matters", () => {
+  for (const event of HFO_EVENTS) {
+    const p = plainAlert(nwsItem(event), NOW);
+    assert.equal(banned(p.headline), undefined, `banned word for "${event}": "${p.headline}"`);
+    assert.equal(banned(p.action), undefined, `banned word in action for "${event}": "${p.action}"`);
+    assert.ok(!p.headline.startsWith(event), `"${event}" falls through to the agency's own title`);
+    assert.ok(words(p.headline) <= 20, `headline too long for "${event}": "${p.headline}"`);
+    for (const s of sentences(p.action)) assert.ok(words(s) <= 20, `action sentence too long for "${event}": "${s}"`);
+    if (p.level >= 2) assert.ok(p.action.length > 0, `"${event}" is level ${p.level} with nothing to do`);
+  }
+});
+
+test("plain: an NWS event nobody has written words for is still safe to show", () => {
+  // The fallback must strip the label, pick an urgency off the last word, and always leave an action.
+  const dust = plainAlert(nwsItem("Dust Storm Warning"), NOW);
+  assert.equal(dust.headline, "Dust Storm on Oahu North Shore");
+  assert.equal(dust.level, 3);
+  assert.ok(dust.action.length > 0);
+  const watch = plainAlert(nwsItem("Dust Storm Watch"), NOW);
+  assert.equal(watch.level, 2);
+  // An event whose own name carries a word we never print falls back to a plain headline.
+  const jargon = plainAlert(nwsItem("Tropical Cyclone Wind Advisory"), NOW);
+  assert.equal(banned(jargon.headline), undefined, jargon.headline);
+  assert.match(jargon.headline, /^Weather notice /);
+});
+
 test("plain: level words, source names and brand labels are jargon-free", () => {
   for (const s of [...Object.values(LEVEL_WORD), ...Object.values(SOURCE_NAME), ...Object.values(ISLAND_LABEL), ...Object.values(TYPE_LABEL)]) {
     assert.equal(banned(s), undefined, `banned word in "${s}"`);

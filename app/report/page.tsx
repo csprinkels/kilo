@@ -100,10 +100,12 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
 
   // Words are kept on the phone until the post goes through, so a dropped signal never eats them.
   useEffect(() => {
-    const saved = localStorage.getItem("reportDraft");
-    queueMicrotask(() => { if (saved) setD((cur) => ({ ...EMPTY, ...JSON.parse(saved), ...(cur.type ? { type: cur.type } : {}) })); setOpenedAt(Date.now()); });
+    // A half-written or older draft must never take the form down with it: unreadable just means "start blank".
+    let saved: Partial<Draft> | null = null;
+    try { const raw = localStorage.getItem("reportDraft"); const v = raw ? JSON.parse(raw) : null; saved = v && typeof v === "object" ? v : null; } catch { saved = null; }
+    queueMicrotask(() => { if (saved) setD((cur) => ({ ...EMPTY, ...saved, ...(cur.type ? { type: cur.type } : {}) })); setOpenedAt(Date.now()); });
   }, []);
-  useEffect(() => { localStorage.setItem("reportDraft", JSON.stringify(d)); }, [d]);
+  useEffect(() => { try { localStorage.setItem("reportDraft", JSON.stringify(d)); } catch { /* storage full: the words stay on screen */ } }, [d]);
   useEffect(() => {
     if (!TURNSTILE_KEY) return;
     (window as unknown as { onTurnstile?: (t: string) => void }).onTurnstile = (t) => setToken(t);

@@ -86,11 +86,15 @@ export const run = internalAction({
     for (const island of ISLANDS) prevW[island] = await prevJson<Weather>(ctx, `v1/${island}/weather.json`);
     const anyStale = ISLANDS.some((i) => stale(prevW[i]?.upd, 15, now));
     if (anyStale) {
-      const hourly = ISLANDS.some((i) => stale(prevW[i]?.surf ? prevW[i]!.upd : 0, 55, now)); // surf/air/forecast refresh at most hourly
+      // Surf and air refresh at most hourly. Gate on when each was last FETCHED (surfAt/airAt), never on the
+      // file's own `upd` — that is rewritten every 15 minutes, so it can never be an hour old and the fetch
+      // would never run again. Same shape as fcAt below. A failed fetch leaves the stamp alone, so it retries.
+      const needSurf = ISLANDS.some((i) => stale(prevW[i]?.surfAt, 55, now));
+      const needAir = ISLANDS.some((i) => stale(prevW[i]?.airAt, 55, now));
       const [ndbc, airnow, srfList] = await Promise.all([
         settle(get("https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt", true, 40_000), null),
-        hourly ? settle(get("https://files.airnowtech.org/airnow/today/reportingarea.dat", true, 40_000), null) : null, // 1.7 MB
-        hourly ? settle(get("https://api.weather.gov/products/types/SRF/locations/HFO"), null) : null,
+        needAir ? settle(get("https://files.airnowtech.org/airnow/today/reportingarea.dat", true, 40_000), null) : null, // 1.7 MB
+        needSurf ? settle(get("https://api.weather.gov/products/types/SRF/locations/HFO"), null) : null,
       ]);
       let srf: Weather["surf"] | undefined;
       if (srfList) {
@@ -118,8 +122,10 @@ export const run = internalAction({
         const weather: Weather = {
           upd: now, island, towns,
           surf: srf ? { at: srf.at, uv: srf.uv, zones: Object.fromEntries(Object.entries(srf.zones).filter(([z]) => (island === "hawaii" ? /Big Island/ : island === "maui" ? /^Maui/ : island === "oahu" ? /^Oahu/ : /^Kauai/).test(z))) } : prev?.surf,
+          surfAt: srf ? now : prev?.surfAt,
           buoys: buoysAll.filter((b) => BUOYS.find((x) => x.id === b.id)?.island === island),
           air: airAll ? airAll.filter((a) => AIR_ISLAND[a.name] === island) : prev?.air ?? [],
+          airAt: airAll ? now : prev?.airAt,
         };
         files.push({ path: `v1/${island}/weather.json`, body: JSON.stringify(weather) });
       }
