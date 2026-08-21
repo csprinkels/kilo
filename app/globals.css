@@ -6,14 +6,14 @@
   and in the one accent for things you can tap. Every text colour clears 4.5:1 on --bg in both schemes.
 */
 :root {
-  --bg: #f5f1ea;
-  --surface: #fffdf9;     /* map fills + tab bar only */
-  --surface-2: #ede8df;   /* island/town button, secondary buttons, the quiet card */
-  --card: #ffffff;        /* one card per thing on Now, one card per list everywhere else */
+  --bg: #efe8dc;          /* paper */
+  --surface: #fff8ee;     /* map fills + tab bar only */
+  --surface-2: #e6dccb;   /* island/town button, secondary buttons, the quiet card */
+  --card: #fff8ee;        /* sand, not white: one card per thing on Now, one card per list everywhere else */
   --card-shadow: 0 1px 2px rgb(27 26 23 / .06), 0 6px 20px -8px rgb(27 26 23 / .14);
   --ink: #1b1a17;
   --ink-2: #4a463f;       /* 8.3:1 — the floor for text */
-  --line: #d6cdbd;        /* row dividers inside cards, never card borders */
+  --line: #e3d9c8;        /* row dividers inside cards, never card borders */
   --brand: #0b6b72;
   --brand-ink: #ffffff;
   --danger: #b3261e;  --danger-bg: #fbe9e7;
@@ -41,14 +41,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121311;
-    --surface: #1b1c19;
-    --surface-2: #24251f;
-    --card: #1e1f1c;
+    --bg: #141210;
+    --surface: #1e1b17;
+    --surface-2: #2a261f;
+    --card: #1e1b17;
     --card-shadow: 0 0 0 1px rgb(255 255 255 / .07);  /* dark: a hairline ring, no shadow */
     --ink: #f1ede6;
     --ink-2: #cdc7bb;
-    --line: #35362f;
+    --line: #342f28;
     --brand: #5ccad0;
     --brand-ink: #0a2a2c;
     --danger: #ff6b5e;  --danger-bg: #3a1512;

@@ -25,7 +25,7 @@ export default function TopBar({ island: islandProp, onIsland: onIslandProp, qui
     <header className="@container pt-s2">
       <div className="flex min-h-14 flex-wrap items-center justify-between gap-x-s2 gap-y-s1">
       {isTab
-        ? <span className={quiet ? "font-sans text-title font-semibold tracking-tight text-ink" : "display text-title text-ink"}>{APP_NAME}</span>
+        ? <span className="display text-title text-ink">{APP_NAME}</span>
         : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><ChevronLeft className="size-5" aria-hidden /> Now</Link>}
       {(
         <label className={`relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-4 text-small font-semibold text-ink @max-[20rem]:order-3 @max-[20rem]:basis-full @max-[20rem]:justify-between ${quiet ? "bg-transparent ring-1 ring-line" : "bg-surface-2"}`}>
