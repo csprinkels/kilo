@@ -31,7 +31,7 @@ export default function SectionNav() {
             return (
               <li key={t.href}>
                 <Link href={t.href} aria-current={on ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-[2px] font-semibold leading-tight transition-colors [font-size:clamp(11px,4cqi,1rem)] ${on ? "bg-surface-2 text-brand" : "text-ink-2"}`}>
+                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-[2px] font-semibold leading-tight transition-colors [font-size:clamp(10px,3cqi,12px)] ${on ? "bg-surface-2 text-brand" : "text-ink-2"}`}>
                   <t.icon className="size-6" strokeWidth={on ? 2.25 : 1.75} aria-hidden /> {t.label}
                 </Link>
               </li>
