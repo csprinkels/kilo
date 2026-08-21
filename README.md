@@ -82,6 +82,10 @@ Never put the decision behind a fetch. Signaling survives a congested cell (push
 
 Verify: `curl -sD - https://data.yourdomain/v1/manifest.json | grep -i cf-cache-status` should say `HIT` on the second request.
 
+## Deployments
+
+Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-lime-eta.vercel.app (`NEXT_PUBLIC_CONVEX_SITE_URL` in Vercel's production env). **Dev** `abundant-dotterel-415` is what `npx convex dev` pushes to; nothing public reads it. Ship backend changes with `npx convex deploy --yes`; secrets are set per deployment (`npx convex env set --prod …`). Both run the same crons on their own data.
+
 ## Not yet (by design)
 
 - Big Island Video News RSS (ask permission first), county CivicPlus pages (403 to bots), HECO outage map (token-gated), Everbridge/Genasys (no feed).
