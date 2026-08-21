@@ -131,7 +131,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           {approaching && mainStorm && (
             <Link href="/storms/" className="isl-card isl-storm" aria-label={mainStorm.text}>
               <p className="isl-kicker"><span className="isl-bubble"><Wind aria-hidden /></span>{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
-              <h2 className="isl-h">{stormName(mainStorm.s)}</h2>
+              <h2 className="isl-h">{stormName(mainStorm.s).replace(/-/g, "\u2011")}</h2>{/* non-breaking hyphen: never "Two-" / "C" */}
               <p className="isl-p">{mainStorm.text}</p>
               {mainStorm.level >= 3 && <p className="isl-note" style={{ color: "var(--now-sky)", borderColor: "color-mix(in srgb, var(--now-sky) 25%, transparent)" }}>Finish getting ready. Follow Civil Defense.</p>}
               <div className="isl-map"><StormMap storm={mainStorm.s} place={place} compact /></div>
