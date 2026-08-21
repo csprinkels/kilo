@@ -67,6 +67,7 @@ export const run = internalAction({
 
     const snapshots = await ctx.runMutation(internal.ingest.commit, { batches, health, now });
     await publishToR2(snapshots);
+    for (const text of await ctx.runMutation(internal.watch.record, { health, now })) await ctx.runAction(internal.push.sendModerator, { text });
   },
 });
 
@@ -138,6 +139,22 @@ export const commit = internalMutation({
 
     for (const { path, body } of out) await putSnapshot(ctx, path, body, now);
     return out;
+  },
+});
+
+/** Cron: delete feed items the source dropped 30+ days ago. Active rows are never touched; anything younger stays so
+ *  a row re-listed within a month keeps its original issuedAt (see commit). Community reports live in `reports`
+ *  and are purged by reports.expire, not here. */
+export const purge = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Age by lastConfirmedAt (when the source last listed it), not issuedAt: a long-running alert that just ended must wait the full 30 days.
+    const cutoff = Date.now() - 30 * 24 * 3_600_000;
+    // ponytail: 500 per daily run is far above the ~150/day deactivation rate; self-reschedule if a backlog ever forms.
+    // Index range, not collect+filter: inactive rows carry road paths and would blow the per-mutation read limit in a month.
+    const stale = await ctx.db.query("items").withIndex("by_active_confirmed", (q) => q.eq("active", false).lt("lastConfirmedAt", cutoff)).take(500);
+    for (const r of stale) await ctx.db.delete(r._id);
+    return stale.length;
   },
 });
 

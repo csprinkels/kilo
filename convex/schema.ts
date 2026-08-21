@@ -30,7 +30,8 @@ export default defineSchema({
   })
     .index("by_key", ["key"])
     .index("by_source_active", ["source", "active"])
-    .index("by_active", ["active"]),
+    .index("by_active", ["active"])
+    .index("by_active_confirmed", ["active", "lastConfirmedAt"]), // purge: inactive rows, oldest first
 
   // Active tropical cyclones (latest advisory) + every past advisory position.
   storms: defineTable({
@@ -85,6 +86,9 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_district_type_created", ["district", "type", "createdAt"])
     .index("by_device_created", ["deviceHash", "createdAt"]),
+
+  // Source health over time, so the owner hears about a feed that has been failing for a while (watch.ts).
+  watch: defineTable({ source: v.string(), failsInRow: v.number(), lastOk: v.number(), lastAlertAt: v.number() }).index("by_source", ["source"]),
 
   // Published JSON: served by http.ts (dev / fallback) and mirrored to R2 (prod).
   snapshots: defineTable({
