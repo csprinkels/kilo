@@ -1,6 +1,6 @@
 // App shell: cache-first for same-origin pages/assets so the UI opens with zero signal.
 // Data JSON is fetched by the page itself (lib/data.ts) with its own localStorage fallback.
-const SHELL = "shell-v9";
+const SHELL = "shell-v10";
 // Big, rarely-changing map data lives in its own cache. Bumping SHELL must never cost someone the evacuation
 // zones they will need with no signal — and `alerts` (the last push digest, which the page renders offline)
 // is spared for the same reason. Anything NOT in this list is an old shell and gets swept on activate.
@@ -54,6 +54,21 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // Pages: network first, so a new version shows on the next visit instead of the one after it.
+  // The saved copy is still there the moment the network fails, which is the whole point of this app.
+  if (e.request.mode === "navigate") {
+    e.respondWith((async () => {
+      const c = await caches.open(SHELL);
+      try {
+        const res = await fetch(e.request);
+        if (res.ok) c.put(e.request, res.clone());
+        return res;
+      } catch {
+        return (await c.match(e.request, { ignoreSearch: true })) || (await c.match("/")) || Response.error();
+      }
+    })());
+    return;
+  }
   // Stale-while-revalidate: serve cached shell instantly, refresh it in the background.
   e.respondWith(
     caches.open(PACK_URL.test(url.pathname) ? PACKS : SHELL).then(async (c) => {
