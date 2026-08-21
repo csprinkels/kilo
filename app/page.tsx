@@ -200,8 +200,11 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           <AlertsCard island={island} compact />
         </div>
 
-        <footer className="mt-s6 pb-s4 text-small leading-relaxed text-ink-2">
-          Free. No ads. No account. Not an emergency service — call 911. <Link className="font-semibold text-brand" href="/sources/">How {APP_NAME} works</Link>
+        <Link href="/sources/" className="row mt-s5 border-t border-line text-small font-semibold text-ink-2">
+          <Icon name="gear" size={18} /> <span className="flex-1">Settings and about</span> <Icon name="caret-right" size={16} />
+        </Link>
+        <footer className="mt-s4 pb-s4 text-small leading-relaxed text-ink-2">
+          Free. No ads. No account. Not an emergency service — call 911.
         </footer>
       </div>
     </main>

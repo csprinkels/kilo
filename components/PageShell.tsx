@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import Icon from "./Icon";
 import SectionNav from "./SectionNav";
 import TopBar from "./TopBar";
 import Freshness from "./Freshness";
@@ -25,6 +27,9 @@ export default function PageShell({
       {line && <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{line}</p>}
       {children}
       {source && gen ? <p className="mt-s7 text-small text-ink-2 num">From {source}. Checked {fmtClock(gen, fetchedAt)}.</p> : null}
+      <Link href="/sources/" className="row mt-s4 border-t border-line text-small font-semibold text-ink-2">
+        <Icon name="gear" size={18} /> <span className="flex-1">Settings and about</span> <Icon name="caret-right" size={16} />
+      </Link>
     </main>
   );
 }

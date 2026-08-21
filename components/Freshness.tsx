@@ -1,5 +1,5 @@
 "use client";
-import { fmtClock } from "@/lib/brand";
+import { fmtClock, fmtDateTime } from "@/lib/brand";
 
 export type FreshnessProps = {
   gen: number;          // when the publisher last produced this data
@@ -17,7 +17,7 @@ export default function Freshness({ gen, checkedAt, offline, weak }: FreshnessPr
   else if (offline) { text = `No signal. Showing what your phone saved at ${fmtClock(gen, checkedAt)}.`; cls = "rounded-card bg-danger-bg px-s3 py-s2 font-semibold text-danger"; }
   else if (checkedAt - gen > VERY_STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}. Something may be wrong on our end.`; cls = "font-semibold text-warn"; }
   else if (checkedAt - gen > STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}.`; cls = "text-ink"; }
-  else text = `Checked ${fmtClock(gen, checkedAt)}`;
+  else text = `Latest update: ${fmtDateTime(gen)}`;
   if (weak && gen && !offline) text += " Weak signal, short version.";
-  return <p role="status" className={`mt-s2 px-1 text-[0.8125rem] num ${cls}`}>{text}</p>;
+  return <p role="status" className={`mt-s3 text-center text-[0.8125rem] num ${cls}`}>{text}</p>;
 }
