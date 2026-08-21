@@ -115,6 +115,19 @@
 @utility row { @apply flex min-h-14 w-full items-center gap-s3 py-s3 text-left; }
 @utility picture { @apply overflow-hidden rounded-card bg-surface; }
 
+.map-terrain {
+  opacity: 0.34;
+  filter: saturate(0.5) contrast(0.9);
+  mix-blend-mode: multiply;
+}
+@media (prefers-color-scheme: dark) {
+  .map-terrain {
+    opacity: 0.2;
+    filter: grayscale(1) brightness(1.35);
+    mix-blend-mode: screen;
+  }
+}
+
 html {
   background: var(--bg);
   font-size: 100%;                 /* never px: inherits the browser/OS text size */
