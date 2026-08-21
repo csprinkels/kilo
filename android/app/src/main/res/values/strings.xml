@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Kilo Hawaiʻi</string>
-    <string name="title_activity_main">Kilo Hawaiʻi</string>
-    <string name="package_name">com.csprinkels.kilohawaii</string>
-    <string name="custom_url_scheme">com.csprinkels.kilohawaii</string>
+    <string name="app_name">Kilo</string>
+    <string name="title_activity_main">Kilo</string>
+    <string name="package_name">com.csprinkels.kilo</string>
+    <string name="custom_url_scheme">com.csprinkels.kilo</string>
 </resources>

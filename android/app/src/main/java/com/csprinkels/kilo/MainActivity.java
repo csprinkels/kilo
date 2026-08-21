@@ -1,4 +1,4 @@
-package com.csprinkels.kilohawaii;
+package com.csprinkels.kilo;
 
 import com.getcapacitor.BridgeActivity;
 

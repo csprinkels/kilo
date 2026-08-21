@@ -84,7 +84,7 @@ Verify: `curl -sD - https://data.yourdomain/v1/manifest.json | grep -i cf-cache-
 
 ## The iOS and Android apps
 
-The same static export, wrapped with Capacitor (`capacitor.config.ts`; app id `com.csprinkels.kilohawaii`, name "Kilo Hawaiʻi"). Native projects live in `ios/` and `android/`; the web bundle is copied in and never committed.
+The same static export, wrapped with Capacitor (`capacitor.config.ts`; app id `com.csprinkels.kilo`, name "Kilo"). Native projects live in `ios/` and `android/`; the web bundle is copied in and never committed.
 
 ```
 pnpm build && npx cap sync      # rebuild the web app and copy it into both projects
