@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { PLACES, type LatLon, type RoadLine } from "@/lib/roads";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
@@ -26,6 +26,13 @@ export const useRoads = (island: IslandId) => useStatic<Roads>(`/${island}-roads
 const FRAME: Record<IslandId, [number, number, number, number]> = {
   hawaii: [18.85, 20.33, -156.15, -154.73], maui: [20.45, 21.3, -157.4, -155.9], oahu: [21.2, 21.77, -158.35, -157.58], kauai: [21.8, 22.3, -159.88, -159.22],
 };
+/** Broad relief rings, clipped to land. They provide orientation without downloading terrain tiles. */
+const PEAKS: Record<IslandId, LatLon[]> = {
+  hawaii: [[19.82, -155.47], [19.48, -155.61], [19.42, -155.29]],
+  maui: [[20.71, -156.25], [20.89, -156.59], [21.13, -156.92]],
+  oahu: [[21.48, -157.90], [21.48, -158.14]],
+  kauai: [[22.07, -159.50]],
+};
 const W = 800;
 const MILE_LAT = 1 / 69; // degrees of latitude per mile
 
@@ -47,6 +54,7 @@ function frameFor(box: [number, number, number, number], aspect: number) {
 export default function RoadMap({ island, segments, focus, detour, you, label }: { island: IslandId; segments: Segment[]; focus?: LatLon[]; detour?: RoadLine[]; you?: LatLon; label: string }) {
   const coast = useStatic<Coast>("/hawaii-coast.json");
   const roads = useRoads(island);
+  const id = useId().replaceAll(":", "");
 
   let box = FRAME[island];
   if (focus?.length) {
@@ -74,20 +82,47 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
   const places = PLACES.filter((p) => p.island === island && (focus ? inside(p.lat, p.lon) : p.big));
   const lines = segments.filter((g) => g.path && g.path.length >= 2);
   const spots = segments.filter((g) => !(g.path && g.path.length >= 2) && g.lat != null && g.lon != null && inside(g.lat, g.lon));
+  const coastPaths = coast?.coordinates.map((poly) => d(poly[0].map(([lon, lat]) => [lat, lon]), true)) ?? [];
+  const roadWidth = focus ? 4.5 : 2.75;
 
   return (
     <div className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
-        <rect width={W} height={H} fill="var(--surface)" />
-        {coast?.coordinates.map((poly, i) => <path key={i} d={d(poly[0].map(([lon, lat]) => [lat, lon]), true)} fill="var(--surface-2)" stroke="var(--ink-2)" strokeOpacity={0.5} strokeWidth={1.5} />)}
-        {roads?.lines.map((l, i) => <path key={i} d={d(l.p)} fill="none" stroke="var(--ink-2)" strokeOpacity={0.55} strokeWidth={focus ? 4 : 2.5} strokeLinejoin="round" strokeLinecap="round" />)}
+        <defs>
+          <pattern id={`${id}-water`} width="72" height="36" patternUnits="userSpaceOnUse">
+            <path d="M-18 18 Q0 8 18 18 T54 18 T90 18" fill="none" stroke="var(--map-water-line)" strokeWidth="1" />
+          </pattern>
+          <clipPath id={`${id}-land`}>
+            {coastPaths.map((p, i) => <path key={i} d={p} />)}
+          </clipPath>
+        </defs>
+        <rect width={W} height={H} fill="var(--map-water)" />
+        <rect width={W} height={H} fill={`url(#${id}-water)`} />
+        {/* A soft shoreline separates land from water even when the phone is dim. */}
+        {coastPaths.map((p, i) => <path key={`halo-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.65} strokeWidth={10} strokeLinejoin="round" />)}
+        {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.75} strokeLinejoin="round" />)}
+        {!focus && (
+          <g clipPath={`url(#${id}-land)`} fill="none" stroke="var(--map-relief)" strokeWidth={1.15}>
+            {PEAKS[island].flatMap(([lat, lon], peak) => {
+              if (!inside(lat, lon)) return [];
+              const [x, y] = f(lat, lon);
+              return [28, 48, 70, 94, 122].map((r, ring) => <circle key={`${peak}-${ring}`} cx={x} cy={y} r={r} opacity={0.24 - ring * 0.025} />);
+            })}
+          </g>
+        )}
+        {/* Roads use a dark casing and light center, like a printed road atlas. */}
+        {roads?.lines.map((l, i) => <path key={`case-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeOpacity={0.7} strokeWidth={roadWidth + 3} strokeLinejoin="round" strokeLinecap="round" />)}
+        {roads?.lines.map((l, i) => <path key={`road-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road)" strokeWidth={roadWidth} strokeLinejoin="round" strokeLinecap="round" />)}
+        {detour?.map((l, i) => <path key={`dc${i}`} d={d(l.p)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 13 : 9} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
+        {lines.filter((g) => g.kind === "lane").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 11 : 9} strokeLinecap="round" strokeLinejoin="round" />)}
         {lines.filter((g) => g.kind === "lane").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--warn)" strokeWidth={focus ? 7 : 5} strokeDasharray="12 9" strokeLinecap="round" strokeLinejoin="round" />)}
-        {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
+        {lines.filter((g) => g.kind === "closed").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 14 : 13} strokeLinecap="round" strokeLinejoin="round" />)}
+        {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={focus ? 9 : 8} strokeLinecap="round" strokeLinejoin="round" />)}
         {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); const c = g.kind === "lane" ? "var(--warn)" : "var(--danger)"; return g.approx
           ? <circle key={g.key} cx={x} cy={y} r={16} fill={c} fillOpacity={0.25} stroke={c} strokeWidth={2} strokeDasharray="4 4" />  /* "about here": neighborhood only */
           : <circle key={g.key} cx={x} cy={y} r={9} fill={c} stroke="var(--surface)" strokeWidth={3} />; })}
-        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4} fill="var(--ink)" />; })}
+        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4.5} fill="var(--map-town)" stroke="var(--map-label-halo)" strokeWidth={2.5} />; })}
         {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return <g><circle cx={x} cy={y} r={14} fill="var(--brand)" fillOpacity={0.2} /><circle cx={x} cy={y} r={7} fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} /></g>; })()}
       </svg>
       {/* Town names as HTML so they follow the reader's text size instead of the picture's scale */}
@@ -95,7 +130,7 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         const [x, y] = f(p.lat, p.lon);
         const px = x / W; // names near an edge hang inward so the picture's edge never cuts them
         const pos = px < 0.15 ? { left: `${px * 100}%` } : px > 0.85 ? { right: `${(1 - px) * 100}%` } : { left: `${px * 100}%`, transform: "translateX(-50%)" };
-        return <span key={p.name} className="pointer-events-none absolute whitespace-nowrap text-small font-semibold text-ink" style={{ ...pos, top: `${(y / H) * 100}%`, marginTop: "0.4rem", textShadow: "0 0 4px var(--surface), 0 0 4px var(--surface)" }}>{p.name}</span>;
+        return <span key={p.name} className="pointer-events-none absolute whitespace-nowrap text-small font-semibold text-ink" style={{ ...pos, top: `${(y / H) * 100}%`, marginTop: "0.4rem", textShadow: "0 0 3px var(--map-label-halo), 0 0 3px var(--map-label-halo), 0 0 6px var(--map-label-halo)" }}>{p.name}</span>;
       })}
     </div>
   );
