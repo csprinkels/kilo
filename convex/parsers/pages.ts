@@ -1,7 +1,7 @@
 // Parsers for page-only JSON (weather, quakes, volcano, tsunami). Pure functions; fixtures in fixtures/.
 import { XMLParser } from "fast-xml-parser";
 import { clip } from "../../lib/types.ts";
-import type { Hourly, Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
+import type { AltModel, Hourly, Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
 import { COMPASS } from "../../lib/storm.ts";
 import { conditionCode } from "../../lib/summary.ts";
 export { conditionCode };
@@ -59,6 +59,31 @@ export function parseHourly(json: { properties?: { periods?: HourPeriod[] } }, h
     n: ps.map((p) => (p.isDaytime ? 0 : 1)),
     rh: ps.map((p) => p.relativeHumidity?.value ?? 0),
   };
+}
+
+// ---------- Open-Meteo multi-model hourly temps → faint alternate curves behind the NWS line ----------
+const ALT_LABELS: Record<string, string> = { ecmwf_ifs025: "ECMWF", gfs_seamless: "GFS", icon_seamless: "ICON" };
+export function parseAltModels(json: { hourly?: Record<string, (string | number | null)[]> }, t0: number, hours = 36): AltModel[] {
+  const h = json.hourly ?? {};
+  const times = (h.time ?? []) as string[];
+  const start = times.indexOf(new Date(t0 - 10 * 3_600_000).toISOString().slice(0, 13) + ":00"); // HST is fixed UTC-10
+  if (start < 0 || times.length - start < hours) return [];
+  const out: AltModel[] = [];
+  for (const [key, series] of Object.entries(h)) {
+    const m = ALT_LABELS[key.replace("temperature_2m_", "")];
+    if (!m || key === "time") continue;
+    const t = (series as (number | null)[]).slice(start, start + hours);
+    if (t.filter((x) => x == null).length > hours * 0.2) continue;
+    for (let i = 0; i < t.length; i++) { // linear interpolation across null gaps; edges copy the nearest value
+      if (t[i] != null) continue;
+      let a = i - 1; while (a >= 0 && t[a] == null) a--;
+      let b = i + 1; while (b < t.length && t[b] == null) b++;
+      const va = a >= 0 ? t[a]! : b < t.length ? t[b]! : 0, vb = b < t.length ? t[b]! : va;
+      t[i] = a < 0 || b >= t.length ? (a >= 0 ? va : vb) : va + ((vb - va) * (i - a)) / (b - a);
+    }
+    out.push({ m, t: t.map((x) => Math.round(x!)) });
+  }
+  return out;
 }
 
 // ---------- NWS Surf Zone Forecast (SRF) text: zone blocks with shore rows of heights (feet) ----------

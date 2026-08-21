@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseObs, parseForecast, parseSrf, parseNdbc, parseAirNow, compactQuakes, parseHans, parseSo2, parseCap, parseSirens } from "../convex/parsers/pages.ts";
+import { parseAltModels, parseObs, parseForecast, parseSrf, parseNdbc, parseAirNow, compactQuakes, parseHans, parseSo2, parseCap, parseSirens } from "../convex/parsers/pages.ts";
 
 const txt = (f: string) => readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8");
 const fx = (f: string) => JSON.parse(txt(f));
@@ -73,4 +73,17 @@ test("hourly: 36 parallel arrays under 1 KB, condition codes from icon paths", a
   assert.equal(conditionCode("https://api.weather.gov/icons/land/day/skc?size=medium"), 0);
   assert.equal(conditionCode("https://api.weather.gov/icons/land/day/bkn?size=medium"), 3);
   assert.equal(conditionCode("", "Partly Cloudy"), 2);
+});
+
+test("open-meteo alt models: aligned to t0, 36 whole °F, gaps interpolated", () => {
+  const json = fx("open-meteo-hilo.json");
+  const t0 = Date.parse("2026-08-21T10:00:00-10:00");
+  const alt = parseAltModels(json, t0);
+  assert.ok(alt.length >= 2, `models ${alt.length}`);
+  for (const a of alt) { assert.ok(["ECMWF", "GFS", "ICON"].includes(a.m)); assert.equal(a.t.length, 36); assert.ok(a.t.every((x) => Number.isInteger(x) && x > 50 && x < 100)); }
+  assert.equal(alt.find((a) => a.m === "ECMWF")!.t[0], Math.round(json.hourly.temperature_2m_ecmwf_ifs025[10]));
+  const gappy = structuredClone(json); gappy.hourly.temperature_2m_gfs_seamless[12] = null; gappy.hourly.temperature_2m_icon_seamless.fill(null, 10, 30);
+  const alt2 = parseAltModels(gappy, t0);
+  assert.ok(!alt2.some((a) => a.m === "ICON"), "drops >20% missing"); assert.ok(Number.isInteger(alt2.find((a) => a.m === "GFS")!.t[2]));
+  assert.deepEqual(parseAltModels(json, Date.parse("2026-09-01T00:00:00-10:00")), []);
 });

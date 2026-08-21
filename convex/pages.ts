@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { ISLANDS } from "../lib/types.ts";
 import type { Quakes, Tsunami, Volcano, Weather } from "../lib/pages.ts";
 import { BUOYS, TOWNS } from "../lib/towns.ts";
-import { compactQuakes, parseAirNow, parseCap, parseForecast, parseHans, parseHourly, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf } from "./parsers/pages.ts";
+import { compactQuakes, parseAirNow, parseCap, parseAltModels, parseForecast, parseHans, parseHourly, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf } from "./parsers/pages.ts";
 import { UA, publishToR2, putSnapshot } from "./ingest.ts";
 
 const MIN = 60_000;
@@ -116,8 +116,13 @@ export const run = internalAction({
             ? await Promise.all([settle(get(`https://api.weather.gov/gridpoints/${t.grid}/forecast`), null), settle(get(`https://api.weather.gov/gridpoints/${t.grid}/forecast/hourly`, false, 30_000), null)])
             : [null, null];
           const fc = fcJson ? parseForecast(fcJson as never) : null;
-          const hourly = hrJson ? parseHourly(hrJson as never, 36, now) : undefined;
-          return { id: t.id, name: t.name, obs: (obsJson && parseObs(obsJson as never)) || prevTown?.obs, fc: fc?.fc ?? prevTown?.fc ?? [], fcAt: fc ? now : prevTown?.fcAt, hourly: hourly ?? prevTown?.hourly };
+          const hourly = hrJson ? parseHourly(hrJson as never, 36, now) : prevTown?.hourly;
+          if (hourly && (needFc || !hourly.alt?.length)) { // Open-Meteo alternate models (optional; a failure just leaves alt off)
+            const om = await settle(get(`https://api.open-meteo.com/v1/forecast?latitude=${t.lat}&longitude=${t.lon}&hourly=temperature_2m&temperature_unit=fahrenheit&timezone=Pacific%2FHonolulu&forecast_days=3&models=ecmwf_ifs025,gfs_seamless,icon_seamless`), null);
+            const alt = om ? parseAltModels(om as never, hourly.t0, hourly.t.length) : [];
+            hourly.alt = alt.length ? alt : hourly.alt;
+          }
+          return { id: t.id, name: t.name, obs: (obsJson && parseObs(obsJson as never)) || prevTown?.obs, fc: fc?.fc ?? prevTown?.fc ?? [], fcAt: fc ? now : prevTown?.fcAt, hourly };
         }));
         const weather: Weather = {
           upd: now, island, towns,
