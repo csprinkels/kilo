@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { parseNws } from "../convex/parsers/nws.ts";
 import { parseHccda } from "../convex/parsers/hccda.ts";
 import { parseHdot, parseHvo, parsePtwc, parseUsgs } from "../convex/parsers/feeds.ts";
-import { BANNED, LEVEL_WORD, SOURCE_NAME, fmtUntil, plainAlert } from "../lib/plain.ts";
+import { BANNED, LEVEL_WORD, SOURCE_NAME, fmtUntil, plainAlert, rankStorms } from "../lib/plain.ts";
+import { ISLAND_POINTS } from "../lib/storm.ts";
 import { ISLAND_LABEL, TYPE_LABEL } from "../lib/brand.ts";
 import type { Item } from "../lib/types.ts";
 
@@ -154,4 +155,17 @@ test("detours: the county's alternate-route wording matches roads in the offline
   assert.ok(names("Akoni Pule Highway").some((n) => /Akoni Pule/.test(n)));
   assert.ok(names("Alii Drive or Highway 180").some((n) => n.endsWith("|180")));
   for (const none of ["", "None", "none", "Non reported at this time", "Kamehameha or Kapiolani"]) assert.deepEqual(names(none).filter((n) => !/Kamehameha/.test(n)), [], none);
+});
+
+test("the storm that comes near leads; one that stays 1,000 miles out is 'not expected to come near'", () => {
+  // Real advisories from Aug 20 2026: Lala (hurricane, 1,148 mi NW, tracking north) and Two-C (depression, due to pass ~220 mi south on Sunday).
+  const lines = rankStorms(fx("storms-lala-twoc.json").storms, ISLAND_POINTS.hawaii);
+  assert.equal(lines[0].s.name, "Two-C");
+  assert.ok(lines[0].approaching);
+  assert.match(lines[0].short, /^Two-C: closest Sun.*about 2\d0 miles south\.$/);
+  const lala = lines.find((l) => l.s.name === "Lala")!;
+  assert.equal(lala.approaching, false);
+  assert.equal(lala.short, "Lala is not expected to come near.");
+  assert.match(lala.text, /not expected to come near Hawaiʻi Island/);
+  for (const l of lines) { assert.equal(banned(l.text), undefined, l.text); assert.equal(banned(l.short), undefined, l.short); }
 });

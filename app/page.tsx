@@ -18,7 +18,7 @@ import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
-import { plainAlert, quakeSentence, stormLine, type Plain } from "@/lib/plain";
+import { plainAlert, quakeSentence, rankStorms, type Plain } from "@/lib/plain";
 import { APP_NAME, fmtClock, fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
@@ -94,10 +94,12 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
   const storms = stormsSnap?.data?.storms ?? [];
   const place = ISLAND_POINTS[island];
-  const stormLines = storms.map((s) => ({ s, ...stormLine(s, place) })).sort((a, b) => Number(b.approaching) - Number(a.approaching) || b.level - a.level);
-  const mainStorm = stormLines.find((x) => x.approaching);
+  const stormLines = rankStorms(storms, place);
+  const coming = stormLines.filter((x) => x.approaching);
+  const mainStorm = coming[0];
 
-  const rows = topicRows(items, plain, island, now, stormLines.map((x) => x.short), !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
+  // A storm that is moving away or staying far out never shares the row with one that is coming.
+  const rows = topicRows(items, plain, island, now, (coming.length ? coming : stormLines).map((x) => x.short), !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
 
   return (
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">

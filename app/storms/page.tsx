@@ -5,7 +5,7 @@ import EmptyState from "@/components/EmptyState";
 import PageShell from "@/components/PageShell";
 import StormTracker from "@/components/StormTracker";
 import { ISLAND_POINTS, bearingDeg, distanceNm, nmToMi, type StormsSnapshot } from "@/lib/storm";
-import { dirWord, stormName, windsLine } from "@/lib/plain";
+import { dirWord, rankStorms, stormName, windsLine } from "@/lib/plain";
 import { useJson, useStoredIsland } from "@/lib/data";
 
 const SOURCE = "the Central Pacific Hurricane Center";
@@ -18,7 +18,7 @@ export default function StormsPage() {
   const [pick, setPick] = useState<string | null>(null);
 
   const miles = (s: { lat: number; lon: number }) => nmToMi(distanceNm(s.lat, s.lon, place.lat, place.lon));
-  const storms = [...(snap?.data?.storms ?? [])].sort((a, b) => miles(a) - miles(b)); // closest first
+  const storms = rankStorms(snap?.data?.storms ?? [], place).map((x) => x.s); // the one that matters here first
   const shown = storms.find((s) => s.id === pick) ?? storms[0];
   const shell = { island, onIsland: setIsland, fetchedAt: snap?.fetchedAt, gen: snap?.data?.gen, offline: snap?.offline, source: SOURCE };
 

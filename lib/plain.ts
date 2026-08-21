@@ -321,16 +321,33 @@ const DIR = ["north", "northeast", "east", "southeast", "south", "southwest", "w
 export const dirWord = (deg: number) => DIR[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 export const stormName = (s: Storm) => `${CLS[s.cls] ?? ""} ${s.name}`.trim();
 
+/** A storm whose closest forecast point stays farther than this is "not expected to come near" and never leads the Now page. */
+const NEAR_MI = 350; // ponytail: one radius for every island; day-4 track error is ~180 mi, so this leaves room to be wrong
+
+export type StormLine = { s: Storm; text: string; short: string; approaching: boolean; level: Level; closestMi: number };
+
 /** One sentence about a storm for one island: where it is, which way, whether it matters here. */
-export function stormLine(s: Storm, place: { lat: number; lon: number; label: string }): { text: string; short: string; approaching: boolean; level: Level } {
+export function stormLine(s: Storm, place: { lat: number; lon: number; label: string }): StormLine {
   const o = outlookFor(s, place);
   const mi = nmToMi(distanceNm(s.lat, s.lon, place.lat, place.lon)).toLocaleString();
   const dir = dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon));
   const name = stormName(s);
-  if (o.hurricaneWindsFrom) return { text: `${name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}. Follow Civil Defense.`, short: `${s.name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}.`, approaching: true, level: 4 };
-  if (o.tsWindsFrom) return { text: `${name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}. Finish getting ready before then.`, short: `${s.name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}.`, approaching: true, level: 3 };
-  if (o.movingAway) return { text: `${name} is ${mi} miles to the ${dir} and moving away.`, short: `${s.name} is moving away.`, approaching: false, level: 0 };
-  return { text: `${name} is ${mi} miles to the ${dir}, heading this way. Closest ${fmtDayTime(o.closest.at)}. Too early to know if it will matter here.`, short: `${s.name} is ${mi} miles ${dir}, closest ${fmtDayTime(o.closest.at)}.`, approaching: true, level: 1 };
+  const closestMi = nmToMi(o.closest.distNm);
+  const closest = `${fmtDayTime(o.closest.at)}, about ${(Math.round(closestMi / 10) * 10).toLocaleString()} miles ${dirWord(o.closest.bearingFromPlace)}`;
+  const base = { s, closestMi };
+  // A depression due to be a storm when it passes should say so; the name alone undersells it.
+  const peakKt = Math.max(s.windKt, ...s.forecast.filter((p) => p.at <= o.closest.at).map((p) => p.windKt));
+  const grows = s.windKt < 64 && peakKt >= 64 ? " It should be a hurricane by then." : s.windKt < 34 && peakKt >= 34 ? " It should be a tropical storm by then." : "";
+  if (o.hurricaneWindsFrom) return { ...base, text: `${name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}. Follow Civil Defense.`, short: `${s.name}: damaging winds likely from ${fmtDayTime(o.hurricaneWindsFrom)}.`, approaching: true, level: 4 };
+  if (o.tsWindsFrom) return { ...base, text: `${name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}. Finish getting ready before then.`, short: `${s.name}: strong winds could start ${fmtDayTime(o.tsWindsFrom)}.`, approaching: true, level: 3 };
+  if (o.movingAway) return { ...base, text: `${name} is ${mi} miles to the ${dir} and moving away.`, short: `${s.name} is moving away.`, approaching: false, level: 0 };
+  if (closestMi > NEAR_MI) return { ...base, text: `${name} is ${mi} miles to the ${dir}. It is not expected to come near ${place.label}.`, short: `${s.name} is not expected to come near.`, approaching: false, level: 0 };
+  return { ...base, text: `${name} is ${mi} miles to the ${dir}, heading this way. Closest ${closest}.${grows} Too early to know if it will matter here.`, short: `${s.name}: closest ${closest}.`, approaching: true, level: 1 };
+}
+
+/** Every storm, the one that matters most first: coming here before not, then by level, then by how close it gets. */
+export function rankStorms(storms: Storm[], place: { lat: number; lon: number; label: string }): StormLine[] {
+  return storms.map((s) => stormLine(s, place)).sort((a, b) => Number(b.approaching) - Number(a.approaching) || b.level - a.level || a.closestMi - b.closestMi);
 }
 export const windsLine = (s: Storm) => `Winds around ${Math.round(ktToMph(s.windKt) / 5) * 5} mph`;
 
