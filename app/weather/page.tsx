@@ -95,7 +95,7 @@ export default function WeatherPage() {
 
           {headsUp.length > 0 && (
             <Section title="Heads up" sentence="Nothing dangerous, but good to know.">
-              <ul className="list mt-s3">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
+              <ul className="list mt-s3">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((h) => h.source)).size > 1} />)}</ul>
             </Section>
           )}
         </>

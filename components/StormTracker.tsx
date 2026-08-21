@@ -51,11 +51,19 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
 
       <Section title="Where it will be">
         <ul className="list mt-s3">
-          {where.map((p) => (
-            <li key={p.hour} className="py-s2 text-body num">
-              {fmtDayTime(p.at)} · {nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon)).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))} · winds {round5(ktToMph(p.windKt))} mph{p.outlook ? " (less certain)" : ""}
-            </li>
-          ))}
+          {where.map((p) => {
+            const mi = nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon));
+            const closest = mi === Math.min(...where.map((q) => nmToMi(distanceNm(q.lat, q.lon, place.lat, place.lon))));
+            return (
+              <li key={p.hour} className="flex items-center gap-s3 py-s3 num">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-body font-semibold text-ink">{fmtDayTime(p.at)}{p.outlook ? <span className="font-normal text-ink-2"> · less certain</span> : ""}</span>
+                  <span className="block text-small text-ink-2">{mi.toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))}{closest ? <span className="font-semibold text-brand"> · closest to {place.label}</span> : ""}</span>
+                </span>
+                <span className="shrink-0 text-right text-body text-ink">{round5(ktToMph(p.windKt))} <span className="text-small text-ink-2">mph</span></span>
+              </li>
+            );
+          })}
         </ul>
       </Section>
 

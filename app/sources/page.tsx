@@ -94,7 +94,7 @@ export default function Settings() {
       <Section title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
         <ul className="list mt-s3">
           {SOURCES.map(([name, what]) => (
-            <li key={name} className="py-s2 text-body"><span className="font-semibold text-ink">{name}</span> <span className="text-ink-2">— {what}</span></li>
+            <li key={name} className="py-s3 text-body"><span className="block font-semibold text-ink">{name}</span><span className="block text-small text-ink-2">{what}</span></li>
           ))}
         </ul>
         <p className="mt-s3 max-w-[36rem] text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>

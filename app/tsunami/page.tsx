@@ -130,9 +130,14 @@ export default function TsunamiPage() {
       <a className="mt-s2 inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={map.url} target="_blank" rel="noreferrer">{map.label} <ChevronRight className="size-5" aria-hidden /></a>
 
       <H2>What to do</H2>
-      <ul className="list mt-s3">
-        {WHAT_TO_DO.map((s) => <li key={s} className="py-s3 text-body text-ink">{s}</li>)}
-      </ul>
+      <ol className="list mt-s3">
+        {WHAT_TO_DO.map((s, i) => (
+          <li key={s} className="flex items-start gap-s3 py-s3 text-body text-ink">
+            <span className="w-6 shrink-0 font-display text-title font-bold leading-snug text-brand num" aria-hidden>{i + 1}</span>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
       <p className="mt-s3 text-small text-ink-2">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
 
       {d && (

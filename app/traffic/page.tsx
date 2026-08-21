@@ -178,7 +178,7 @@ export default function RoadsPage() {
                 <>
                   <h2 className="h-title">Roadwork</h2>
                   <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Planned work. Expect a wait, not a closed road.</p>
-                  <ul className="list mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>
+                  <ul className="list mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
                 </>
               ) : (
                 <button className="btn btn-big" onClick={() => setShowWork(true)}><TrafficCone className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>

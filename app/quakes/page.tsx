@@ -56,12 +56,19 @@ function QuakesBody({ retry }: { retry: () => void }) {
           <Section title="Ones people felt" sentence={felt.length ? undefined : "None this month."}>
             {felt.length > 0 && (
               <ul className="list mt-s3">
-                {felt.map((e) => (
-                  <li key={e.i} className="py-s3">
-                    <span className="block text-body font-semibold text-ink">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
-                    <span className="block text-body text-ink-2 num">{when(e.t * 1000, now)} · {e.m.toFixed(1)}{e.f ? ` · ${people(e.f)}` : ""}</span>
-                  </li>
-                ))}
+                {felt.map((e) => {
+                  const dot = Math.round(8 + Math.min(Math.max(e.m - 3, 0), 3) * 6); // same idea as the map: bigger dot, bigger quake
+                  return (
+                    <li key={e.i} className="flex items-center gap-s3 py-s3">
+                      <span className="flex w-8 shrink-0 justify-center" aria-hidden><span className="rounded-full bg-ink" style={{ width: dot, height: dot }} /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-body font-semibold text-ink">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
+                        <span className="block text-small text-ink-2 num">{when(e.t * 1000, now)}{e.f ? ` · ${people(e.f)}` : ""}</span>
+                      </span>
+                      <span className="shrink-0 text-title font-semibold text-ink num" aria-label={`magnitude ${e.m.toFixed(1)}`}>{e.m.toFixed(1)}</span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Section>

@@ -40,12 +40,13 @@ function Actions({ item }: { item: Item }) {
  * One official item: [level word] · plain headline · what to do · who said it. Tap the whole row for the details.
  * Never shows the agency's title unless you open "Official wording".
  */
-export default function ItemRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
+export default function ItemRow({ item, now, focus, showSource = true }: { item: Item; now: number; focus?: boolean; showSource?: boolean }) {
   if (item.tier === "community") return <NeighborRow item={item} now={now} focus={focus} />;
-  return <OfficialRow item={item} now={now} focus={focus} />;
+  return <OfficialRow item={item} now={now} focus={focus} showSource={showSource} />;
 }
 
-function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
+/** `showSource` is false when every row in the list comes from the same agency (the page says it once instead). */
+function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number; focus?: boolean; showSource?: boolean }) {
   const [open, setOpen] = useState(!!focus);
   const p = plainAlert(item, now);
   const stale = staleLine(item, now);
@@ -59,7 +60,7 @@ function OfficialRow({ item, now, focus }: { item: Item; now: number; focus?: bo
           {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
           {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(lastUpdated(item, now).at, now)}</span>
+          <span className="mt-1 block text-small text-ink-2 num">{showSource ? `${p.source[0].toUpperCase() + p.source.slice(1)} · ` : ""}{fmtClock(lastUpdated(item, now).at, now)}</span>
           {stale && <span className="mt-1 block text-small font-semibold text-ink">{stale}</span>}
         </span>
         <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />

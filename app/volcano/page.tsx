@@ -24,6 +24,7 @@ function volcanoLine(name: string, v: VolcanoStatus): string {
 
 // EPA category from the index number, in words people say. 0 good · 1 okay · 2 bad for asthma · 3 unhealthy for everyone
 const AIR_WORD = ["good", "okay", "bad for people with asthma", "unhealthy for everyone"];
+const AIR_DOT = ["bg-cond-windy", "bg-cond-clear", "bg-warn", "bg-danger"]; // the EPA's green / yellow / orange / red, in our colours
 const airCat = (aqi: number) => (aqi <= 50 ? 0 : aqi <= 100 ? 1 : aqi <= 150 ? 2 : 3);
 // Monitors that are not on Hawaiʻi Island; everything else is. ponytail: three names, a field on the feed if the list grows.
 const MONITOR_ISLAND: Record<string, Island> = { Honolulu: "oahu", Kapolei: "oahu", Kīhei: "maui" };
@@ -92,7 +93,9 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
               <ul className="list mt-s3">
                 {air.map((a) => (
                   <li key={a.name} className="row text-body text-ink">
-                    <span className="font-semibold">{a.name}</span> · <span className="text-ink-2">{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
+                    <span className={`size-3.5 shrink-0 rounded-full ${a.cat != null ? AIR_DOT[a.cat] : "bg-line"}`} aria-hidden />
+                    <span className="min-w-0 flex-1 font-semibold">{a.name}</span>
+                    <span className="shrink-0 text-right text-ink-2">{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
                   </li>
                 ))}
               </ul>
