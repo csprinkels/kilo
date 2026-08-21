@@ -12,8 +12,9 @@ import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
-import { LEVEL_WORD, lastUpdated, plainAlert, staleLine, type Plain, highway } from "@/lib/plain";
+import { LEVEL_WORD, lastUpdated, plainAlert, type Plain, highway } from "@/lib/plain";
 import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
+import { districtName } from "@/lib/places";
 
 type IslandId = Exclude<Island, "state">;
 
@@ -95,6 +96,15 @@ export default function RoadsPage() {
   }
   const nearCount = you ? grouped.filter((g) => (milesFrom(g.item) ?? 1e9) <= NEAR_MILES).length : 0;
   const rows = showAll ? grouped : grouped.slice(0, you ? Math.max(3, nearCount) : 3);
+  // One box per district, in the order the rows already have (nearest first when you asked, else most urgent first).
+  const byDistrict: { name: string | null; rows: typeof rows }[] = [];
+  for (const g of rows) {
+    const name = g.item.districts[0] ? districtName(g.item.districts[0]) : null;
+    const d = byDistrict.find((x) => x.name === name);
+    if (d) d.rows.push(g); else byDistrict.push({ name, rows: [g] });
+  }
+  const mixedSources = new Set(official.map((i) => i.source.split(":")[0])).size > 1;
+  const anyStale = rows.some((g) => lastUpdated(g.item, now).stale);
   const w = WAZE[island];
 
   const locate = () => {
@@ -139,7 +149,17 @@ export default function RoadsPage() {
 
           <Section title="Closed or blocked">
             {official.length ? (
-              <ul className="list mt-s3">{rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} />)}</ul>
+              <>
+                {anyStale && <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</p>}
+                {byDistrict.map((d) => (
+                  <div key={d.name ?? "-"}>
+                    {byDistrict.length > 1 && d.name && <h3 className="now-label mt-s4">{d.name}</h3>}
+                    <ul className={`list ${byDistrict.length > 1 ? "mt-s2" : "mt-s3"}`}>
+                      {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
+                    </ul>
+                  </div>
+                ))}
+              </>
             ) : (
               <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
             )}
@@ -198,14 +218,27 @@ function roadName(item: Item) {
  * A closure or crash row, like ItemRow but with the closed stretch drawn when you open it.
  * Headline and action come from plainAlert so the words match the rest of the app.
  */
-function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you }: { item: Item; also?: Item[]; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon }) {
+function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, district, showSource }: { item: Item; also?: Item[]; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon; district?: string; showSource?: boolean }) {
   const [open, setOpen] = useState(false);
-  const alt = item.fields?.alternate?.trim();
+  // The county sometimes types "None" into the detour field; plain.ts already turned that into "No way around listed yet."
+  const alt = /^no way around/i.test(p.action) ? undefined : item.fields?.alternate?.trim();
   const detour = useMemo(() => (open && alt ? matchDetour(alt, roads) : []), [open, alt, roads]);
   const county = item.source.startsWith("hccda") && isClosed(item);
   const cd = CIVIL_DEFENSE[island];
   const [copied, setCopied] = useState(false);
   const Icon = item.type === "traffic" ? CarFront : TrafficCone;
+  // The same colours as the map: red = closed, orange = one lane, so the list and the picture say the same thing.
+  const kind = segmentKind(item);
+  const tone = kind === "lane" ? "text-warn" : kind ? "text-danger" : LEVEL_TEXT[p.level];
+  // Under a district heading the headline need not repeat the district.
+  const title = district ? p.headline.replace(` in ${district}`, "") : p.headline;
+  const updated = lastUpdated(item, now);
+  const meta = [
+    miles != null ? `${milesWord(miles)} from you` : "",
+    p.action && !/^no way around/i.test(p.action) ? p.action.replace(/\.$/, "") : "",
+    showSource ? p.source[0].toUpperCase() + p.source.slice(1) : "",
+    updated.stale ? `Last update ${fmtClock(updated.at, now)}` : fmtClock(updated.at, now),
+  ].filter(Boolean).join(" · ");
   const path: LatLon[] | undefined = item.path && item.path.length >= 2 ? item.path : undefined;
   const stretches = [item, ...also].filter((i) => i.path && i.path.length >= 2);
   const allPoints: LatLon[] = stretches.flatMap((i) => i.path!);
@@ -220,13 +253,11 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you }: 
   return (
     <li id={`item-${hashOf(item.key)}`}>
       <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <Icon className={`mt-1 size-6 shrink-0 ${LEVEL_TEXT[p.level]}`} strokeWidth={1.75} aria-hidden />
+        <Icon className={`mt-1 size-6 shrink-0 ${tone}`} strokeWidth={2} aria-hidden />
         <span className="min-w-0 flex-1">
           {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
-          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
-          {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{miles != null ? `${milesWord(miles)} from you · ` : ""}{p.source[0].toUpperCase() + p.source.slice(1)} · {fmtClock(lastUpdated(item, now).at, now)}</span>
-          {staleLine(item, now) && <span className="mt-1 block text-small font-semibold text-ink">{staleLine(item, now)}</span>}
+          <span className="block text-body font-semibold leading-snug text-ink">{title}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
+          <span className="mt-0.5 block text-small text-ink-2 num">{meta}</span>
         </span>
         <ChevronDown className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>

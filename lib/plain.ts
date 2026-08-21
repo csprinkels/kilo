@@ -212,7 +212,8 @@ function road(item: Item, now: number): Plain {
   }
   const how = /both/.test(st) ? "closed both ways" : /one lane|partial/.test(st) ? "down to one lane" : /open/.test(st) && !/clos/.test(st) ? "open again" : "closed";
   // Collapse the county's doubled words ("one lane one lane of traffic…") before we repeat them.
-  const alt = item.fields?.alternate?.trim().replace(/\s+/g, " ").replace(/\b(\w+(?: \w+)?) \1\b/gi, "$1");
+  const altRaw = item.fields?.alternate?.trim().replace(/\s+/g, " ").replace(/\b(\w+(?: \w+)?) \1\b/gi, "$1");
+  const alt = altRaw && !/^(none|no|n\/a|na|tbd|unknown|not reported.*)\.?$/i.test(altRaw) ? altRaw : undefined; // "None" is not a road
   const detour = !alt ? "No way around listed yet." : alt.split(" ").length <= 4 ? `Use ${highway(alt)} instead.` : `Detour: ${cap(alt.toLowerCase())}.`;
   return {
     headline: `${highway(roadName)} ${how}${place}`,

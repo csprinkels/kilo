@@ -20,3 +20,9 @@ export function districtFor(text: string): string | undefined {
   const t = ` ${fold(text)} `;
   return INDEX.find(([name]) => t.includes(` ${name} `) || t.includes(` ${name},`) || t.includes(` ${name}.`) || t.includes(`-${name} `))?.[1];
 }
+
+/** The county writes "Kau" and "Hamakua"; people read "Ka‘ū" and "Hāmākua". Unknown names pass through. */
+export function districtName(raw: string): string {
+  const f = fold(raw);
+  return Object.keys(HAWAII_DISTRICTS).find((d) => fold(d) === f) ?? raw;
+}
