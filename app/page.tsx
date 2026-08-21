@@ -9,6 +9,7 @@ import SectionNav from "@/components/SectionNav";
 import TopBar from "@/components/TopBar";
 import StormMap from "@/components/StormMap";
 import ConditionIcon from "@/components/ConditionIcon";
+import Onboarding from "@/components/Onboarding";
 import type { DigestItem, Island, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
@@ -18,7 +19,7 @@ import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { LEVEL_WORD, plainAlert, quakeSentence, rankStorms, staleLine, stormName, type Plain, type StormLine } from "@/lib/plain";
-import { APP_NAME, fmtClock, fmtTime, islandName } from "@/lib/brand";
+import { fmtClock, fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
@@ -40,21 +41,9 @@ export default function Home() {
   return <Now island={island === "state" ? "hawaii" : island} setIsland={setIsland} focusKey={focusKey} />;
 }
 
-/** One screen for someone who arrived from a neighbor's link: what this is, which island, done. */
+/** First run, for someone who arrived from a neighbor's link: a few screens, one idea each, then Now. */
 function FirstRun({ onPick }: { onPick: (i: Island) => void }) {
-  return (
-    <main className="relative z-[1] mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-s7 pt-s7">
-      <h1 className="h-display">{APP_NAME}</h1>
-      <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{APP_NAME} shows what is happening on your island: weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report.</p>
-      <h2 className="h-title mt-s7">Which island are you on?</h2>
-      <div className="mt-s3 flex flex-col gap-s2">
-        {ISLANDS.map((i) => (
-          <button key={i} onClick={() => onPick(i)} className="btn btn-big justify-start px-s5 text-left">{islandName(i, true)}</button>
-        ))}
-      </div>
-      <p className="mt-s4 text-small text-ink-2">You can change this any time at the top of the screen.</p>
-    </main>
-  );
+  return <Onboarding onDone={onPick} />;
 }
 
 function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">; setIsland: (i: Island) => void; focusKey: string | null }) {
