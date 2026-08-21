@@ -82,6 +82,9 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
   const spots = segments.filter((g) => !(g.path && g.path.length >= 2) && g.lat != null && g.lon != null && inside(g.lat, g.lon));
   const coastPaths = coast?.coordinates.map((poly) => d(poly[0].map(([lon, lat]) => [lat, lon]), true)) ?? [];
   const roadWidth = focus ? 5 : 3.5;
+  const [artSouth, artNorth, artWest, artEast] = FRAME[island];
+  const [artX, artY] = f(artNorth, artWest), [artRight, artBottom] = f(artSouth, artEast);
+  const art = { x: artX, y: artY, width: artRight - artX, height: artBottom - artY };
 
   return (
     <div className="relative">
@@ -90,15 +93,14 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
           <pattern id={`${id}-water`} width="72" height="36" patternUnits="userSpaceOnUse">
             <path d="M-18 18 Q0 8 18 18 T54 18 T90 18" fill="none" stroke="var(--map-water-line)" strokeWidth="1" />
           </pattern>
-          <filter id={`${id}-terrain`} x="-15%" y="-15%" width="130%" height="130%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="3" seed="17" />
-            <feColorMatrix type="saturate" values="0" />
-            <feComponentTransfer>
-              <feFuncR type="linear" slope="0.7" intercept="0.25" />
-              <feFuncG type="linear" slope="0.7" intercept="0.25" />
-              <feFuncB type="linear" slope="0.55" intercept="0.2" />
-              <feFuncA type="table" tableValues="0 0.2" />
-            </feComponentTransfer>
+          <filter id={`${id}-street-case`} colorInterpolationFilters="sRGB">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="1.1" result="wide" />
+            <feFlood floodColor="var(--map-road-case)" result="color" />
+            <feComposite in="color" in2="wide" operator="in" />
+          </filter>
+          <filter id={`${id}-street-fill`} colorInterpolationFilters="sRGB">
+            <feFlood floodColor="var(--map-road)" result="color" />
+            <feComposite in="color" in2="SourceAlpha" operator="in" />
           </filter>
           <clipPath id={`${id}-land`}>
             {coastPaths.map((p, i) => <path key={i} d={p} />)}
@@ -111,7 +113,9 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.75} strokeLinejoin="round" />)}
         {!focus && (
           <g clipPath={`url(#${id}-land)`}>
-            <rect width={W} height={H} fill="var(--map-relief)" filter={`url(#${id}-terrain)`} opacity={0.65} />
+            <image href={`/maps/${island}-terrain.png`} {...art} preserveAspectRatio="none" className="map-terrain" />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-case)`} opacity={0.58} />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-fill)`} opacity={0.82} />
           </g>
         )}
         {/* Roads use a dark casing and light center, like a printed road atlas. */}

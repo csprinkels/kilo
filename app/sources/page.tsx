@@ -18,6 +18,7 @@ const SOURCES = [
   ["Central Pacific Hurricane Center", "storms"],
   ["Hawaiʻi Department of Health and AirNow", "air and vog"],
   ["Honolulu 911 dispatch", "crashes on Oʻahu"],
+  ["Hawaiʻi Statewide GIS Program and USGS", "map roads, coastlines, and elevation"],
   ["Neighbors", "their own reports"],
 ] as const;
 
