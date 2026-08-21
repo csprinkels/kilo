@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { PLACES, type LatLon, type RoadLine } from "@/lib/roads";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
@@ -47,6 +47,7 @@ function frameFor(box: [number, number, number, number], aspect: number) {
 export default function RoadMap({ island, segments, focus, detour, you, label }: { island: IslandId; segments: Segment[]; focus?: LatLon[]; detour?: RoadLine[]; you?: LatLon; label: string }) {
   const coast = useStatic<Coast>("/hawaii-coast.json");
   const roads = useRoads(island);
+  const id = useId().replaceAll(":", "");
 
   let box = FRAME[island];
   if (focus?.length) {
@@ -60,6 +61,11 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
       const near = pts.reduce((a, b) => (Math.hypot(b[0] - c[0], b[1] - c[1]) < Math.hypot(a[0] - c[0], a[1] - c[1]) ? b : a));
       box = [Math.min(box[0], near[0] - pad), Math.max(box[1], near[0] + pad), Math.min(box[2], near[1] - kpad), Math.max(box[3], near[1] + kpad)];
     }
+  } else {
+    // Leave enough water around the island to read its shape instead of filling the card edge to edge.
+    const [south, north, west, east] = box;
+    const latPad = (north - south) * 0.09, lonPad = (east - west) * 0.09;
+    box = [south - latPad, north + latPad, west - lonPad, east + lonPad];
   }
   const kx0 = Math.cos(((box[0] + box[1]) / 2) * (Math.PI / 180));
   const natural = (box[1] - box[0]) / ((box[3] - box[2]) * kx0);
@@ -74,20 +80,57 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
   const places = PLACES.filter((p) => p.island === island && (focus ? inside(p.lat, p.lon) : p.big));
   const lines = segments.filter((g) => g.path && g.path.length >= 2);
   const spots = segments.filter((g) => !(g.path && g.path.length >= 2) && g.lat != null && g.lon != null && inside(g.lat, g.lon));
+  const coastPaths = coast?.coordinates.map((poly) => d(poly[0].map(([lon, lat]) => [lat, lon]), true)) ?? [];
+  const roadWidth = focus ? 5 : 3.5;
+  const [artSouth, artNorth, artWest, artEast] = FRAME[island];
+  const [artX, artY] = f(artNorth, artWest), [artRight, artBottom] = f(artSouth, artEast);
+  const art = { x: artX, y: artY, width: artRight - artX, height: artBottom - artY };
 
   return (
     <div className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
-        <rect width={W} height={H} fill="var(--surface)" />
-        {coast?.coordinates.map((poly, i) => <path key={i} d={d(poly[0].map(([lon, lat]) => [lat, lon]), true)} fill="var(--surface-2)" stroke="var(--ink-2)" strokeOpacity={0.5} strokeWidth={1.5} />)}
-        {roads?.lines.map((l, i) => <path key={i} d={d(l.p)} fill="none" stroke="var(--ink-2)" strokeOpacity={0.55} strokeWidth={focus ? 4 : 2.5} strokeLinejoin="round" strokeLinecap="round" />)}
+        <defs>
+          <pattern id={`${id}-water`} width="72" height="36" patternUnits="userSpaceOnUse">
+            <path d="M-18 18 Q0 8 18 18 T54 18 T90 18" fill="none" stroke="var(--map-water-line)" strokeWidth="1" />
+          </pattern>
+          <filter id={`${id}-street-case`} colorInterpolationFilters="sRGB">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="1.1" result="wide" />
+            <feFlood floodColor="var(--map-road-case)" result="color" />
+            <feComposite in="color" in2="wide" operator="in" />
+          </filter>
+          <filter id={`${id}-street-fill`} colorInterpolationFilters="sRGB">
+            <feFlood floodColor="var(--map-road)" result="color" />
+            <feComposite in="color" in2="SourceAlpha" operator="in" />
+          </filter>
+          <clipPath id={`${id}-land`}>
+            {coastPaths.map((p, i) => <path key={i} d={p} />)}
+          </clipPath>
+        </defs>
+        <rect width={W} height={H} fill="var(--map-water)" />
+        <rect width={W} height={H} fill={`url(#${id}-water)`} />
+        {/* A soft shoreline separates land from water even when the phone is dim. */}
+        {coastPaths.map((p, i) => <path key={`halo-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.65} strokeWidth={10} strokeLinejoin="round" />)}
+        {coastPaths.map((p, i) => <path key={`land-${i}`} d={p} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.75} strokeLinejoin="round" />)}
+        {!focus && (
+          <g clipPath={`url(#${id}-land)`}>
+            <image href={`/maps/${island}-terrain.png`} {...art} preserveAspectRatio="none" className="map-terrain" />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-case)`} opacity={0.58} />
+            <image href={`/maps/${island}-streets.png`} {...art} preserveAspectRatio="none" filter={`url(#${id}-street-fill)`} opacity={0.82} />
+          </g>
+        )}
+        {/* Roads use a dark casing and light center, like a printed road atlas. */}
+        {roads?.lines.map((l, i) => <path key={`case-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road-case)" strokeOpacity={0.72} strokeWidth={roadWidth + 3.5} strokeLinejoin="round" strokeLinecap="round" />)}
+        {roads?.lines.map((l, i) => <path key={`road-${i}`} d={d(l.p)} fill="none" stroke="var(--map-road)" strokeWidth={roadWidth} strokeLinejoin="round" strokeLinecap="round" />)}
+        {detour?.map((l, i) => <path key={`dc${i}`} d={d(l.p)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 13 : 9} strokeLinejoin="round" strokeLinecap="round" />)}
         {detour?.map((l, i) => <path key={`d${i}`} d={d(l.p)} fill="none" stroke="var(--brand)" strokeWidth={focus ? 8 : 5} strokeLinejoin="round" strokeLinecap="round" />)}
+        {lines.filter((g) => g.kind === "lane").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 11 : 9} strokeLinecap="round" strokeLinejoin="round" />)}
         {lines.filter((g) => g.kind === "lane").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--warn)" strokeWidth={focus ? 7 : 5} strokeDasharray="12 9" strokeLinecap="round" strokeLinejoin="round" />)}
-        {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
+        {lines.filter((g) => g.kind === "closed").map((g) => <path key={`${g.key}-halo`} d={d(g.path!)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={focus ? 14 : 13} strokeLinecap="round" strokeLinejoin="round" />)}
+        {lines.filter((g) => g.kind === "closed").map((g) => <path key={g.key} d={d(g.path!)} fill="none" stroke="var(--danger)" strokeWidth={focus ? 9 : 8} strokeLinecap="round" strokeLinejoin="round" />)}
         {spots.map((g) => { const [x, y] = f(g.lat!, g.lon!); const c = g.kind === "lane" ? "var(--warn)" : "var(--danger)"; return g.approx
           ? <circle key={g.key} cx={x} cy={y} r={16} fill={c} fillOpacity={0.25} stroke={c} strokeWidth={2} strokeDasharray="4 4" />  /* "about here": neighborhood only */
           : <circle key={g.key} cx={x} cy={y} r={9} fill={c} stroke="var(--surface)" strokeWidth={3} />; })}
-        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4} fill="var(--ink)" />; })}
+        {places.map((p) => { const [x, y] = f(p.lat, p.lon); return <circle key={p.name} cx={x} cy={y} r={4.5} fill="var(--map-town)" stroke="var(--map-label-halo)" strokeWidth={2.5} />; })}
         {you && inside(you[0], you[1]) && (() => { const [x, y] = f(you[0], you[1]); return <g><circle cx={x} cy={y} r={14} fill="var(--brand)" fillOpacity={0.2} /><circle cx={x} cy={y} r={7} fill="var(--brand)" stroke="var(--surface)" strokeWidth={3} /></g>; })()}
       </svg>
       {/* Town names as HTML so they follow the reader's text size instead of the picture's scale */}
@@ -95,7 +138,7 @@ export default function RoadMap({ island, segments, focus, detour, you, label }:
         const [x, y] = f(p.lat, p.lon);
         const px = x / W; // names near an edge hang inward so the picture's edge never cuts them
         const pos = px < 0.15 ? { left: `${px * 100}%` } : px > 0.85 ? { right: `${(1 - px) * 100}%` } : { left: `${px * 100}%`, transform: "translateX(-50%)" };
-        return <span key={p.name} className="pointer-events-none absolute whitespace-nowrap text-small font-semibold text-ink" style={{ ...pos, top: `${(y / H) * 100}%`, marginTop: "0.4rem", textShadow: "0 0 4px var(--surface), 0 0 4px var(--surface)" }}>{p.name}</span>;
+        return <span key={p.name} className="pointer-events-none absolute whitespace-nowrap text-small font-semibold text-ink" style={{ ...pos, top: `${(y / H) * 100}%`, marginTop: "0.4rem", textShadow: "0 0 3px var(--map-label-halo), 0 0 3px var(--map-label-halo), 0 0 6px var(--map-label-halo)" }}>{p.name}</span>;
       })}
     </div>
   );
