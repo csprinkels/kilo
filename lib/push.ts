@@ -1,5 +1,5 @@
 "use client";
-import { DATA_URL } from "./data";
+import { API_URL } from "./data";
 import type { Island } from "./types";
 
 export type PushStatus = "unsupported" | "needs-install" | "denied" | "off" | "on";
@@ -29,10 +29,10 @@ export async function enablePush(island: Exclude<Island, "state"> | "mod", minSe
   if (st === "unsupported" || st === "needs-install" || st === "denied") return st;
   if ((await Notification.requestPermission()) !== "granted") return "denied";
   const reg = await navigator.serviceWorker.ready;
-  const { key } = (await (await fetch(`${DATA_URL}/v1/push/key`, { signal: AbortSignal.timeout(30_000) })).json()) as { key: string | null };
+  const { key } = (await (await fetch(`${API_URL}/v1/push/key`, { signal: AbortSignal.timeout(30_000) })).json()) as { key: string | null };
   if (!key) throw new Error("push not configured");
   const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(key) as BufferSource }));
-  const res = await fetch(`${DATA_URL}/v1/push/subscribe`, {
+  const res = await fetch(`${API_URL}/v1/push/subscribe`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subscription: sub.toJSON(), island, minSev }),
     signal: AbortSignal.timeout(30_000),
@@ -46,7 +46,7 @@ export async function disablePush(): Promise<PushStatus> {
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (sub) {
-    await fetch(`${DATA_URL}/v1/push/unsubscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
+    await fetch(`${API_URL}/v1/push/unsubscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
     await sub.unsubscribe();
   }
   localStorage.removeItem("push.island");

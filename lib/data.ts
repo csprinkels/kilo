@@ -3,7 +3,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Digest, Essentials, Island, Snapshot } from "./types";
 
 // Where the JSON lives. Prod: the R2/CDN domain (same origin as the app). Dev: the Convex HTTP endpoint serving the same bytes.
+/** Where the JSON is read from: the CDN mirror when configured (data.kilohi.org), else Convex itself. */
 export const DATA_URL = (process.env.NEXT_PUBLIC_DATA_URL ?? process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "").replace(/\/$/, "");
+/** Where writes go (reports, votes, push, moderation): always Convex — the mirror only serves files. */
+export const API_URL = (process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "").replace(/\/$/, "");
 
 // Bad-signal policy: fetch the ~1 KB essentials FIRST with a patient timeout; the 30 KB snapshot only when the link is healthy.
 const T_ESS = 30_000, T_SNAP = 60_000;

@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
+import Wordmark from "@/components/Wordmark";
 import { ISLANDS, type Island } from "@/lib/types";
 import { useStoredIsland } from "@/lib/data";
-import { APP_NAME, ISLAND_LABEL } from "@/lib/brand";
+import { ISLAND_LABEL } from "@/lib/brand";
 
 const TAB_PATHS = ["/", "/weather/", "/traffic/", "/report/"];
 
@@ -25,7 +26,7 @@ export default function TopBar({ island: islandProp, onIsland: onIslandProp, qui
     <header className="pt-s2">
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-s3 gap-y-s2">
         {isTab
-          ? <span className="display text-[1.375rem] leading-none text-ink">{APP_NAME}</span>
+          ? <Wordmark className="text-ink" />
           : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><Icon name="caret-left" size={18} /> Now</Link>}
         {/* A native <select> behind a quiet chip: iPhones show their wheel, and it stops shouting over the wordmark. */}
         <label className="relative inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-s3 text-small font-semibold text-ink ring-1 ring-line">

@@ -107,6 +107,9 @@ export default function Settings() {
       <Link href="/guidelines/" className="row mt-s6 border-t border-line font-semibold text-brand">
         <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
       </Link>
+      <Link href="/privacy/" className="row border-t border-line font-semibold text-brand">
+        <span className="flex-1">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+      </Link>
       <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
     </PageShell>
   );

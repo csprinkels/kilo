@@ -1,7 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e7c84"/><stop offset="1" stop-color="#084f55"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <circle cx="256" cy="256" r="178" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="14"/>
-  <text x="256" y="332" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="300" fill="#ffffff" letter-spacing="-8">K</text>
-  <circle cx="396" cy="122" r="26" fill="#f5d26b"/>
+  <defs>
+    <linearGradient id="kilo-field" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e7c84"/>
+      <stop offset="1" stop-color="#084f55"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#kilo-field)"/>
+  <g fill="none" stroke="#fff" stroke-width="16">
+    <circle cx="256" cy="256" r="198" stroke-opacity="0.42"/>
+  </g>
+  <g fill="#fff" transform="translate(256 256) scale(0.44) translate(-394.75 371.5)">
+    <path d="M352 0L39.5 0L39.5-60L119-70.5L119-667.5L40.5-680.5L40.5-743L343-743L343-680.5L266-667.5L266-342L528-667.5L446-680.5L446-743L717-743L717-681L633-667.5L439.5-450Q463.5-429 489.5-394.25Q515.5-359.5 541.5-318.5Q567.5-277.5 592-235.5Q616.5-193.5 638-158Q659.5-122.5 676.25-98.75Q693-75 702.5-70.5L750-59.5L750 0L569.5 0Q559 0 544.75-18.5Q530.5-37 513.25-67.5Q496-98 476.5-136Q457-174 436.75-213.5Q416.5-253 395.5-288.5Q374.5-324 354.5-349.5L266-248.5L266-70L352-59.5Z"/>
+  </g>
+  <circle cx="396" cy="116" r="32" fill="#f5d26b"/>
 </svg>

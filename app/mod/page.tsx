@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import { Notice } from "@/components/AlertBlock";
-import { DATA_URL } from "@/lib/data";
+import { API_URL } from "@/lib/data";
 import { enablePush, pushStatus, type PushStatus } from "@/lib/push";
 import { fmtClock } from "@/lib/brand";
 
@@ -29,7 +29,7 @@ export default function ModPage() {
   const load = useCallback(async () => {
     if (!key) return;
     try {
-      const r = await fetch(`${DATA_URL}/v1/mod/reports?key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(20_000) });
+      const r = await fetch(`${API_URL}/v1/mod/reports?key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(20_000) });
       const j = await r.json();
       if (!j.ok) { setErr(j.error ?? "Could not load."); if (r.status === 403) localStorage.removeItem("modKey"); return; }
       setErr(null); setData({ pending: j.pending, live: j.live }); setNow(Date.now());
@@ -50,7 +50,7 @@ export default function ModPage() {
   const act = async (id: string, action: "show" | "hide") => {
     setBusy(id);
     try {
-      const r = await fetch(`${DATA_URL}/v1/mod/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, id, action }) });
+      const r = await fetch(`${API_URL}/v1/mod/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, id, action }) });
       const j = await r.json();
       if (!j.ok) setErr(j.error ?? "That did not work.");
       await load();
