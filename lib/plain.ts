@@ -211,7 +211,8 @@ function road(item: Item, now: number): Plain {
     return { headline: `${highway(roadName)}${place}: ${useful ? why : "check before you go"}`, action: "", level: Math.min(item.sev, 2) as Level, until, source: src2, official: item.title };
   }
   const how = /both/.test(st) ? "closed both ways" : /one lane|partial/.test(st) ? "down to one lane" : /open/.test(st) && !/clos/.test(st) ? "open again" : "closed";
-  const alt = item.fields?.alternate?.trim().replace(/\s+/g, " ");
+  // Collapse the county's doubled words ("one lane one lane of traffic…") before we repeat them.
+  const alt = item.fields?.alternate?.trim().replace(/\s+/g, " ").replace(/\b(\w+(?: \w+)?) \1\b/gi, "$1");
   const detour = !alt ? "No way around listed yet." : alt.split(" ").length <= 4 ? `Use ${highway(alt)} instead.` : `Detour: ${cap(alt.toLowerCase())}.`;
   return {
     headline: `${highway(roadName)} ${how}${place}`,

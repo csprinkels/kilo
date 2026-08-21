@@ -1,11 +1,15 @@
 // App shell: cache-first for same-origin pages/assets so the UI opens with zero signal.
 // Data JSON is fetched by the page itself (lib/data.ts) with its own localStorage fallback.
-const SHELL = "shell-v8";
+const SHELL = "shell-v9";
 // Big, rarely-changing map data lives in its own cache. Bumping SHELL must never cost someone the evacuation
 // zones they will need with no signal — and `alerts` (the last push digest, which the page renders offline)
 // is spared for the same reason. Anything NOT in this list is an old shell and gets swept on activate.
 const PACKS = "packs-v1";
-const KEEP = [SHELL, PACKS, "alerts"];
+// Street-map tiles you have already seen (Roads page) stay for offline; capped so they never crowd the phone.
+const TILES = "tiles-v1";
+const TILE_HOST = /\.basemaps\.cartocdn\.com$/;
+const TILE_CAP = 600;
+const KEEP = [SHELL, PACKS, "alerts", TILES];
 const PACK_URL = /^\/(?:zones\/[a-z]+\.json|[a-z]+-roads\.json|hawaii-coast\.json)$/;
 const PACK_FILES = ["/hawaii-coast.json", "/hawaii-roads.json", "/maui-roads.json", "/oahu-roads.json", "/kauai-roads.json"];
 const PAGES = ["/", "/sources/", "/storms/", "/traffic/", "/weather/", "/quakes/", "/volcano/", "/tsunami/", "/report/", "/manifest.webmanifest", "/icon-192.png",
@@ -34,7 +38,22 @@ self.addEventListener("activate", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
+  if (e.request.method !== "GET") return;
+  if (TILE_HOST.test(url.hostname)) {
+    // Cache-first: a tile never changes enough to matter, and a cached tile is a road you can still see with no signal.
+    e.respondWith(caches.open(TILES).then(async (c) => {
+      const hit = await c.match(e.request);
+      if (hit) return hit;
+      const res = await fetch(e.request);
+      if (res.ok) {
+        c.put(e.request, res.clone());
+        c.keys().then((ks) => { if (ks.length > TILE_CAP) ks.slice(0, ks.length - TILE_CAP).forEach((k) => c.delete(k)); });
+      }
+      return res;
+    }));
+    return;
+  }
+  if (url.origin !== self.location.origin) return;
   // Stale-while-revalidate: serve cached shell instantly, refresh it in the background.
   e.respondWith(
     caches.open(PACK_URL.test(url.pathname) ? PACKS : SHELL).then(async (c) => {

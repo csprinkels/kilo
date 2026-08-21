@@ -6,7 +6,8 @@ import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell, { Section } from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import OfficialWording from "@/components/OfficialWording";
-import RoadMap, { useRoads, type Segment } from "@/components/RoadMap";
+import TileMap from "@/components/TileMap";
+import { useRoads, type Segment } from "@/components/RoadMap";
 import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
@@ -120,7 +121,7 @@ export default function RoadsPage() {
       {loaded && (
         <>
           <div className="picture mt-s4">
-            <RoadMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+            <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
           </div>
           {legend && <p className="mt-s3 text-small text-ink-2">{legend}{you ? " Blue dot: you." : ""}</p>}
 
@@ -233,7 +234,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you }: 
         <div className="fade-up mb-s4 pl-9">
           {path && (
             <>
-              <div className="well"><RoadMap island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
+              <div className="well"><TileMap className="h-[15rem]" island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
               <p className="mt-s3 text-small text-ink-2">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
             </>
           )}
