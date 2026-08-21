@@ -43,9 +43,9 @@ const METRICS: { id: Metric; label: string; unit: string }[] = [
 const series = (h: Hourly, m: Metric, n: number) =>
   (m === "t" ? h.t : m === "fl" ? h.t.map((t, i) => feelsLike(t, h.rh[i])) : m === "w" ? h.w : m === "p" ? h.p : h.rh).slice(0, n);
 
-// The picture is drawn in px on purpose: 1 hour = 32px, like a photo; only the words scale with the reader's text size.
+// The picture is drawn in px on purpose: 1 hour = 14px (Acme's density: eight 3-hour marks across a phone), like a photo; only the words scale.
 // PAD: room on the left so the first figure is not cut by the screen edge.
-const COL = 32, PAD = 32, HEAD = 64, PLOT = 330, AXIS = 28, NOWROW = 24;
+const COL = 14, PAD = 30, HEAD = 56, PLOT = 250, AXIS = 24, NOWROW = 20;
 
 /**
  * The next 36 hours as one scrolling strip: period names with the chance of rain, then the curve with a sky icon and
@@ -87,16 +87,16 @@ export default function HourlyChart({ h }: { h: Hourly }) {
             {/* where we are right now */}
             <line x1={x(0)} y1={HEAD} x2={x(0)} y2={HEAD + PLOT} stroke="var(--brand)" strokeWidth={1.5} strokeDasharray="4 4" />
             {/* other models' guesses sit behind the forecast */}
-            {alts.map((a, k) => <path key={k} d={smooth(pts(a))} fill="none" stroke="var(--ink)" strokeOpacity={0.28} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />)}
-            <path d={smooth(pts(main))} fill="none" stroke="var(--ink)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
-            {marks.map((i) => <circle key={i} cx={x(i)} cy={y(main[i])} r={7} fill="var(--ink)" stroke="var(--bg)" strokeWidth={3} />)}
+            {alts.map((a, k) => <path key={k} d={smooth(pts(a))} fill="none" stroke="var(--ink)" strokeOpacity={0.28} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />)}
+            <path d={smooth(pts(main))} fill="none" stroke="var(--ink)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+            {marks.map((i) => <circle key={i} cx={x(i)} cy={y(main[i])} r={5} fill="var(--ink)" stroke="var(--bg)" strokeWidth={2.5} />)}
           </svg>
 
           {/* Period names with the chance of rain, centred over their hours */}
           {blocks.map((p) => (
             <div key={p.from} className="absolute top-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap leading-tight" style={{ left: PAD + (p.from + p.len / 2) * COL }}>
-              <span className="text-[1.375rem] font-bold text-ink">{p.name}</span>
-              <span className="flex items-center gap-1 text-[1.25rem] text-ink-2 num">
+              <span className="text-[1.0625rem] font-bold text-ink">{p.name}</span>
+              <span className="flex items-center gap-1 text-[0.9375rem] text-ink-2 num">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/weather/raindrop.svg" alt="" className="size-5" /> {p.pop}%
               </span>
@@ -107,17 +107,17 @@ export default function HourlyChart({ h }: { h: Hourly }) {
           {marks.map((i) => (
             // The stack leans a little downhill so a steep curve passes beside the figure, not through it; a --bg halo knocks out what still touches.
             <div key={i} className="absolute flex -translate-x-1/2 flex-col items-center gap-1.5 whitespace-nowrap"
-              style={{ left: x(i) + Math.max(-10, Math.min(10, (y(main[Math.min(n - 1, i + 1)]) - y(main[Math.max(0, i - 1)])) * 0.4)), bottom: TOTAL - y(main[i]) + 14, filter: "drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 3px var(--bg))" }}>
-              <ConditionIcon code={h.c[i]} night={!!h.n[i]} size={40} />
-              <span className="text-[1.375rem] font-bold leading-none text-ink num">{main[i]}{unit}</span>
+              style={{ left: x(i) + Math.max(-6, Math.min(6, (y(main[Math.min(n - 1, i + 1)]) - y(main[Math.max(0, i - 1)])) * 0.3)), bottom: TOTAL - y(main[i]) + 10, filter: "drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 3px var(--bg))" }}>
+              <ConditionIcon code={h.c[i]} night={!!h.n[i]} size={28} />
+              <span className="text-[1.0625rem] font-bold leading-none text-ink num">{main[i]}{unit}</span>
             </div>
           ))}
 
           {/* Clock times, and "Now" under the first */}
           {marks.map((i) => (
-            <span key={i} className="absolute -translate-x-1/2 whitespace-nowrap text-[1.25rem] leading-none text-ink-2 num" style={{ left: x(i), top: HEAD + PLOT + 4 }}>{clock(h.t0 + i * 3_600_000)}</span>
+            <span key={i} className="absolute -translate-x-1/2 whitespace-nowrap text-[0.8125rem] leading-none text-ink-2 num" style={{ left: x(i), top: HEAD + PLOT + 4 }}>{clock(h.t0 + i * 3_600_000)}</span>
           ))}
-          <span className="absolute -translate-x-1/2 text-[1.25rem] font-semibold leading-none text-brand" style={{ left: x(0), top: HEAD + PLOT + AXIS + 2 }}>Now</span>
+          <span className="absolute -translate-x-1/2 text-[0.875rem] font-semibold leading-none text-brand" style={{ left: x(0), top: HEAD + PLOT + AXIS + 2 }}>Now</span>
         </div>
       </div>
 
