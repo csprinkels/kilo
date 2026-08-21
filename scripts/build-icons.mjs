@@ -7,7 +7,7 @@ const SRC = "/Volumes/WorkFlow/Assets/UI Icons/phosphor-icons/SVGs";
 const NAMES = [
   // chrome
   "caret-right", "caret-down", "caret-left", "check", "check-circle", "wifi-slash", "x",
-  "map-pin", "arrow-square-out", "share-network", "phone", "crosshair", "camera", "gear", "note-pencil", "flag",
+  "map-pin", "arrow-square-out", "share-network", "phone", "crosshair", "camera", "gear", "note-pencil", "flag", "navigation-arrow",
   // topics and item types
   "house", "cloud-sun", "car", "users-three", "traffic-cone", "traffic-signal", "tent", "student",
   "mountains", "waves", "wind", "pulse", "siren", "warning", "megaphone", "lightning-slash", "drop", "first-aid",

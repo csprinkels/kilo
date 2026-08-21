@@ -4,7 +4,9 @@ import type { Island } from "./types";
 export type Obs = { at: number; f?: number; rh?: number; wMph?: number; wDir?: number; gMph?: number; sky?: string };
 export type Period = { n: string; day: boolean; t: number; pop: number; wind: string; s: string };
 /** Condition codes (from the NWS icon path): 0 clear · 1 mostly clear · 2 partly cloudy · 3 mostly cloudy · 4 overcast · 5 showers · 6 rain · 7 thunderstorms · 8 fog · 9 windy · 10 tropical */
-export type Hourly = { t0: number; t: number[]; p: number[]; w: number[]; wd: number[]; c: number[]; n: number[]; rh: number[] }; // parallel arrays, hour by hour from t0; n = 1 at night
+export type Hourly = { t0: number; t: number[]; p: number[]; w: number[]; wd: number[]; c: number[]; n: number[]; rh: number[]; alt?: AltModel[] }; // parallel arrays, hour by hour from t0; n = 1 at night
+/** Another model's hourly temperatures (°F) on the same t0/hour grid as the NWS arrays: the faint "alternate predictions" behind the curve. */
+export type AltModel = { m: string; t: number[] };
 export type TownWx = { id: string; name: string; obs?: Obs; fc: Period[]; fcAt?: number; hourly?: Hourly };
 export type Weather = {
   upd: number; island: Island;

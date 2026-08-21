@@ -19,7 +19,6 @@ import { ISLAND_LABEL, fmtTime } from "@/lib/brand";
 
 const HOUR = 3_600_000, DAY = 86_400_000;
 const dayStartHST = (ms: number) => Math.floor((ms - 10 * HOUR) / DAY) * DAY + 10 * HOUR;
-const hourHST = (ms: number) => new Date(ms - 10 * HOUR).getUTCHours();
 
 // The town choice lives in localStorage ("town") so the Now page shows the same place.
 const townListeners = new Set<() => void>();
@@ -48,15 +47,16 @@ export default function WeatherPage() {
   const meta = TOWNS.find((t) => t.id === town?.id);
   const h = town?.hourly;
 
-  // The town is a visible select-as-button, same look as the island pill up top.
+  // Town picker above the heading: a native <select> behind the words, so iPhones get their wheel. The h1 is "Right Now".
   const title = !d || !town ? "Weather" : (
-    <>Weather in{" "}
-      <label className="relative inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full bg-surface-2 px-4 align-middle font-sans text-body font-semibold text-ink">
-        {town.name} <Icon name="caret-down" className="size-5 text-ink-2" aria-hidden />
+    <>
+      <label className="relative mx-auto flex min-h-11 w-fit items-center justify-center gap-1 whitespace-nowrap font-display text-[1.375rem] font-bold leading-none text-brand">
+        <Icon name="navigation-arrow" size={18} aria-hidden /> {town.name} <Icon name="caret-down" size={16} aria-hidden />
         <select aria-label="Town" value={town.id} onChange={(e) => setTownId(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
           {d.towns.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </label>
+      <span className="mt-s5 block text-[2.75rem] leading-none">Right Now</span>
     </>
   );
 
@@ -75,9 +75,11 @@ export default function WeatherPage() {
           <RightNow town={town} meta={meta} now={now} />
           {storm && <p className="mt-s3 max-w-[36rem] text-body text-ink"><span className="font-semibold">{storm.text}</span> <Link href="/storms/" className="inline-flex min-h-11 items-center font-semibold text-brand">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link></p>}
 
-          <Section title="Next 24 hours" sentence={`${trendSentence(h)}${sunburn(d.surf?.uv, now)}`}>
+          <section className="mt-s7">
+            <h2 className="h-title text-[2.75rem] leading-none">Next 24 Hours</h2>
+            <p className="mt-s3 max-w-[36rem] text-[1.375rem] leading-relaxed text-ink-2 num">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
             <HourlyChart h={h} />
-          </Section>
+          </section>
 
           {town.fc.length > 0 && (
             <Section title={daysTitle(town.fc)} sentence={weekSentence(town.fc)}>
@@ -104,31 +106,49 @@ export default function WeatherPage() {
   );
 }
 
-/** The weather picture: big icon, temperature, feels like, high/low, town and condition, then one sentence with wind and sun. */
+const obsFresh = (town: TownWx, now: number) => !!town.obs && now - town.obs.at < 2 * HOUR;
+/** The station's sky when its reading is fresh, else nothing (the forecast's first hour stands in). */
+const obsCode = (town: TownWx, now: number) => (obsFresh(town, now) && town.obs?.sky ? conditionCode("", town.obs.sky) : undefined);
+/** "Sunrise at 6:02 AM, sets at 6:44 PM." for today. */
+function sunLine(meta: { lat: number; lon: number }, now: number) {
+  const s = sunTimes(dayStartHST(now), meta.lat, meta.lon);
+  return `Sunrise at ${fmtTime(s.rise)}, sets at ${fmtTime(s.set)}.`;
+}
+
+/** The weather picture: big icon, then the temperature, the sky word, high and low, and a "More" fold with the rest. */
 function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon: number }; now: number }) {
+  const [open, setOpen] = useState(false);
   const h = town.hourly!;
-  const obsFresh = !!town.obs && now - town.obs.at < 2 * HOUR;
-  const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0];
-  const night = !!h.n[0];
-  const temp = (obsFresh ? town.obs?.f : undefined) ?? h.t[0];
-  const fl = obsFresh && town.obs?.f != null && town.obs.rh != null ? feelsLike(town.obs.f, town.obs.rh) : undefined;
+  const fresh = obsFresh(town, now);
+  const code = obsCode(town, now) ?? h.c[0];
+  const temp = (fresh ? town.obs?.f : undefined) ?? h.t[0];
+  const rh = (fresh ? town.obs?.rh : undefined) ?? h.rh[0];
+  const fl = temp != null && rh != null ? feelsLike(temp, rh) : undefined;
   const hi = town.fc.find((p) => p.day)?.t, lo = town.fc.find((p) => !p.day)?.t;
-  const mph = (obsFresh ? town.obs?.wMph : undefined) ?? h.w[0];
-  const deg = obsFresh && town.obs?.wDir != null ? town.obs.wDir : h.wd[0] * 22.5;
-  const wind = mph == null ? "" : mph < 4 ? " Almost no wind." : ` Wind from the ${dirWord(deg)}, ${mph} mph.`;
-  const d0 = dayStartHST(now);
-  const sun = [0, 1].map((k) => sunTimes(d0 + k * DAY, meta.lat, meta.lon)).flatMap((s) => [{ k: "Sunrise", at: s.rise }, { k: "Sunset", at: s.set }]).find((s) => s.at > now);
+  const mph = (fresh ? town.obs?.wMph : undefined) ?? h.w[0];
+  const deg = fresh && town.obs?.wDir != null ? town.obs.wDir : h.wd[0] * 22.5;
+  const sun = sunTimes(dayStartHST(now), meta.lat, meta.lon);
   return (
     <section className="mt-s4" aria-label={`${town.name} right now`}>
-      <div className="flex items-center gap-s4">
-        <ConditionIcon code={code} night={night} size={88} />
-        <div className="min-w-0">
-          <p className="text-number font-semibold text-ink num">{temp != null ? `${temp}°` : "—"}</p>
-          <p className="text-body text-ink-2 num">{fl != null && Math.abs(fl - (temp ?? fl)) >= 3 ? `Feels like ${fl}°. ` : ""}{hi != null && lo != null ? `High ${hi}°, low ${lo}°.` : ""}</p>
-          <p className="text-body font-semibold text-ink">{town.name} · {condWord(code)}</p>
+      <div className="flex flex-wrap items-start gap-3">
+        <ConditionIcon code={code} night={!!h.n[0]} size={164} className="-my-3 -ml-4" />
+        <div className="min-w-0 flex-1 basis-36 pt-s3">
+          <p className="text-[4rem] font-light leading-none text-ink num">{temp != null ? `${temp}°` : "—"}</p>
+          <p className="mt-s2 text-[1.5rem] leading-tight text-ink-2">{condWord(code)}</p>
+          {hi != null && lo != null && <p className="mt-1 text-[1.375rem] leading-tight text-ink-2 num">High {hi}° Low {lo}°</p>}
+          <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="-ml-1 mt-1 inline-flex min-h-11 items-center gap-0.5 px-1 text-[1.375rem] text-ink">
+            More <Icon name="caret-down" size={16} className={open ? "rotate-180" : ""} aria-hidden />
+          </button>
         </div>
       </div>
-      <p className="mt-s3 max-w-[36rem] text-body text-ink-2 num">{nowAndLater(obsFresh ? code : undefined, h)}{wind}{sun ? ` ${sun.k} at ${fmtTime(sun.at)}.` : ""}</p>
+      {open && (
+        <div className="mt-s2 text-body text-ink-2 num">
+          {fl != null && <p>Feels like {fl}°</p>}
+          {mph != null && <p>{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p>}
+          {rh != null && <p>Humidity {rh}%</p>}
+          <p>Sunrise {fmtTime(sun.rise)} · Sunset {fmtTime(sun.set)}</p>
+        </div>
+      )}
     </section>
   );
 }
@@ -143,8 +163,6 @@ function trendSentence(h: Hourly): string {
   if (iMax === 0) return `Down to ${t[iMin]}° around ${at(iMin)}.`;
   return iMin < iMax ? `Down to ${t[iMin]}° around ${at(iMin)}, then up to ${t[iMax]}° by ${at(iMax)}.` : `Up to ${t[iMax]}° around ${at(iMax)}, then down to ${t[iMin]}° by ${at(iMin)}.`;
 }
-
-const sunburn = (uv: string | undefined, now: number) => (uv && /very high|extreme/i.test(uv) && hourHST(now) < 16 ? " Sunburn risk very high this afternoon." : "");
 
 // The feed carries however many days the publisher sends; the heading says that number, never more.
 const daysTitle = (fc: Period[]) => { const n = fc.filter((p) => p.day).length; return n >= 7 ? "Next 7 days" : n <= 1 ? "Today and tonight" : `Next ${n} days`; };
