@@ -22,6 +22,19 @@
   --night-band: rgb(0 0 0 / .06);
   --cond-clear: #b7791f; --cond-cloud: #6b7280; --cond-showers: #2f7f9e; --cond-rain: #1d5f93;
   --cond-storm: #5b4a9e; --cond-fog: #8a6f4e; --cond-windy: #3f7a5e; --cond-night: #3b4a7a;
+
+  /* offline road atlas: calm geography, high-contrast live conditions */
+  --map-water: #c9e0df;
+  --map-water-line: rgb(51 111 113 / .09);
+  --map-shore: #e8f1ed;
+  --map-land: #e4e2c8;
+  --map-coast: #667266;
+  --map-relief: #747b62;
+  --map-road-case: #5a605a;
+  --map-road: #fffdf9;
+  --map-mark-halo: #fffdf9;
+  --map-town: #2d332e;
+  --map-label-halo: #f2f0dd;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -40,6 +53,17 @@
     --night-band: rgb(255 255 255 / .07);
     --cond-clear: #f2c14e; --cond-cloud: #b4bcc8; --cond-showers: #6cc4dc; --cond-rain: #5aa6e6;
     --cond-storm: #a99af0; --cond-fog: #c9ad86; --cond-windy: #7fc8a4; --cond-night: #8fa0d8;
+    --map-water: #173b3e;
+    --map-water-line: rgb(140 207 209 / .08);
+    --map-shore: #254d4b;
+    --map-land: #42483a;
+    --map-coast: #9ba58e;
+    --map-relief: #aab28d;
+    --map-road-case: #111512;
+    --map-road: #d8d6c8;
+    --map-mark-halo: #20241f;
+    --map-town: #f1ede6;
+    --map-label-halo: #42483a;
   }
 }
 
