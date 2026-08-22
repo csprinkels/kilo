@@ -27,14 +27,14 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
   return (
     <html lang="en">
       <body>
-        <title>Kilo could not start</title>
+        <title>ʻio could not start</title>
         <style dangerouslySetInnerHTML={{ __html: CSS }} />
         <main>
           <div className="call">
             <b>Hurt or in danger? Call 911.</b>
             <p style={{ margin: "0.25rem 0 0" }}>Do not wait for this screen.</p>
           </div>
-          <h1>Kilo could not start</h1>
+          <h1>ʻio could not start</h1>
           <p>Something went wrong on this phone, not out in the world. Try again.</p>
           <button onClick={() => retry()}>Try again</button>
           <p style={{ fontSize: "1rem", marginTop: "1.5rem" }}>

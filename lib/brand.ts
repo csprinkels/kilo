@@ -1,7 +1,7 @@
 import type { Island, ItemType } from "./types";
 
-export const APP_NAME = "Kilo";
-export const TAGLINE = "Hawaiʻi, at a glance"; // kilo: to watch, observe, forecast
+export const APP_NAME = "ʻio";
+export const TAGLINE = "Hawaiʻi, at a glance"; // ʻio: the Hawaiian hawk, a vigilant observer
 
 export const ISLAND_LABEL: Record<Island, string> = {
   hawaii: "Hawaiʻi Island",

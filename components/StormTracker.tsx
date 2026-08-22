@@ -23,7 +23,7 @@ function islandWarning(storm: Storm, island: Exclude<Island, "state">) {
 }
 
 const WHAT_TO_DO: Record<number, string> = {
-  0: "Nothing to do. Kilo will say if that changes.",
+  0: "Nothing to do. ʻio will say if that changes.",
   1: "Too early to act. Check back tomorrow morning. Make sure you have a week of water and medicine anyway.",
   3: "Get ready now. Fill the car, charge phones, get cash, water and medicine for a week. Know where you would go.",
   4: "Finish getting ready today. Bring in anything loose. Once the wind starts, stay inside. If Civil Defense says leave, leave.",

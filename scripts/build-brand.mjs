@@ -7,7 +7,7 @@ import { Resvg } from "@resvg/resvg-js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const iconSvg = readFileSync(join(root, "public/icon.svg"), "utf8");
-const markSvg = iconSvg.replace(/<rect width="512" height="512" fill="url\(#kilo-field\)"\/>/, "");
+const markSvg = iconSvg.replace(/<rect width="512" height="512" fill="#efe8dc"\/>/, "");
 
 function png(svg, width) {
   return new Resvg(svg, { fitTo: { mode: "width", value: width }, font: { loadSystemFonts: false } }).render().asPng();
@@ -43,7 +43,7 @@ function roundIcon() {
   </svg>`;
 }
 
-const solid = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#0b6b72"/></svg>`;
+const solid = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#efe8dc"/></svg>`;
 
 write("public/favicon.png", png(iconSvg, 64));
 write("public/apple-touch-icon.png", png(iconSvg, 180));
@@ -75,7 +75,7 @@ for (const [density, size] of Object.entries(foreground)) {
 }
 writeFileSync(join(androidRes, "values/ic_launcher_background.xml"), `<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0B6B72</color>
+    <color name="ic_launcher_background">#EFE8DC</color>
 </resources>
 `);
 

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Kilo checks whether the spot you are standing on is inside a tsunami evacuation zone, and which closed roads are near you. Your location is never saved or sent anywhere.</string>
+	<string>ʻio checks whether the spot you are standing on is inside a tsunami evacuation zone, and which closed roads are near you. Your location is never saved or sent anywhere.</string>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Kilo</string>
+        <string>ʻio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

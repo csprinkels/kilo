@@ -8,7 +8,7 @@ const out = {};
 for (const a of areas) {
   // "Oahu" is not in OSM addresses; "Hawaii" + a Honolulu County filter is. Keep only hits on the island frame.
   const q = encodeURIComponent(`${a}, Honolulu County, Hawaii`);
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3`, { headers: { "User-Agent": "Kilo (aloha@csprinkels.com)" } });
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3`, { headers: { "User-Agent": "io (aloha@csprinkels.com)" } });
   const j = (await res.json().catch(() => [])).filter((h) => +h.lat > 21.2 && +h.lat < 21.77 && +h.lon > -158.35 && +h.lon < -157.58);
   if (j[0]) out[a] = [Number(Number(j[0].lat).toFixed(4)), Number(Number(j[0].lon).toFixed(4))];
   else console.error("no match:", a);
