@@ -113,7 +113,7 @@
   --font-display: var(--font-heading), Georgia, "Times New Roman", serif;
 
   /*
-    Five text styles, all rem so the phone's text-size setting (and Kilo's own) scales everything.
+    Five text styles, all rem so the phone's text-size setting (and ʻio's own) scales everything.
     Nothing under 1rem (16px). Body is 19px, GOV.UK's tested size.
   */
   --text-number: 3.5rem;      --text-number--line-height: 1;     --text-number--letter-spacing: -0.03em;

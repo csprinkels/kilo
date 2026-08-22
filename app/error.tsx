@@ -7,7 +7,7 @@ import { Notice } from "@/components/AlertBlock";
 // outcome to design against. Anything that throws while rendering lands here instead.
 // Next 16 calls the recovery prop `retry` (it re-fetches and re-renders); `reset` only clears the boundary.
 
-/** Everything Kilo keeps on this phone. Wiping it is the way out of a corrupt saved value. */
+/** Everything ʻio keeps on this phone. Wiping it is the way out of a corrupt saved value. */
 const KEYS = ["island", "town", "text", "mode", "lastOkAt", "votes", "reportDraft", "deviceId", "alertsDismissed", "push.island"];
 
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {

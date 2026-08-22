@@ -1,25 +1,19 @@
 "use client";
+import { APP_NAME } from "@/lib/brand";
 
-/** Wordmark: Merriweather Bold "Kilo" with the gold sun as the i-tittle. Letters follow currentColor. Keep in sync with public/wordmark.svg. */
+/** Wordmark: the ʻio hawk plus Merriweather “ʻio”. Letters follow currentColor. */
 export default function Wordmark({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center ${className}`}>
-      <svg viewBox="0 0 2011 1000" fill="currentColor" aria-hidden className="h-[1.375rem] w-auto" focusable="false">
-        <g transform="translate(0 830)">
-          <path d="M352 0L39.5 0L39.5-60L119-70.5L119-667.5L40.5-680.5L40.5-743L343-743L343-680.5L266-667.5L266-342L528-667.5L446-680.5L446-743L717-743L717-681L633-667.5L439.5-450Q463.5-429 489.5-394.25Q515.5-359.5 541.5-318.5Q567.5-277.5 592-235.5Q616.5-193.5 638-158Q659.5-122.5 676.25-98.75Q693-75 702.5-70.5L750-59.5L750 0L569.5 0Q559 0 544.75-18.5Q530.5-37 513.25-67.5Q496-98 476.5-136Q457-174 436.75-213.5Q416.5-253 395.5-288.5Q374.5-324 354.5-349.5L266-248.5L266-70L352-59.5Z"/>
-          <g transform="translate(747 0)">
-            <path d="M318 0L38 0L38-60L107.5-69L107.5-460.5L37-479.5L37-546.5L220.5-568.5L222.5-568.5L250.5-549L250.5-68.5L318-60L318 0Z"/>
-          </g>
-          <g transform="translate(1089 0)">
-            <path d="M23.5-60L93.5-69L93.5-731L19.5-743.5L19.5-797.5L205-819.5L207-819.5L234-800.5L234-68.5L307-60L307 0L23.5 0Z"/>
-          </g>
-          <g transform="translate(1414 0)">
-            <path d="M29-276.5Q29-350 51.5-405Q74-460 112.75-496.5Q151.5-533 201-551.5Q250.5-570 304.5-570Q389.5-570 448-534.5Q506.5-499 537.25-434.5Q568-370 568-282.5Q568-208 545.5-152.75Q523-97.5 484-61Q445-24.5 395.5-6.75Q346 11 291.5 11Q228.5 11 179.5-9.25Q130.5-29.5 97-67Q63.5-104.5 46.25-157.75Q29-211 29-276.5ZM300.5-54Q337.5-54 362.25-77.25Q387-100.5 400-149Q413-197.5 413-272Q413-326.5 407-369.75Q401-413 387.5-443.25Q374-473.5 352.25-489.25Q330.5-505 299-505Q262-505 236.25-481.75Q210.5-458.5 197-410.25Q183.5-362 183.5-287Q183.5-232 190-188.75Q196.5-145.5 210.5-115.5Q224.5-85.5 246.75-69.75Q269-54 300.5-54Z"/>
-          </g>
-        </g>
-        <circle cx="918.75" cy="101.5" r="86" fill="#f5d26b"/>
-      </svg>
-      <span className="sr-only">Kilo</span>
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icons/io-mark.svg" alt="" width={28} height={28} className="size-7 shrink-0" aria-hidden />
+      <span className="font-display text-[1.375rem] font-bold leading-none">{APP_NAME}</span>
     </span>
   );
+}
+
+/** Large hawk for first-run and splash-like moments. Always shown next to a word. */
+export function IoMark({ size = 120, className = "" }: { size?: number; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/icon.svg" alt="" aria-hidden width={size} height={size} className={`inline-block shrink-0 rounded-[22%] ${className}`} style={{ width: size, height: size }} />;
 }
