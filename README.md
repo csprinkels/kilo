@@ -94,6 +94,14 @@ npx cap open android            # Android Studio (needs the SDK + a JDK installe
 
 What differs inside the app: no service worker (the bundle is already offline; WKWebView has none), Share goes through the native sheet (`lib/native.ts`), the status bar overlays the page (`env(safe-area-inset-top)`), and links into the app navigate client-side — the local server maps every extension-less URL to the root `index.html`, so nothing may do a full page load of a deep route. Web Push does not work in the iOS app; native push (APNs/FCM) is the next step. Icons and splash screens are rendered from `public/icon.svg` into `assets/` and the native catalogs.
 
+## Where things live
+
+- **kilohi.org** — the landing / waitlist page (`site/`, plain HTML, Cloudflare Pages project `kilohi`). Sign-ups go to Convex (`waitlist` table; `GET /v1/mod/waitlist?key=…` returns a CSV).
+- **app.kilohi.org** — the app itself (Cloudflare Pages project `kilo`, built from `out/`). Push links, Turnstile and the privacy URL (`app.kilohi.org/privacy/`) use this host.
+- **data.kilohi.org** — the R2 mirror of the JSON feeds (bucket `kilo-data`), once the R2 keys are set.
+
+Deploy the app: `NEXT_PUBLIC_CONVEX_SITE_URL=https://standing-ram-435.convex.site NEXT_PUBLIC_TURNSTILE_SITEKEY=… npx next build && npx wrangler pages deploy out --project-name kilo`. Deploy the site: `npx wrangler pages deploy site --project-name kilohi`.
+
 ## Deployments
 
 Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-lime-eta.vercel.app (`NEXT_PUBLIC_CONVEX_SITE_URL` in Vercel's production env). **Dev** `abundant-dotterel-415` is what `npx convex dev` pushes to; nothing public reads it. Ship backend changes with `npx convex deploy --yes`; secrets are set per deployment (`npx convex env set --prod …`). Both run the same crons on their own data.

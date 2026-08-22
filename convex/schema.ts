@@ -92,6 +92,9 @@ export default defineSchema({
   watch: defineTable({ source: v.string(), failsInRow: v.number(), lastOk: v.number(), lastAlertAt: v.number() }).index("by_source", ["source"]),
 
   // Published JSON: served by http.ts (dev / fallback) and mirrored to R2 (prod).
+  // Waitlist sign-ups from kilohi.org while the apps are finished. Email only; deleted when the launch mail goes out.
+  waitlist: defineTable({ email: v.string(), island: v.optional(v.string()), createdAt: v.number(), source: v.string() }).index("by_email", ["email"]),
+
   snapshots: defineTable({
     path: v.string(), // "v1/hawaii.json", "v1/manifest.json"
     body: v.string(),

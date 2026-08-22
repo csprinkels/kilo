@@ -163,4 +163,30 @@ http.route({
   }),
 });
 
+// ---- Waitlist (kilohi.org): same bot checks as reports; email only ----
+http.route({ path: "/v1/waitlist", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: PUSH_CORS })) });
+http.route({
+  path: "/v1/waitlist", method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    let body: Record<string, unknown>;
+    try { body = await req.json(); } catch { return json({ ok: false, error: "Bad request." }, 400); }
+    const bot = await botCheck(body);
+    if (bot === "honeypot") return json({ ok: true, already: false }); // lie to bots, store nothing
+    if (bot) return json({ ok: false, error: bot }, 429);
+    try {
+      return json(await ctx.runMutation(internal.waitlist.join, { email: String(body.email ?? ""), island: typeof body.island === "string" ? body.island : undefined, source: "kilohi.org" }));
+    } catch (e) { return errJson(e); }
+  }),
+});
+http.route({
+  path: "/v1/mod/waitlist", method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    if (!modOk(req)) return json({ ok: false, error: "That key does not work." }, 403);
+    const rows = await ctx.runQuery(internal.waitlist.list, {});
+    const csv = ["email,island,signed_up", ...rows.map((r) => `${r.email},${r.island},${new Date(r.at).toISOString()}`)].join("\n");
+    return new Response(csv, { headers: { ...CORS, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": "attachment; filename=kilo-waitlist.csv" } });
+  }),
+});
+
+
 export default http;
