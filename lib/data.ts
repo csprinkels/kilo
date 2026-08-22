@@ -21,6 +21,41 @@ const readCache = <T,>(path: string): Loaded<T> | null => {
   try { const raw = localStorage.getItem(lsKey(path)); return raw ? (JSON.parse(raw) as Loaded<T>) : null; } catch { return null; }
 };
 
+/** Same-tab listeners for link quality (mode / online / save-data / reduced motion). */
+const linkListeners = new Set<() => void>();
+const notifyLink = () => linkListeners.forEach((cb) => cb());
+const readMode = (): Mode => (localStorage.getItem("mode") as Mode) || "normal";
+/** True when bars are healthy enough for extras (animated weather icons): online, mode normal, no Save-Data, motion allowed. */
+export function useWeatherMotion(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      linkListeners.add(cb);
+      window.addEventListener("online", cb);
+      window.addEventListener("offline", cb);
+      window.addEventListener("storage", cb);
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", cb);
+      const conn = (navigator as Navigator & { connection?: EventTarget }).connection;
+      conn?.addEventListener?.("change", cb);
+      return () => {
+        linkListeners.delete(cb);
+        window.removeEventListener("online", cb);
+        window.removeEventListener("offline", cb);
+        window.removeEventListener("storage", cb);
+        mq.removeEventListener("change", cb);
+        conn?.removeEventListener?.("change", cb);
+      };
+    },
+    () => {
+      if (!navigator.onLine || readMode() === "low") return false;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+      const c = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      return !c?.saveData;
+    },
+    () => false,
+  );
+}
+
 /** Fetch with ETag; on any failure return the cached copy flagged offline. Never throws. */
 export async function load<T>(path: string, timeoutMs = T_SNAP): Promise<Loaded<T>> {
   const cached = readCache<T>(path);
@@ -84,8 +119,10 @@ export function useFeed(island: Island): Feed {
       if (!alive) return;
       if (!ess.offline && ess.ms != null) {
         lastOkAt = Date.now(); localStorage.setItem("lastOkAt", String(lastOkAt));
+        const prev = mode;
         if (ess.ms > SLOW_MS) mode = "low"; else if (ess.ms < FAST_MS) mode = "normal";
         localStorage.setItem("mode", mode);
+        if (mode !== prev) notifyLink();
         backoff = 0;
       } else {
         backoff = Math.min((backoff || 15_000) * 2, BACKOFF_MAX);
