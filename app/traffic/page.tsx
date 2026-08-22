@@ -31,7 +31,7 @@ const islandName = (i: IslandId) => ISLAND_LABEL[i].split(" · ")[0];
 // Who to call when the county has not listed a way around. Only Hawaiʻi County publishes closures with detours today.
 const CIVIL_DEFENSE: Partial<Record<IslandId, { tel: string; shown: string }>> = { hawaii: { tel: "+18089350031", shown: "(808) 935-0031" } };
 const NEAR_MILES = 5;
-const APP_NOTE = "ʻio does not save your location.";
+const APP_NOTE = "Kilo does not save your location.";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const isRoadwork = (i: Item) => i.source === "hdot";
 const isClosed = (i: Item) => /both|closed/i.test(i.status ?? "") && !/open|lane/i.test(i.status ?? "");

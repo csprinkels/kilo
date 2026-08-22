@@ -1,6 +1,6 @@
-# ʻio — Hawaiʻi, at a glance
+# Kilo — Hawaiʻi, at a glance
 
-*ʻio* (Hawaiian): the Hawaiian hawk; a vigilant observer of the islands.
+*Kilo* (Hawaiian): to watch, observe, forecast.
 
 Official Hawaiʻi alerts, shelters, road closures and county notices in one offline-capable page. Read-only, no account, no ads. Plan and research: `~/.claude/plans/so-i-had-this-twinkling-crab.md`.
 
@@ -40,7 +40,7 @@ Sources live: NWS alerts, Hawaiʻi County Civil Defense ArcGIS (shelters, roads,
 Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a storm. Every screen follows one grammar — **heading → one sentence → one picture → one action** — and two levels only (Now → a topic page; an item opens once, inline). Rules, enforced by `tests/plain.test.ts` and the Playwright sweep:
 
 - Plain words, never agency labels: `lib/plain.ts` turns every item into *headline / what to do / how urgent* ("Roads may flood in Puna until 9 PM · Do not drive through water."). Level words are **Act now / Get ready / Heads up**. The agency's own text lives behind one "Official wording" disclosure.
-- Five text styles in `rem` (Merriweather headings, Inter body 19px, nothing under 16px) so the phone's text size applies; ʻio also has its own Normal / Large / Largest in Settings.
+- Five text styles in `rem` (Merriweather headings, Inter body 19px, nothing under 16px) so the phone's text size applies; Kilo also has its own Normal / Large / Largest in Settings.
 - Every tap target ≥ 44 px; no icon-only controls; colour only in pictures and in danger/warn blocks; light and dark from the same tokens.
 - One freshness sentence in the same place on every page ("Checked 3:42 PM" · "No signal. Showing what your phone saved at 2:10 PM.").
 - Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`. Weather uses static fill by default; on a healthy link (and when motion is allowed) large condition icons swap to the animated Meteocons fill in `public/icons/weather/animated/`.
@@ -53,7 +53,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 |---|---|---|
 | `/` Now | first run (pick your island) · warning block · Right now weather · one row per topic | 2 min |
 | `/storms` | CPHC/NHC advisories → one sentence for your island, cone map, what to do, where it will be | 2 min (re-parse on new advisory) |
-| `/traffic` Roads | island map with every closed segment drawn (county + HDOT LineStrings → `item.path`; offline highway packs `public/*-roads.json` from `scripts/build-roads.mjs`; official elevation and county street basemaps from `scripts/build-map-art.mjs`), crashes/signals, neighbor reports, roadwork and Waze behind a tap. **Way around:** the county's `Alternate_Route` is matched to the named highway in the pack and drawn in the accent colour (`lib/roads.ts matchDetour`); when none is listed the page says so and offers a tap-to-call Civil Defense. ʻio never computes its own detour. **Near me:** opt-in location (never stored) sorts closures by distance. Oʻahu 911 crashes are placed by dispatch neighborhood (`lib/oahuAreas.ts`, drawn as dotted rings). County rows not edited in 24 h (shelters 12 h) say "Civil Defense has not updated this since … Check before you go." | 2 min |
+| `/traffic` Roads | island map with every closed segment drawn (county + HDOT LineStrings → `item.path`; offline highway packs `public/*-roads.json` from `scripts/build-roads.mjs`; official elevation and county street basemaps from `scripts/build-map-art.mjs`), crashes/signals, neighbor reports, roadwork and Waze behind a tap. **Way around:** the county's `Alternate_Route` is matched to the named highway in the pack and drawn in the accent colour (`lib/roads.ts matchDetour`); when none is listed the page says so and offers a tap-to-call Civil Defense. Kilo never computes its own detour. **Near me:** opt-in location (never stored) sorts closures by distance. Oʻahu 911 crashes are placed by dispatch neighborhood (`lib/oahuAreas.ts`, drawn as dotted rings). County rows not edited in 24 h (shelters 12 h) say "Civil Defense has not updated this since … Check before you go." | 2 min |
 | `/weather` | NWS obs + forecast per town, SRF surf by shore, NDBC buoys, AirNow PM2.5 | 15 min (forecast/surf/air hourly) |
 | `/quakes` | USGS M2+ 7 d, M3.5+ 30 d; Now's quake row reads the same file so they never disagree | 5 min |
 | `/volcano` | HVO HANS daily update + sections, DOH SO₂/PM2.5, webcams on tap | 15 min |
@@ -84,7 +84,7 @@ Verify: `curl -sD - https://data.yourdomain/v1/manifest.json | grep -i cf-cache-
 
 ## The iOS and Android apps
 
-The same static export, wrapped with Capacitor (`capacitor.config.ts`; app id `com.csprinkels.kilo`, name "ʻio"). Native projects live in `ios/` and `android/`; the web bundle is copied in and never committed.
+The same static export, wrapped with Capacitor (`capacitor.config.ts`; app id `com.csprinkels.kilo`, name "Kilo"). Native projects live in `ios/` and `android/`; the web bundle is copied in and never committed.
 
 ```
 pnpm build && npx cap sync      # rebuild the web app and copy it into both projects
@@ -112,4 +112,4 @@ Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-l
 - Capacitor wrap: Phase 2. Reporters on the other islands and a help board: Phase 3.
 - Switched on but not yet configured: Turnstile (set `TURNSTILE_SECRET` in Convex and `NEXT_PUBLIC_TURNSTILE_SITEKEY` in Vercel), the R2/CDN mirror (four `R2_*` vars). Until then the report form has only the honeypot and timer, and data is served straight from Convex.
 - Operations: `/mod/?key=…` is the moderation page; the watchdog and held-report alerts push to whoever has tapped "Notify me" there.
-- Store listings and a custom domain that says ʻio. Package id `com.csprinkels.kilo` and the kilohi.org hosts stay until those move.
+- The name. `APP_NAME` in `lib/brand.ts` and `public/manifest.webmanifest` are placeholders; icons are generated squares.

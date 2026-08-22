@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import ConditionIcon, { TopicIcon } from "@/components/ConditionIcon";
-import { IoMark } from "@/components/Wordmark";
 import { ISLANDS, type Island } from "@/lib/types";
 import { TOWNS } from "@/lib/towns";
 import { APP_NAME, islandName } from "@/lib/brand";
@@ -51,7 +50,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
       setPush(s);
       if (s === "on") setStep("done");
       else if (s === "needs-install") setNote(`First add ${APP_NAME} to your Home Screen (Share, then “Add to Home Screen”), then turn warnings on from Settings.`);
-      else if (s === "denied") setNote(`Notifications are off for ${APP_NAME} in your phone's settings. You can turn them on there any time.`);
+      else if (s === "denied") setNote("Notifications are off for Kilo in your phone's settings. You can turn them on there any time.");
     } catch { setNote("Could not finish turning this on. Try again from Settings when you have a better signal."); }
     finally { setBusy(false); }
   };
@@ -71,13 +70,13 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
 
       <div className="flex flex-1 flex-col justify-center py-s6">
         {step === "welcome" && (
-          <Screen picture={<IoMark size={144} />} title={APP_NAME} text="What is happening on your island, in plain words: weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report. Free, no ads, no account.">
+          <Screen picture={<ConditionIcon code={2} size={144} />} title={APP_NAME} text="What is happening on your island, in plain words: weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report. Free, no ads, no account.">
             <button className="btn btn-primary btn-big" onClick={() => setStep("island")}>Get started</button>
           </Screen>
         )}
 
         {step === "island" && (
-          <Screen picture={<TopicIcon topic="volcano" size={120} />} title="Which island are you on?" text={`Everything in ${APP_NAME} is about one island at a time. You can change this any time at the top of the screen.`}>
+          <Screen picture={<TopicIcon topic="volcano" size={120} />} title="Which island are you on?" text="Everything in Kilo is about one island at a time. You can change this any time at the top of the screen.">
             <div className="flex flex-col gap-s2">
               {(ISLANDS as readonly Island[]).filter((i): i is IslandId => i !== "state").map((i) => (
                 <button key={i} onClick={() => { setIsland(i); setTown(TOWNS.find((t) => t.island === i)?.id ?? null); setStep("town"); }}
@@ -99,7 +98,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
         )}
 
         {step === "location" && (
-          <Screen picture={<TopicIcon topic="tsunami" size={120} />} title="Where you are" text={`${APP_NAME} can check whether the spot you are standing on is in a tsunami evacuation zone, and which closed roads are near you. The check happens on your phone. Your location is never saved or sent anywhere.`}>
+          <Screen picture={<TopicIcon topic="tsunami" size={120} />} title="Where you are" text="Kilo can check whether the spot you are standing on is in a tsunami evacuation zone, and which closed roads are near you. The check happens on your phone. Your location is never saved or sent anywhere.">
             <button className="btn btn-primary btn-big" disabled={busy} onClick={askLocation}><Icon name="crosshair" size={20} /> {busy ? "Asking your phone…" : "Allow location"}</button>
             <button className="btn btn-big mt-s2" onClick={() => setStep(canAskPush ? "warnings" : "done")}>Not now</button>
             {note && <p className="mt-s3 text-body text-ink-2">{note}</p>}

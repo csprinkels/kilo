@@ -31,5 +31,5 @@ export function sourceStep(prev: WatchState, ok: boolean, error: string | undefi
 /** The manifest's gen is the heartbeat of the whole pipeline; one miss is enough to speak up. */
 export function snapshotStep(prev: WatchState, gen: number, now: number) {
   const mins = Math.round((now - gen) / 60_000);
-  return step(prev, now - gen < STALE_MS, now, { down: `ʻio has not updated for ${mins} minutes`, back: "ʻio is updating again" }, 1);
+  return step(prev, now - gen < STALE_MS, now, { down: `Kilo has not updated for ${mins} minutes`, back: "Kilo is updating again" }, 1);
 }

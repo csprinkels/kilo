@@ -62,7 +62,7 @@ export default function ModPage() {
       <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-s7">
         <h1 className="h-display">Moderation</h1>
         <p className="mt-s3 text-body text-ink-2">This page needs the moderator link. Open it from the link you were given.</p>
-        <Link href="/" className="btn mt-s5">Back to ʻio</Link>
+        <Link href="/" className="btn mt-s5">Back to Kilo</Link>
       </main>
     );
   }
@@ -80,7 +80,7 @@ export default function ModPage() {
           ? <span className="text-small text-ink-2">You get a notification when something is held.</span>
           : push === "off" || push === null
             ? <button className="btn" onClick={() => void enablePush("mod", 4).then(setPush)}><Icon name="bell" size={18} /> Notify me when something is held</button>
-            : <span className="text-small text-ink-2">{push === "needs-install" ? "Add ʻio to your Home Screen to get notifications here." : push === "denied" ? "Notifications are off for ʻio in your phone's settings." : "This phone cannot show notifications."}</span>}
+            : <span className="text-small text-ink-2">{push === "needs-install" ? "Add Kilo to your Home Screen to get notifications here." : push === "denied" ? "Notifications are off for Kilo in your phone's settings." : "This phone cannot show notifications."}</span>}
       </div>
 
       <h2 className="now-label mt-s6">Waiting{data ? ` · ${data.pending.length}` : ""}</h2>

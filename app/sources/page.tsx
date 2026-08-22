@@ -25,7 +25,7 @@ const SOURCES = [
 const SIZES = [["", "Normal"], ["large", "Large"], ["largest", "Largest"]] as const;
 type TextSize = (typeof SIZES)[number][0];
 
-// ʻio's own text size, mirrored to <html data-text> right away; app/layout.tsx re-applies it before paint on the next load.
+// Kilo's own text size, mirrored to <html data-text> right away; app/layout.tsx re-applies it before paint on the next load.
 const sizeListeners = new Set<() => void>();
 const subscribeSize = (cb: () => void) => { sizeListeners.add(cb); return () => { sizeListeners.delete(cb); }; };
 const getSize = () => (localStorage.getItem("text") ?? "") as TextSize;
@@ -60,7 +60,7 @@ export default function Settings() {
 
   return (
     <PageShell title="Settings and about" sentence={`Pick your island and text size, turn on warnings, and see where ${APP_NAME}'s information comes from.`}>
-      <Section title="Your island" sentence={`Everything in ${APP_NAME} is about this island.`}>
+      <Section title="Your island" sentence="Everything in Kilo is about this island.">
         <div className="mt-s3 flex flex-col gap-s2">
           {ISLANDS.map((i) => (
             <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
@@ -70,7 +70,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section title="Text size" sentence={`Makes every word in ${APP_NAME} bigger. Your phone's own text setting still works too.`}>
+      <Section title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
         <div className="mt-s3 flex gap-s2" role="group" aria-label="Text size">
           {SIZES.map(([v, label]) => (
             <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>

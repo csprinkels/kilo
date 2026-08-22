@@ -28,7 +28,7 @@ test("source: an ok run with no earlier alert is silent", () => {
 test("snapshot: stale gen alerts once, fresh gen says it is back", () => {
   let s = fresh("__snapshot", 0);
   let r = snapshotStep(s, 0, 10 * 60_000); s = r.next; assert.equal(r.alert, undefined, "10 min is fine");
-  r = snapshotStep(s, 0, 20 * 60_000); s = r.next; assert.equal(r.alert, "ʻio has not updated for 20 minutes");
+  r = snapshotStep(s, 0, 20 * 60_000); s = r.next; assert.equal(r.alert, "Kilo has not updated for 20 minutes");
   r = snapshotStep(s, 0, 30 * 60_000); s = r.next; assert.equal(r.alert, undefined, "no repeat within 6 h");
-  r = snapshotStep(s, 40 * 60_000, 41 * 60_000); assert.equal(r.alert, "ʻio is updating again");
+  r = snapshotStep(s, 40 * 60_000, 41 * 60_000); assert.equal(r.alert, "Kilo is updating again");
 });
