@@ -102,7 +102,7 @@ export default function Settings() {
 
       <Section title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="font-semibold text-ink">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
 
-      <Section title={`What ${APP_NAME} will never do`} sentence="Show ads. Ask you to sign up. Sell or share where you are. Let a computer write an alert. Make a neighbor's post look official." />
+      <Section title={`What ${APP_NAME} will never do`} sentence="Show ads. Make you create an account. Sell or share where you are. Let a computer write an alert. Make a neighbor's post look official." />
 
       <Link href="/guidelines/" className="row mt-s6 border-t border-line font-semibold text-brand">
         <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />

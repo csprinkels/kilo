@@ -40,7 +40,7 @@ export default function Privacy() {
       <Section title="What we never do">
         <ul className="mt-s2 max-w-[36rem] list-disc pl-5 text-body text-ink-2">
           <li>Show ads, or let anyone else show you ads.</li>
-          <li>Ask you to sign up, or collect your name, email or phone number.</li>
+          <li>Make you create an account, or collect your name, email or phone number. (The waitlist on kilohi.org is the one place we take an email; it is used for a single launch message, then deleted.)</li>
           <li>Sell, share or store where you are.</li>
           <li>Use a tracking or analytics company. There is no analytics code in the app.</li>
           <li>Let a computer write an alert in the name of an official agency.</li>
