@@ -43,7 +43,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 - Five text styles in `rem` (Merriweather headings, Inter body 19px, nothing under 16px) so the phone's text size applies; Kilo also has its own Normal / Large / Largest in Settings.
 - Every tap target ≥ 44 px; no icon-only controls; colour only in pictures and in danger/warn blocks; light and dark from the same tokens.
 - One freshness sentence in the same place on every page ("Checked 3:42 PM" · "No signal. Showing what your phone saved at 2:10 PM.").
-- Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`.
+- Illustrated icons: Meteocons (MIT) for weather, a small bespoke set for topics, in `public/icons/`. Weather uses static fill by default; on a healthy link (and when motion is allowed) large condition icons swap to the animated Meteocons fill in `public/icons/weather/animated/`.
 - Tabs: Now · Weather · Roads · Reports. Storms, earthquakes, the volcano and tsunami are fixed cards on Now.
 - Cards on paper: a card holds one thing on Now (the weather, a shelter, one topic) and one whole list everywhere else (`.card` / `.list` / `.picture` in `globals.css`; `--card` white with a soft shadow in light, a hairline ring in dark). One tinted card per page at most; never a card inside a card (pictures inside a row use `.well`).
 
