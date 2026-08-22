@@ -30,5 +30,12 @@ export async function nativeBoot(go: (path: string) => void) {
   App.addListener("backButton", ({ canGoBack }) => { if (canGoBack && location.pathname !== "/") history.back(); else App.exitApp(); });
   // A link into the app (push tap, later: universal links) lands on the right page.
   App.addListener("appUrlOpen", ({ url }) => { try { const u = new URL(url); go(u.pathname + u.search); } catch { /* ignore */ } });
+  // A tapped warning carries data.navigate ("/?island=hawaii&item=…" or an absolute URL). Received-while-open needs nothing: the pages poll.
+  const { PushNotifications } = await import("@capacitor/push-notifications");
+  PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
+    const nav = (notification.data as { navigate?: unknown } | undefined)?.navigate;
+    if (typeof nav !== "string") return;
+    try { const u = new URL(nav, location.origin); go(u.pathname + u.search); } catch { /* ignore */ }
+  });
   await SplashScreen.hide().catch(() => {});
 }

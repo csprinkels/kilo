@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: { launchShowDuration: 600, launchAutoHide: true, backgroundColor: "#efe8dc", showSpinner: false },
     StatusBar: { overlaysWebView: true, style: "DEFAULT" },
+    PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
   },
 };
 

@@ -61,6 +61,7 @@ export default defineSchema({
     createdAt: v.number(),
     lastOkAt: v.optional(v.number()),
     failures: v.number(),
+    kind: v.optional(v.string()), // absent = "web"; "apns" | "fcm" rows keep the device token in `endpoint`, p256dh/auth ""
   }).index("by_endpoint", ["endpoint"]).index("by_island", ["island"]),
   pushLog: defineTable({ island: v.string(), at: v.number(), trigger: v.string(), sent: v.number(), failed: v.number() }).index("by_island", ["island"]),
 

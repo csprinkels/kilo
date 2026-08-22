@@ -48,11 +48,12 @@ http.route({
   path: "/v1/push/subscribe", method: "POST",
   handler: httpAction(async (ctx, req) => {
     try {
-      const { subscription, island, minSev } = await req.json();
-      await ctx.runMutation(api.pushStore.subscribe, {
-        endpoint: String(subscription.endpoint), p256dh: String(subscription.keys.p256dh), auth: String(subscription.keys.auth),
-        island: String(island), minSev: Math.min(4, Math.max(2, Number(minSev) || 3)),
-      });
+      // Web: { subscription: PushSubscription JSON, island, minSev }. Native: { kind: "apns"|"fcm", token, island, minSev }.
+      const { subscription, kind, token, island, minSev } = await req.json();
+      const common = { island: String(island), minSev: Math.min(4, Math.max(2, Number(minSev) || 3)) };
+      await ctx.runMutation(api.pushStore.subscribe, kind
+        ? { kind: String(kind), endpoint: String(token ?? ""), p256dh: "", auth: "", ...common }
+        : { endpoint: String(subscription.endpoint), p256dh: String(subscription.keys.p256dh), auth: String(subscription.keys.auth), ...common });
       return json({ ok: true });
     } catch (e) { return json({ ok: false, error: String((e as Error).message).slice(0, 120) }, 400); }
   }),

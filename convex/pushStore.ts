@@ -23,11 +23,12 @@ export const afterSend = internalMutation({
   },
 });
 
-/** Called from http.ts. One row per endpoint; re-subscribing moves it to a new island. */
+/** Called from http.ts. One row per endpoint (device token for apns/fcm); re-subscribing moves it to a new island. */
 export const subscribe = mutation({
-  args: { endpoint: v.string(), p256dh: v.string(), auth: v.string(), island: v.string(), minSev: v.number() },
+  args: { endpoint: v.string(), p256dh: v.string(), auth: v.string(), island: v.string(), minSev: v.number(), kind: v.optional(v.string()) },
   handler: async (ctx, a) => {
-    if (!/^https:\/\//.test(a.endpoint) || a.endpoint.length > 2048) throw new Error("bad endpoint");
+    if (a.kind !== undefined && !["apns", "fcm"].includes(a.kind)) throw new Error("bad kind");
+    if (a.kind ? !/^[A-Za-z0-9:_-]{1,512}$/.test(a.endpoint) : !/^https:\/\//.test(a.endpoint) || a.endpoint.length > 2048) throw new Error("bad endpoint");
     if (!["hawaii", "maui", "oahu", "kauai"].includes(a.island)) throw new Error("bad island");
     const row = await ctx.db.query("pushSubs").withIndex("by_endpoint", (q) => q.eq("endpoint", a.endpoint)).unique();
     if (row) await ctx.db.patch(row._id, { ...a, failures: 0 });
