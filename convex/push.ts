@@ -97,3 +97,16 @@ export const sendModerator = internalAction({
 
 /** Public VAPID key for the client's pushManager.subscribe(). */
 export const publicKey = internalAction({ args: {}, handler: async () => vapid() });
+
+/** A plain test notification to every subscriber of one island — `npx convex run --prod push:ping '{"island":"hawaii"}'`. */
+export const ping = internalAction({
+  args: { island: v.string(), text: v.optional(v.string()) },
+  handler: async (ctx, { island, text }): Promise<string> => {
+    const subs: Sub[] = await ctx.runQuery(internal.pushStore.forIsland, { island, minSev: 9 });
+    const site = (process.env.SITE_URL ?? "").replace(/\/$/, "");
+    const title = "Kilo test", body = text ?? "Warnings are working on this phone.", navigate = `${site}/?island=${island}`, tag = "ping";
+    const webPayload = JSON.stringify({ web_push: 8030, notification: { title, body, navigate, tag, lang: "en", silent: false } });
+    await fanOut(ctx, subs, { island, trigger: "ping", title, body, navigate, tag, webPayload, urgency: "high" });
+    return `${subs.length} subscription(s): ${subs.map((s) => s.kind ?? "web").join(", ") || "none"}`;
+  },
+});
