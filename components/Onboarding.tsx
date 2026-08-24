@@ -25,7 +25,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
   const towns = island ? TOWNS.filter((t) => t.island === island) : [];
 
   // Web Push is only offered where it can work (not inside the iOS app yet, not in browsers without it).
-  useEffect(() => { let live = true; void Promise.resolve().then(() => pushStatus()).then((s) => { if (live) setPush(s); }); return () => { live = false; }; }, []);
+  useEffect(() => { let live = true; void Promise.resolve().then(() => pushStatus()).then((s) => { if (live) setPush(s); }).catch(() => { if (live) setPush("off"); }); return () => { live = false; }; }, []);
   const canAskPush = push === "off" || push === "needs-install";
 
   const finish = () => {

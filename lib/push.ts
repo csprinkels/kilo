@@ -59,17 +59,19 @@ export async function disablePush(): Promise<PushStatus> {
 
 // ---- Native (iOS APNs / Android FCM) via @capacitor/push-notifications. Dynamic import keeps the plugin out of the web bundle.
 const TOKEN_KEY = "push.token";
-const plugin = async () => (await import("@capacitor/push-notifications")).PushNotifications;
+// Never make the plugin proxy a promise resolution value: awaiting it probes `.then`, which the proxy
+// forwards to native as a method call -> '"PushNotifications.then()" is not implemented on ios'.
+const plugin = async () => { const m = await import("@capacitor/push-notifications"); const { PushNotifications } = m; return { push: PushNotifications }; };
 
 async function nativeStatus(): Promise<PushStatus> {
-  const { receive } = await (await plugin()).checkPermissions();
+  const { receive } = await (await plugin()).push.checkPermissions();
   if (receive === "denied") return "denied";
   return receive === "granted" && localStorage.getItem(TOKEN_KEY) ? "on" : "off";
 }
 
 /** Ask, register with APNs/FCM, and wait for the token (or a registration error / 20 s). */
 async function nativeToken(): Promise<string | null> {
-  const push = await plugin();
+  const { push } = await plugin();
   if ((await push.requestPermissions()).receive !== "granted") return null;
   // Android needs a channel for heads-up alerts; on iOS this is a no-op that may reject.
   await push.createChannel({ id: "warnings", name: "Warnings", description: "Shelter openings, evacuations and warnings", importance: 5, visibility: 1, sound: "default" }).catch(() => {});
@@ -106,6 +108,6 @@ async function nativeDisable(): Promise<PushStatus> {
   if (token) await fetch(`${API_URL}/v1/push/unsubscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: token }) }).catch(() => {});
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem("push.island");
-  await (await plugin()).unregister().catch(() => {});
+  await (await plugin()).push.unregister().catch(() => {});
   return "off";
 }

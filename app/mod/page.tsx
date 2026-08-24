@@ -41,7 +41,7 @@ export default function ModPage() {
     void Promise.resolve().then(async () => {
       if (!live) return;
       await load();
-      const s = await pushStatus();
+      const s = await pushStatus().catch((): PushStatus => "off");
       if (live) setPush(localStorage.getItem("push.island") === "mod" && s === "on" ? "on" : s === "on" ? "off" : s);
     });
     return () => { live = false; };

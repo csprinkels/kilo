@@ -22,7 +22,8 @@ export default function AlertsCard({ island, compact }: { island: Exclude<Island
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [dismissed, dismiss] = useAlertsDismissed();
-  useEffect(() => { void pushStatus().then(setStatus); }, []);
+  // A failed status check still offers the button: tapping it surfaces the real error instead of hiding it.
+  useEffect(() => { void pushStatus().then(setStatus).catch(() => setStatus("off")); }, []);
 
   const toggle = async () => {
     setBusy(true); setErr(null);
