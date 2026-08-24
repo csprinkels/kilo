@@ -73,7 +73,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const shelters = official.filter((i) => i.type === "shelter" && plain.get(i.key)!.level >= 2);
   const rest = warnings.filter((i) => i !== lead && i.type !== "shelter");
   const extraWarnings = showAll || (focusKey && rest.some((i) => i.key === focusKey)) ? rest : rest.slice(0, 2);
-  const headsUp = official.filter((i) => (i.type === "advisory" || i.type === "storm") && plain.get(i.key)!.level === 2);
+  const headsUp = official.filter((i) => (i.type === "advisory" || i.type === "storm" || i.type === "outage") && plain.get(i.key)!.level === 2);
 
   const storms = stormsSnap?.data?.storms ?? [];
   const place = ISLAND_POINTS[island];

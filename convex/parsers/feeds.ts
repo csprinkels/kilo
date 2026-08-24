@@ -2,11 +2,13 @@ import { XMLParser } from "fast-xml-parser";
 import { OAHU_AREAS } from "../../lib/oahuAreas.ts";
 import { clip, hashOf, type Island, type Item } from "../../lib/types.ts";
 import { geoJsonPath, simplifyPath } from "../../lib/roads.ts";
+import { districtsFor } from "../../lib/places.ts";
 
 const DAY = 86_400_000;
 const xml = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", cdataPropName: "__cdata", textNodeName: "#text" });
 const text = (v: unknown): string =>
   v == null ? "" : typeof v === "object" ? text((v as Record<string, unknown>)["__cdata"] ?? (v as Record<string, unknown>)["#text"] ?? Object.values(v as object).map(text).join(" ")) : String(v);
+const unent = (s: string) => s.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&amp;/g, "&");
 const stripHtml = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/&#8230;|&hellip;/g, "…").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\[…\]/g, "").trim();
 const asArray = <T,>(v: T | T[] | undefined): T[] => (v == null ? [] : Array.isArray(v) ? v : [v]);
 
@@ -126,6 +128,43 @@ const HPD_SEV = (title: string, body: string): Item["sev"] => {
 };
 export const parseHpd = (rss: string, now = Date.now(), districts?: (t: string) => string[]) =>
   parseWordPress(rss, { source: "hpd", islands: ["hawaii"], maxAgeDays: 3, sev: HPD_SEV, districts }, now);
+
+// ---------- Hawaiʻi County Department of Water Supply (WordPress; boil-water, outages, conservation) ----------
+// The county's only public water feed. We surface only notices we can classify with confidence; general
+// updates, board news and "cancelled/restored" posts are dropped so a stale "boil your water" never lingers.
+export const HIDWS_URL = "https://www.hawaiidws.org/feed/";
+type DwsKind = "boil" | "off" | "prep" | "conserve";
+const DWS_DAYS: Record<DwsKind, number> = { boil: 10, off: 10, prep: 4, conserve: 30 };
+function dwsClassify(t: string): { kind: DwsKind; sev: Item["sev"] } | null {
+  if (/\b(cancel|rescind|lift|no longer|downgraded to (a )?normal|fully restored|has ended|back to normal|is safe to drink)/i.test(t)) return null;
+  if (/boil water/i.test(t)) return { kind: "boil", sev: 3 };
+  if (/water (main break|outage)|water (is|are|now) (off|out|down)|no water|without water|shut ?off|service (is|has been) (interrupted|disrupted|cut)/i.test(t)) return { kind: "off", sev: 2 };
+  if (/could be (interrupt|impact|disrupt)|service (could|may|will) be|prepare .*drinking water|plan for possible|ahead of .*storm/i.test(t)) return { kind: "prep", sev: 2 };
+  if (/conservation|restriction|use less water|low water pressure/i.test(t)) return { kind: "conserve", sev: 1 };
+  return null;
+}
+// One district when the notice clearly names one area; whole island when it spans several or names none.
+const dwsDistricts = (t: string): string[] => { const ds = districtsFor(t); return ds.length === 1 ? ds : []; };
+export function parseDws(rss: string, now = Date.now()): Item[] {
+  const doc = xml.parse(rss);
+  const out: Item[] = [];
+  for (const it of asArray<Record<string, unknown>>(doc?.rss?.channel?.item)) {
+    const at = Date.parse(text(it.pubDate));
+    if (!Number.isFinite(at)) continue;
+    const link = text(it.link), title = clip(unent(text(it.title)), 120), body = clip(unent(stripHtml(text(it.description))), 600);
+    const cls = dwsClassify(title); // the title alone — a general update that only mentions boil water in its body is not a boil-water notice
+    if (!cls || now - at > DWS_DAYS[cls.kind] * DAY) continue;
+    out.push({
+      key: `hidws:${text(it.guid) || link}`, source: "hidws", type: "outage" as const, tier: "official" as const,
+      sev: cls.sev, islands: ["hawaii" as const], districts: dwsDistricts(`${title} ${body}`),
+      title, body, srcUrl: link,
+      fields: { kind: cls.kind },
+      issuedAt: at, lastConfirmedAt: now, expiresAt: at + DWS_DAYS[cls.kind] * DAY,
+      hash: hashOf(title, body),
+    });
+  }
+  return out;
+}
 
 // ---------- PTWC tsunami bulletins (Atom) ----------
 export const PTWC_URL = "https://www.tsunami.gov/events/xml/PHEBAtom.xml";

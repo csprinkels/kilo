@@ -12,6 +12,7 @@ const SOURCES = [
   ["National Weather Service", "weather, surf, warnings"],
   ["Hawaiʻi County Civil Defense", "shelters, road closures, schools"],
   ["State highways department", "roadwork"],
+  ["Hawaiʻi County Department of Water Supply", "boil-water notices and water outages"],
   ["USGS", "earthquakes"],
   ["USGS Hawaiian Volcano Observatory", "Kīlauea and Mauna Loa"],
   ["Pacific Tsunami Warning Center", "tsunami"],

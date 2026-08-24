@@ -34,6 +34,7 @@ export const SOURCE_LABEL: Record<string, string> = {
   usgs: "USGS",
   hvo: "USGS Hawaiian Volcano Observatory",
   ptwc: "Pacific Tsunami Warning Center",
+  hidws: "Hawaiʻi County Department of Water Supply",
 };
 
 export const SEV_SECTION: Record<1 | 2 | 3 | 4, string> = {

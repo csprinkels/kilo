@@ -22,6 +22,19 @@ export function districtFor(text: string): string | undefined {
 }
 
 /** The county writes "Kau" and "Hamakua"; people read "Ka‘ū" and "Hāmākua". Unknown names pass through. */
+/** Every district named anywhere in the text, deduped ("Papaikou and Honokaa" -> ["South Hilo","Hāmākua"]). */
+export function districtsFor(text: string): string[] {
+  let t = ` ${fold(text)} `;
+  const out = new Set<string>();
+  for (const [name, d] of INDEX) { // INDEX is longest-first, so "South Kona" is matched and consumed before bare "Kona"
+    if (t.includes(` ${name} `) || t.includes(` ${name},`) || t.includes(` ${name}.`) || t.includes(`-${name} `)) {
+      out.add(d);
+      t = t.split(name).join(" "); // consume the span so a shorter name inside it cannot match again
+    }
+  }
+  return [...out];
+}
+
 export function districtName(raw: string): string {
   const f = fold(raw);
   return Object.keys(HAWAII_DISTRICTS).find((d) => fold(d) === f) ?? raw;

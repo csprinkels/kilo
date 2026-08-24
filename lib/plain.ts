@@ -22,7 +22,7 @@ export type Plain = {
 export const SOURCE_NAME: Record<string, string> = {
   nws: "the National Weather Service", hccda: "Hawaiʻi County Civil Defense", hdot: "the state highways department",
   hiema: "the state emergency agency", hpd: "Hawaiʻi Police", hnl: "Honolulu 911 dispatch", usgs: "the USGS",
-  hvo: "the USGS Hawaiian Volcano Observatory", ptwc: "the Pacific Tsunami Warning Center", cphc: "the Central Pacific Hurricane Center",
+  hvo: "the USGS Hawaiian Volcano Observatory", hidws: "the county Water Supply", ptwc: "the Pacific Tsunami Warning Center", cphc: "the Central Pacific Hurricane Center",
   community: "a neighbor", digest: "your last notification",
 };
 export const sourceName = (source: string) => SOURCE_NAME[source.split(":")[0]] ?? "an official source";
@@ -266,6 +266,19 @@ function tsunami(item: Item, now: number): Plain {
   return { headline: "An earthquake happened far away. No tsunami danger for Hawaiʻi.", action: "", level: 0, source: src, official: item.title };
 }
 
+function outage(item: Item, now: number): Plain {
+  const src = sourceName(item.source), until = fmtUntil(item.expiresAt, now), where = placeOf(item);
+  if (item.tier === "community")
+    return { headline: `Power or water out near ${item.title.split("—").pop()?.trim() || where}`, action: "Not checked by anyone official.", level: Math.min(item.sev, 2) as Level, source: src, official: item.title };
+  switch (item.fields?.kind) {
+    case "boil": return { headline: `Boil your water ${where}`, action: "Boil water one minute before you drink or cook with it. Bottled water is fine.", level: 3, until, source: src, official: item.title };
+    case "off": return { headline: `Water is out ${where}`, action: "Fill containers from another source. Service should come back soon.", level: 2, until, source: src, official: item.title };
+    case "prep": return { headline: `Water could go out ${where}`, action: "Fill containers now, before any outage.", level: 2, until, source: src, official: item.title };
+    case "conserve": return { headline: `Use less water ${where}`, action: "Cut back where you can so there is enough for everyone.", level: 1, until, source: src, official: item.title };
+    default: return { headline: `Power out ${where}`, action: "Keep fridges shut. Check on neighbors who use medical equipment.", level: 2, until, source: src, official: item.title };
+  }
+}
+
 /** The plain version of any item. Never throws; unknown shapes keep their own title and get the type's default action. */
 export function plainAlert(item: Item, now = Date.now(), island?: Island): Plain {
   const src = sourceName(item.source);
@@ -282,9 +295,7 @@ export function plainAlert(item: Item, now = Date.now(), island?: Island): Plain
     case "quake": return quake(item);
     case "volcano": return volcano(item);
     case "evac": return { ...fallback("Follow Civil Defense. Take medicine and pets.", 4), headline: item.title.replace(/^Evacuation\s*(order)?:?\s*/i, (m) => (m ? "Leave now: " : "")) };
-    case "outage":
-      if (item.tier === "community") return { ...fallback("Not checked by anyone official.", Math.min(item.sev, 2) as Level), headline: `Power or water out near ${item.title.split("—").pop()?.trim() || placeOf(item)}` };
-      return fallback("Keep fridges shut. Check on neighbors who use medical equipment.", 2);
+    case "outage": return outage(item, now);
     case "hazard": return fallback("Stay away from the area.", item.sev);
     case "notice":
       if (item.tier === "community") return { ...fallback("Not checked by anyone official.", Math.min(item.sev, 2) as Level), headline: item.title.replace(/^(Lost|Found)\b/i, (m) => `${m} pet:`).replace(/:\s*:/, ":") };

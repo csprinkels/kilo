@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseNws } from "../convex/parsers/nws.ts";
 import { parseHccda } from "../convex/parsers/hccda.ts";
-import { parseHdot, parseHvo, parsePtwc, parseUsgs } from "../convex/parsers/feeds.ts";
+import { parseDws, parseHdot, parseHvo, parsePtwc, parseUsgs } from "../convex/parsers/feeds.ts";
 import { BANNED, LEVEL_WORD, SOURCE_NAME, fmtUntil, plainAlert, rankStorms } from "../lib/plain.ts";
 import { ISLAND_POINTS } from "../lib/storm.ts";
 import { ISLAND_LABEL, TYPE_LABEL } from "../lib/brand.ts";
@@ -25,6 +25,7 @@ const ITEMS: Item[] = [
   ...parseHvo(fx("hvo-elevated.json"), NOW),
   ...parseHdot(fx("hdot-current.json"), NOW),
   ...parsePtwc(txt("ptwc.atom"), Date.parse("2026-08-12T04:00:00Z")),
+  ...parseDws(txt("hidws.rss"), NOW),
 ];
 
 test("plain: every fixture item gets a headline with no agency jargon, ≤ 20 words, sentences ≤ 20 words", () => {

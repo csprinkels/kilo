@@ -193,3 +193,47 @@ test("road closures carry the closed segment as a short path; endpoints stay put
   const snapBytes = Buffer.byteLength(JSON.stringify(roads.map((r) => r.path)));
   assert.ok(snapBytes < 8_000, `paths add ${snapBytes} B to the island snapshot`);
 });
+
+test("DWS: only classifiable water notices survive, with the right kind and district", async () => {
+  const { parseDws } = await import("../convex/parsers/feeds.ts");
+  const txt = (f: string) => readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8");
+  const now = Date.parse("2026-08-19T21:00:00-10:00");
+  const items = parseDws(txt("hidws.rss"), now);
+  // 7 posts in; the CANCELLED notice, the general UPDATE and the board meeting are dropped.
+  assert.equal(items.length, 4, items.map((i) => i.title).join(" | "));
+  for (const i of items) {
+    assert.equal(i.type, "outage");
+    assert.equal(i.tier, "official");
+    assert.equal(i.islands[0], "hawaii");
+    assert.ok(i.expiresAt! > i.issuedAt);
+  }
+  const kind = (k: string) => items.find((i) => i.fields?.kind === k)!;
+  assert.equal(kind("boil").sev, 3);
+  assert.deepEqual(kind("boil").districts, ["Ka‘ū"]);           // Waiōhinu + Nāʻālehu → one district
+  assert.equal(kind("off").sev, 2);
+  assert.deepEqual(kind("off").districts, ["North Kona"]);      // Kailua-Kona
+  assert.equal(kind("prep").sev, 2);
+  assert.deepEqual(kind("prep").districts, []);                 // "islandwide" → whole island
+  assert.equal(kind("conserve").sev, 1);
+  assert.deepEqual(kind("conserve").districts, ["South Kona"]);
+  // Everything expires when now is pushed a month forward.
+  assert.equal(parseDws(txt("hidws.rss"), now + 32 * 24 * 3600_000).length, 0);
+});
+
+test("DWS: plain wording matches the kind", async () => {
+  const { parseDws } = await import("../convex/parsers/feeds.ts");
+  const { plainAlert } = await import("../lib/plain.ts");
+  const txt = (f: string) => readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8");
+  const now = Date.parse("2026-08-19T21:00:00-10:00");
+  const items = parseDws(txt("hidws.rss"), now);
+  const say = (k: string) => plainAlert(items.find((i) => i.fields?.kind === k)!, now);
+  assert.match(say("boil").headline, /Boil your water in Ka‘ū/);
+  assert.equal(say("boil").level, 3);
+  assert.match(say("boil").action, /Boil water one minute/);
+  assert.match(say("off").headline, /Water is out in North Kona/);
+  assert.equal(say("off").level, 2);
+  assert.match(say("prep").headline, /Water could go out on Hawai/);
+  assert.match(say("conserve").headline, /Use less water in South Kona/);
+  assert.equal(say("conserve").level, 1);
+  assert.equal(say("boil").source, "the county Water Supply");
+});
