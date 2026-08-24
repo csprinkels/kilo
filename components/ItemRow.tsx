@@ -42,7 +42,7 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
   const [open, setOpen] = useState(!!focus);
   const p = plainAlert(item, now);
   const stale = staleLine(item, now);
-  const glyph = ICON[item.type] ?? "megaphone";
+  const glyph = item.type === "outage" && item.fields?.kind ? "drop" : ICON[item.type] ?? "megaphone"; // water notices read as a drop, power stays lightning-slash
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   return (
     <li id={`item-${hashOf(item.key)}`} className={focus ? "bg-surface-2" : ""}>

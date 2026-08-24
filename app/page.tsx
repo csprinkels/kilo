@@ -104,7 +104,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
         <div className="isl-stack">
           {lead && !(approaching && (lead.type === "storm" || lead.type === "advisory")) && (
-            <ItemCard tone="hot" icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} now={now} focus={lead.key === focusKey}>
+            <ItemCard tone="hot" icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : lead.type === "outage" ? (lead.fields?.kind ? "drop" : "lightning-slash") : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} now={now} focus={lead.key === focusKey}>
               {plain.get(lead.key)!.action && <p className="isl-p">{plain.get(lead.key)!.action}</p>}
               {staleLine(lead, now) && <p className="isl-note">{staleLine(lead, now)}</p>}
               {(extraWarnings.length > 0 || headlinesOnly.length > 0) && (
