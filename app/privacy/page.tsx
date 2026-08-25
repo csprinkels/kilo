@@ -6,7 +6,7 @@ import { APP_NAME } from "@/lib/brand";
  * The privacy policy, in the same plain words as the rest of the app. Both app stores require a public URL for this page.
  * Every sentence here is a promise the code keeps; change the code, change the sentence.
  */
-const UPDATED = "August 21, 2026";
+const UPDATED = "August 24, 2026";
 
 export default function Privacy() {
   return (
@@ -42,9 +42,15 @@ export default function Privacy() {
           <li>Show ads, or let anyone else show you ads.</li>
           <li>Make you create an account, or collect your name, email or phone number. (The waitlist on kilohi.org is the one place we take an email; it is used for a single launch message, then deleted.)</li>
           <li>Sell, share or store where you are.</li>
-          <li>Use a tracking or analytics company. There is no analytics code in the app.</li>
+          <li>Use an outside tracking or analytics company, set a cookie, or record your screen, mouse or taps as you. What we do keep is described just below.</li>
           <li>Let a computer write an alert in the name of an official agency.</li>
         </ul>
+      </Section>
+
+      <Section title="What we count">
+        <p className="mt-s2 max-w-[36rem] text-body text-ink-2">
+          So we can see which parts of {APP_NAME} people actually use, we keep simple counts &mdash; how many times each screen is opened and each main button is tapped. These counts live on our own server, are added up across everyone, and are never tied to you, your phone, or where you are. There is no cookie, no advertising company, and nothing that could pick you out. Example: &ldquo;the Weather screen was opened 300 times today.&rdquo;
+        </p>
       </Section>
 
       <Section title="Where the information comes from" sentence="Weather, alerts, roads, earthquakes, the volcano and tsunami information come from public agencies (the National Weather Service, Hawaiʻi County Civil Defense, the state highways department, the USGS and others). Reading it from them sends them nothing about you; the app fetches it for everyone and passes it on." />

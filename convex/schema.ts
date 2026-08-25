@@ -33,6 +33,14 @@ export default defineSchema({
     .index("by_active", ["active"])
     .index("by_active_confirmed", ["active", "lastConfirmedAt"]), // purge: inactive rows, oldest first
 
+  // Anonymous, aggregate usage counts: one row per (day, event), just a tally. No device, no person, no location.
+  // ponytail: one row per (day,event) so a busy event serializes its writes; shard the key if that ever bottlenecks.
+  stats: defineTable({
+    day: v.string(),   // YYYY-MM-DD in Hawaiʻi time
+    event: v.string(), // "view:weather", "open:storm", "warnings:on", …
+    count: v.number(),
+  }).index("by_day", ["day"]).index("by_day_event", ["day", "event"]),
+
   // Active tropical cyclones (latest advisory) + every past advisory position.
   storms: defineTable({
     stormId: v.string(),

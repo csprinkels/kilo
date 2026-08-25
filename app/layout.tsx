@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import Script from "next/script";
 import NativeBoot from "@/components/NativeBoot";
+import StatTracker from "@/components/StatTracker";
 import "./globals.css";
 import { APP_NAME, TAGLINE } from "@/lib/brand";
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("text");if(t)document.documentElement.dataset.text=t}catch(e){}` }} />
         {children}
         <NativeBoot />
+        <StatTracker />
         {/* The service worker is for the web. Inside the app the bundle is already offline, and WKWebView has no service workers anyway. */}
         <Script id="sw" strategy="afterInteractive">
           {`if ("serviceWorker" in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) navigator.serviceWorker.register("/sw.js");`}

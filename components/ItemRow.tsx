@@ -7,6 +7,7 @@ import { hashOf, smsText } from "@/lib/types";
 import { shareText } from "@/lib/native";
 import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
+import { track } from "@/lib/stat";
 
 export const ICON: Record<ItemType, IconName> = {
   shelter: "tent", road_closure: "traffic-cone", school: "student", advisory: "drop", storm: "wind", tsunami: "waves",
@@ -46,7 +47,7 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   return (
     <li id={`item-${hashOf(item.key)}`} className={focus ? "bg-surface-2" : ""}>
-      <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <button className="row items-start" onClick={() => { if (!open) track(item.tier === "community" ? "open:neighbor" : `open:${item.type}`); setOpen((o) => !o); }} aria-expanded={open}>
         <span className={`tile mt-0.5 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : ""}`}><Icon name={`${glyph}-fill`} size={20} className={LEVEL_TEXT[p.level]} /></span>
         <span className="min-w-0 flex-1">
           {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
@@ -86,7 +87,7 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
   const p = plainAlert(item, now);
   return (
     <li id={`item-${hashOf(item.key)}`} className="border-l-[3px] border-dashed border-ink-2 bg-surface-2">
-      <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <button className="row items-start" onClick={() => { if (!open) track(item.tier === "community" ? "open:neighbor" : `open:${item.type}`); setOpen((o) => !o); }} aria-expanded={open}>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-ink-2">Neighbor report · not checked</span>
           <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>

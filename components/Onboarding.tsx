@@ -6,6 +6,7 @@ import { ISLANDS, type Island } from "@/lib/types";
 import { TOWNS } from "@/lib/towns";
 import { APP_NAME, islandName } from "@/lib/brand";
 import { enablePush, pushStatus, type PushStatus } from "@/lib/push";
+import { track } from "@/lib/stat";
 
 type IslandId = Exclude<Island, "state">;
 type Step = "welcome" | "island" | "town" | "location" | "warnings" | "done";
@@ -47,6 +48,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
     setBusy(true); setNote(null);
     try {
       const s = await enablePush(island, 3);
+      if (s === "on") track("warnings:on");
       setPush(s);
       if (s === "on") setStep("done");
       else if (s === "needs-install") setNote(`First add ${APP_NAME} to your Home Screen (Share, then “Add to Home Screen”), then turn warnings on from Settings.`);

@@ -17,6 +17,15 @@ const keyStore = {
   get: () => { const q = new URLSearchParams(location.search).get("key"); if (q) { localStorage.setItem("modKey", q); history.replaceState(null, "", "/mod/"); } return localStorage.getItem("modKey"); },
 };
 
+const STAT_LABEL = (e: string): string => {
+  const [kind, rest] = e.split(":");
+  if (kind === "view") return `Opened the ${rest === "now" ? "Now" : rest === "reports" ? "Reports" : rest.replace(/^./, (c) => c.toUpperCase())} screen`;
+  if (kind === "open") return `Opened a ${rest === "neighbor" ? "neighbor report" : (TYPE[rest] ?? rest).toLowerCase()}`;
+  if (kind === "warnings") return "Turned on warnings";
+  if (kind === "report") return `Sent a report (${rest})`;
+  return e;
+};
+
 /** The one moderator's page: what is waiting, what went live today, Show / Hide. Not linked from anywhere; useless without the key. */
 export default function ModPage() {
   const key = useSyncExternalStore(keyStore.subscribe, keyStore.get, () => null);
@@ -25,6 +34,7 @@ export default function ModPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [push, setPush] = useState<PushStatus | null>(null);
   const [now, setNow] = useState(0);
+  const [stats, setStats] = useState<{ since: string; totals: Record<string, number> } | null>(null);
 
   const load = useCallback(async () => {
     if (!key) return;
@@ -33,6 +43,7 @@ export default function ModPage() {
       const j = await r.json();
       if (!j.ok) { setErr(j.error ?? "Could not load."); if (r.status === 403) localStorage.removeItem("modKey"); return; }
       setErr(null); setData({ pending: j.pending, live: j.live }); setNow(Date.now());
+      try { const sr = await fetch(`${API_URL}/v1/mod/stats?key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(20_000) }); const sj = await sr.json(); if (sj.ok) setStats({ since: sj.since, totals: sj.totals }); } catch { /* stats are optional */ }
     } catch { setErr("Could not load. Try again when you have signal."); }
   }, [key]);
   // Deferred to a microtask, the way lib/data.ts does it: the effect body itself sets no state.
@@ -91,6 +102,20 @@ export default function ModPage() {
       <h2 className="now-label mt-s6">Live in the last day{data ? ` · ${data.live.length}` : ""}</h2>
       {data && (data.live.length === 0 ? <p className="mt-s3 text-body text-ink-2">Nothing went live today.</p>
         : <ul className="list mt-s2">{data.live.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>)}
+
+      {stats && Object.keys(stats.totals).length > 0 && (
+        <>
+          <h2 className="now-label mt-s6">What people use · since {stats.since}</h2>
+          <ul className="list mt-s2">
+            {Object.entries(stats.totals).sort((a, b) => b[1] - a[1]).map(([event, count]) => (
+              <li key={event} className="flex items-baseline justify-between py-s2">
+                <span className="text-body text-ink">{STAT_LABEL(event)}</span>
+                <span className="num text-body font-semibold text-ink-2">{count.toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <p className="mt-s7 text-small text-ink-2">A shown report appears on the Reports page within about two minutes. Hidden reports are gone for good; the neighbor is not told.</p>
     </main>

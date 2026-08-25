@@ -22,6 +22,7 @@ import type * as push from "../push.js";
 import type * as pushJwt from "../pushJwt.js";
 import type * as pushStore from "../pushStore.js";
 import type * as reports from "../reports.js";
+import type * as stats from "../stats.js";
 import type * as storms from "../storms.js";
 import type * as waitlist from "../waitlist.js";
 import type * as watch from "../watch.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   pushJwt: typeof pushJwt;
   pushStore: typeof pushStore;
   reports: typeof reports;
+  stats: typeof stats;
   storms: typeof storms;
   waitlist: typeof waitlist;
   watch: typeof watch;

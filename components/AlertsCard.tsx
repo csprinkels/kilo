@@ -2,6 +2,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Island } from "@/lib/types";
 import { disablePush, enablePush, pushStatus, type PushStatus } from "@/lib/push";
+import { track } from "@/lib/stat";
 import { APP_NAME, ISLAND_LABEL } from "@/lib/brand";
 
 // "Not now" on the Now page: remembered on this phone; Settings always shows the block.
@@ -27,7 +28,7 @@ export default function AlertsCard({ island, compact }: { island: Exclude<Island
 
   const toggle = async () => {
     setBusy(true); setErr(null);
-    try { setStatus(status === "on" ? await disablePush() : await enablePush(island)); }
+    try { const next = status === "on" ? await disablePush() : await enablePush(island); if (next === "on") track("warnings:on"); setStatus(next); }
     catch (e) { setErr("Couldn't finish turning this on. Try again when you have a better signal."); console.error(e); }
     finally { setBusy(false); }
   };

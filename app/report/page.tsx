@@ -10,6 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import { HAWAII_DISTRICTS, districtFor } from "@/lib/places";
 import { HELD_BY_DEFAULT, LOC_MAX, REPORT_TYPES, REPORT_TYPE_KEYS, TEXT_MAX, holdReason, validateReport, type HoldReason, type ReportType } from "@/lib/reportRules";
 import { submitReport, type SubmitResult } from "@/lib/report";
+import { track } from "@/lib/stat";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import type { Island } from "@/lib/types";
 import { fmtClock } from "@/lib/brand";
@@ -126,6 +127,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
     setBusy(true);
     try {
       const r = await submitReport({ type: d.type, text: d.text, locText: d.locText, island: "hawaii", district, openedAt, website: "", turnstileToken: token });
+      if (r.ok) track(`report:${r.status ?? "posted"}`);
       setResult({ r, at: Date.now() });
       if (r.ok) localStorage.removeItem("reportDraft");
     } catch {

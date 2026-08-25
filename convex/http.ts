@@ -42,6 +42,18 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const PUSH_CORS = { ...CORS, "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
 
 http.route({ path: "/v1/push/key", method: "GET", handler: httpAction(async (ctx) => json({ key: await ctx.runAction(internal.push.publicKey, {}) })) });
+// Anonymous usage counts from the app (screen views, taps). No auth, no body about a person — just {events:{name:count}}.
+http.route({ path: "/v1/stat", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: PUSH_CORS })) });
+http.route({ path: "/v1/stat", method: "POST", handler: httpAction(async (ctx, req) => {
+  try {
+    const { events } = await req.json();
+    if (!events || typeof events !== "object") return json({ ok: true });
+    const clean: Record<string, number> = {};
+    for (const [k, n] of Object.entries(events).slice(0, 60)) if (typeof k === "string" && k.length <= 60 && typeof n === "number") clean[k] = n;
+    await ctx.runMutation(internal.stats.bump, { events: clean, at: Date.now() });
+    return json({ ok: true });
+  } catch { return json({ ok: true }); } // stats never error the client
+}) });
 http.route({ path: "/v1/push/subscribe", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: PUSH_CORS })) });
 http.route({ path: "/v1/push/unsubscribe", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: PUSH_CORS })) });
 http.route({
@@ -188,5 +200,11 @@ http.route({
   }),
 });
 
+
+http.route({ path: "/v1/mod/stats", method: "GET", handler: httpAction(async (ctx, req) => {
+  if (!modOk(req)) return json({ ok: false, error: "That key does not work." }, 403);
+  const days = Number(new URL(req.url).searchParams.get("days")) || 7;
+  return json({ ok: true, ...(await ctx.runQuery(internal.stats.recent, { days })) });
+}) });
 
 export default http;
