@@ -34,25 +34,23 @@ export default function DailyRows({ fc }: { fc: Period[] }) {
   const min = Math.min(...temps), span = Math.max(Math.max(...temps) - min, 1);
   const pct = (t: number) => ((t - min) / span) * 100;
   return (
-    <ul className="list mt-s3">
+    <ul className="wx-days">
       {rows.map((r) => {
         const lo = r.lo ?? r.hi!, hi = r.hi ?? r.lo!; // a night-only or day-only row is a single point on the bar
         const words = r.hi != null && r.lo != null ? `High ${r.hi}°, low ${r.lo}°. ` : r.hi != null ? `High ${r.hi}°. ` : `Low ${r.lo}°. `;
         return (
-          <li key={r.name} className="py-s3">
+          <li key={r.name} className="wx-day">
             <span className="sr-only">{r.name}: {words}{rainWords(r.pop)}</span>
-            <div className="flex items-center gap-s3" aria-hidden>
+            <div className="wx-day-top" aria-hidden>
               <ConditionIcon code={r.code} night={r.night} size={32} />
-              <span className="min-w-0 flex-1 text-body font-semibold text-ink">{r.name.replace(" Night", " night")}</span>
+              <span className="wx-day-name">{r.name.replace(" Night", " night")}</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {r.pop >= 20 && <span className="inline-flex items-center gap-1 text-small font-semibold text-precip num"><img src="/icons/weather/raindrop.svg" alt="" className="size-5" /> {r.pop}%</span>}
+              {r.pop >= 20 && <span className="wx-pop"><img src="/icons/weather/raindrop.svg" alt="" className="wx-drop" /> {r.pop}%</span>}
             </div>
-            <div className="mt-s1 flex items-center gap-s3 pl-11" aria-hidden>
-              <span className="w-[3ch] text-right text-small text-ink-2 num">{r.lo != null ? `${r.lo}°` : ""}</span>
-              <span className="relative h-1.5 flex-1 rounded-full bg-surface-2">
-                <span className="absolute inset-y-0 min-w-1.5 rounded-full bg-brand" style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }} />
-              </span>
-              <span className="w-[3ch] text-small font-semibold text-ink num">{r.hi != null ? `${r.hi}°` : ""}</span>
+            <div className="wx-day-bar" aria-hidden>
+              <span className="wx-t wx-t--lo">{r.lo != null ? `${r.lo}°` : ""}</span>
+              <span className="wx-bar"><i style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }} /></span>
+              <span className="wx-t wx-t--hi">{r.hi != null ? `${r.hi}°` : ""}</span>
             </div>
           </li>
         );

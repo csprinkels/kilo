@@ -24,7 +24,8 @@ function volcanoLine(name: string, v: VolcanoStatus): string {
 
 // EPA category from the index number, in words people say. 0 good · 1 okay · 2 bad for asthma · 3 unhealthy for everyone
 const AIR_WORD = ["good", "okay", "bad for people with asthma", "unhealthy for everyone"];
-const AIR_DOT = ["bg-cond-windy", "bg-cond-clear", "bg-warn", "bg-danger"]; // the EPA's green / yellow / orange / red, in our colours
+// The shared pip, one step per category: teal "nothing wrong", slate, amber, brick.
+const AIR_PIP = ["", "cs-pip--ok", "cs-pip--warn", "cs-pip--down"];
 const airCat = (aqi: number) => (aqi <= 50 ? 0 : aqi <= 100 ? 1 : aqi <= 150 ? 2 : 3);
 // Monitors that are not on Hawaiʻi Island; everything else is. ponytail: three names, a field on the feed if the list grows.
 const MONITOR_ISLAND: Record<string, Island> = { Honolulu: "oahu", Kapolei: "oahu", Kīhei: "maui" };
@@ -81,7 +82,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
     .filter((a) => (MONITOR_ISLAND[a.name] ?? "hawaii") === island)
     .map((a) => ({ name: a.name.replace(/\s*\(.*\)$/, ""), cat: a.aqi != null && !a.stale ? airCat(a.aqi) : undefined }))
     .slice(0, 5);
-  const worst = Math.max(-1, ...air.map((a) => a.cat ?? -1)); // the card runs hot only when the air is bad for someone
+  const worst = Math.max(-1, ...air.map((a) => a.cat ?? -1)); // the meter runs to the worst monitor on the island
   const [airHead, airRest] = split(airSentence(air, islandName));
   const [proseHead, proseRest] = split(plainProse(k?.sections ?? {}) || "The observatory's latest update is in the official wording below.");
   const [camHead, camRest] = split("A photo from the observatory's camera. Nothing loads until you tap.");
@@ -96,64 +97,79 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
         </>
       )}
       {d && (
-        <div className="now-island">
-          <div className="isl-stack mt-s6">
-            <article className={`isl-card ${worst >= 2 ? "isl-hot" : "isl-wx"}`}>
-              <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="wind-fill" aria-hidden /></span>Vog</h2>
-              <p className="isl-h">{airHead}</p>
-              {airRest && <p className="isl-p">{airRest}</p>}
-              {air.length > 0 && (
-                <ul className="mt-s3 divide-y divide-line">
-                  {air.map((a) => (
-                    <li key={a.name} className="row text-body text-ink">
-                      <span className={`size-3.5 shrink-0 rounded-full ${a.cat != null ? AIR_DOT[a.cat] : "bg-line"}`} aria-hidden />
-                      <span className="min-w-0 flex-1 font-semibold">{a.name}</span>
-                      <span className="shrink-0 text-right text-ink-2">{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="mt-s3 border-t border-line pt-s3 text-small text-ink-2">If vog bothers you, stay inside with the windows closed and keep your medicine close. Dust masks do not stop vog.</p>
-              <a className="btn mt-s3" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health <Icon name="caret-right" className="size-5 text-ink-2" aria-hidden /></a>
-            </article>
+        <div className="vo-stack mt-s6">
+          <section className="cs-card">
+            <p className="cs-label"><Icon name="wind" size={15} />Vog</p>
+            <h2 className="cs-title">{airHead}</h2>
+            {airRest && <p className="cs-body">{airRest}</p>}
 
-            {k && (
-              <article className="isl-card isl-road">
-                <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="mountains-fill" aria-hidden /></span>From the observatory</h2>
-                <p className="isl-h">{proseHead}</p>
-                {proseRest && <p className="isl-p">{proseRest}</p>}
-                <a className="btn mt-s3" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update <Icon name="caret-right" className="size-5 text-ink-2" aria-hidden /></a>
-              </article>
+            {/* The island's worst reading as a four-step meter. No labels under it: the
+                app's four words are whole phrases, and shortening them is not ours to do. */}
+            {worst >= 0 && (
+              <div className={`cs-meter${worst === 2 ? " cs-meter--warn" : ""}${worst === 3 ? " vo-meter--bad" : ""}`} aria-hidden>
+                {[0, 1, 2, 3].map((i) => <span key={i} className={`cs-seg${i <= worst ? " cs-seg--now" : ""}`} />)}
+              </div>
             )}
 
-            {d.cams.length > 0 && (
-              <article className="isl-card vo-quiet">
-                <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="camera" aria-hidden /></span>Crater camera</h2>
-                <p className="isl-h">{camHead}</p>
-                {camRest && <p className="isl-p">{camRest}</p>}
-                {cam && (
-                  <figure className="well mt-s3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://volcanoes.usgs.gov/cams/${cam}/images/M.jpg?ts=${Math.floor(now / 600_000)}`} alt={camName ?? "Crater camera"} className="w-full" />
-                    <figcaption className="px-s4 py-s3 text-small text-ink-2">{camName}. A new photo every few minutes.</figcaption>
-                  </figure>
-                )}
-                {!cam ? (
-                  <button onClick={() => setCam(d.cams[0].id)} className="btn btn-big mt-s3 text-center">See a photo of the crater (uses a little data)</button>
-                ) : (
-                  <label className="btn relative mt-s3 cursor-pointer">
-                    Other cameras <Icon name="caret-down" className="size-5 text-ink-2" aria-hidden />
-                    <select aria-label="Camera" value={cam} onChange={(e) => setCam(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
-                      {d.cams.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </label>
-                )}
-              </article>
+            {air.length > 0 && (
+              <ul className="vo-air">
+                {air.map((a) => (
+                  <li key={a.name} className="cs-row cs-row--mid">
+                    <span className={`cs-pip cs-pip--lg ${a.cat != null ? AIR_PIP[a.cat] : "cs-pip--none"}`} aria-hidden />
+                    <span className="cs-rowmain cs-rowname">{a.name}</span>
+                    <span className="cs-rowend cs-rowsub">{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
+
+            <div className="cs-rule" />
+            <p className="cs-meta">If vog bothers you, stay inside with the windows closed and keep your medicine close. Dust masks do not stop vog.</p>
+            <div className="cs-actions">
+              <a className="cs-link" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health</a>
+            </div>
+          </section>
 
           {k && (
-            <div className="vo-notice mt-s7">
+            <section className="cs-card">
+              <p className="cs-label"><Icon name="mountains" size={15} />From the observatory</p>
+              <h2 className="cs-title">{proseHead}</h2>
+              {proseRest && <p className="cs-body">{proseRest}</p>}
+              <div className="cs-actions">
+                <a className="cs-link" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update</a>
+              </div>
+            </section>
+          )}
+
+          {d.cams.length > 0 && (
+            <section className="cs-card">
+              <p className="cs-label"><Icon name="camera" size={15} />Crater camera</p>
+              <h2 className="cs-title">{camHead}</h2>
+              {camRest && <p className="cs-body">{camRest}</p>}
+
+              {cam && (
+                <figure className="cs-figure">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`https://volcanoes.usgs.gov/cams/${cam}/images/M.jpg?ts=${Math.floor(now / 600_000)}`} alt={camName ?? "Crater camera"} className="w-full" />
+                  <figcaption className="vo-cam-cap">{camName}. A new photo every few minutes.</figcaption>
+                </figure>
+              )}
+
+              {!cam ? (
+                <button onClick={() => setCam(d.cams[0].id)} className="cs-cta cs-wide vo-cam-go">See a photo of the crater (uses a little data)</button>
+              ) : (
+                <label className="cs-ghost cs-wide vo-cam-go relative cursor-pointer">
+                  Other cameras <Icon name="caret-down" size={18} />
+                  <select aria-label="Camera" value={cam} onChange={(e) => setCam(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
+                    {d.cams.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </label>
+              )}
+            </section>
+          )}
+
+          {k && (
+            <div className="vo-notice">
               <OfficialWording title={`USGS level: ${k.level} · Aviation color: ${k.color} (for aircraft only)${since(k.levelSince)}`} body={k.sms}>
                 {ml && <p className="mt-s2">Mauna Loa — USGS level: {ml.level} · Aviation color: {ml.color}</p>}
                 {Object.entries(k.sections).map(([h, body]) => (

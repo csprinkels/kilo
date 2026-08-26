@@ -27,7 +27,7 @@ export default function StormsPage() {
     return (
       <PageShell {...shell} fetchedAt={undefined} title="Storms">
         <div className="st-stack mt-s5">
-          <section className="st-card">
+          <section className="cs-card st-flush">
             {/* useJson refetches on the window "online" event, so this is a retry without a page reload. */}
             <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
           </section>
@@ -41,14 +41,14 @@ export default function StormsPage() {
     return (
       <PageShell {...shell} title="Storms">
         <div className="st-stack mt-s5">
-          <section className="st-card">
+          <section className="cs-card cs-hero">
             {snap ? (
-              <div className="st-hero">
-                <span className="st-bubble st-bubble--calm"><Icon name="check-circle" size={20} /></span>
-                <p className="st-h">No hurricanes or tropical storms near Hawaiʻi. Hurricane season runs June to November.</p>
+              <div className="cs-heroline">
+                <span className="cs-ictile cs-ictile--teal"><Icon name="check-circle" size={21} className="cs-ic" /></span>
+                <p className="cs-body cs-body--hero st-heroline-body">No hurricanes or tropical storms near <span className="cs-haw">Hawaiʻi</span>. Hurricane season runs June to November.</p>
               </div>
             ) : (
-              <p className="text-body text-ink-2">Checking for storms…</p>
+              <p className="cs-body st-do">Checking for storms…</p>
             )}
           </section>
         </div>
@@ -61,15 +61,15 @@ export default function StormsPage() {
       <div className="st-stack mt-s5">
         <StormTracker key={shown.id} storm={shown} island={island} />
         {others.length > 0 && (
-          <section className="st-card">
-            <div className="divide-y divide-line">
-              {others.map((s) => (
-                <button key={s.id} className="row text-body text-ink num" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
-                  <span className="min-w-0 flex-1">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
-                  <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
-                </button>
-              ))}
-            </div>
+          <section className="cs-card st-flush">
+            {others.map((s) => (
+              <button key={s.id} type="button" className="cs-row cs-row--mid st-row" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
+                <span className="cs-rowmain">
+                  <span className="cs-rowname num">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
+                </span>
+                <Icon name="caret-right" size={16} className="cs-ic" />
+              </button>
+            ))}
           </section>
         )}
       </div>

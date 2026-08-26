@@ -6,18 +6,32 @@
   and in the one accent for things you can tap. Every text colour clears 4.5:1 on --bg in both schemes.
 */
 :root {
-  --bg: #efe8dc;          /* paper */
-  --surface: #fff8ee;     /* map fills + tab bar only */
-  --surface-2: #e6dccb;   /* island/town button, secondary buttons, the quiet card */
-  --card: #fff8ee;        /* sand, not white: one card per thing on Now, one card per list everywhere else */
-  --card-shadow: 0 1px 2px rgb(27 26 23 / .06), 0 6px 20px -8px rgb(27 26 23 / .14);
-  --ink: #1b1a17;
-  --ink-2: #4a463f;       /* 8.3:1 — the floor for text */
-  --line: #e3d9c8;        /* row dividers inside cards, never card borders */
-  --brand: #0b6b72;
-  --brand-ink: #ffffff;
-  --danger: #b3261e;  --danger-bg: #fbe9e7;
-  --warn: #9a3d00;    --warn-bg: #fdeee3;
+  --bg: #f0e4d2;          /* paper */
+  --surface: #fffaf2;     /* map fills + tab bar only */
+  --surface-2: #e6d8c2;   /* island/town button, secondary buttons, the quiet card */
+  /* The card is the glass from the mockup, already composited. rgba(255,250,242,.92) over --bg
+     resolves to exactly this, so it looks identical and costs no GPU. backdrop-filter buys
+     nothing until there is an island to blur; swap these two lines the day the scene lands. */
+  --card: #fdf8ef;
+  --card-shadow: 0 4px 24px rgb(80 60 40 / .12);
+  --card-radius: 20px;
+  --ink: #4a3a2a;
+  --ink-2: #5a4a3a;       /* 6.8:1 on --bg */
+  --mute: #6a5a4a;        /* 5.3:1 — the floor for text */
+  --line: rgb(200 180 150 / .55);   /* card borders */
+  --hairline: rgb(200 180 150 / .45); /* row dividers inside cards */
+  --tint: rgb(160 140 120 / .12);   /* tile + chip ground */
+  --brand: #557085;       /* slate: fills and marks */
+  --brand-ink: #fffaf2;
+  --sea: #445e72;         /* the one accent for things you can tap — 5.4:1 */
+  --danger: #9a3d2c;  --danger-bg: rgb(154 61 44 / .12);
+  --danger-ink: #fffaf2;  /* text on a filled danger card */
+  --danger-edge: #8a3526;
+  --ok: #7ab8c0;          /* the "nothing wrong here" pip */
+  --brand-hover: #4a6376;
+  /* Two ambers on purpose: --amber paints, --warn is the one you can read (4.9:1). */
+  --amber: #b89060;
+  --warn: #7d5c2e;    --warn-bg: rgb(184 144 96 / .14);
 
   /* data + condition colours (marks in pictures only, never text) */
   --precip: #0b7a90;
@@ -26,12 +40,12 @@
   --cond-storm: #5b4a9e; --cond-fog: #8a6f4e; --cond-windy: #3f7a5e; --cond-night: #3b4a7a;
 
   /* geography in pictures: Google-maps family, live conditions stay high-contrast on top */
-  --map-water: #aadaff;
-  --map-water-line: rgb(70 140 180 / .06);
-  --map-shore: #aadaff;
-  --map-land: #eef2e4;
-  --map-coast: #b7c4b0;
-  --map-relief: #7a8f62;
+  --map-water: #c9dfe0;
+  --map-water-line: rgb(68 94 114 / .07);
+  --map-shore: #c9dfe0;
+  --map-land: #f4e9d6;
+  --map-coast: rgb(148 120 86 / .9);
+  --map-relief: #ecd9bd;
   --map-road-case: #d0d4d8;
   --map-road: #ffffff;
   --map-highway: #ffe680;
@@ -42,37 +56,50 @@
   --map-you: #1a73e8;
 
   /* storm track marks (pictures only): weaker → stronger */
-  --storm-td: #4f7d8c;
-  --storm-ts: #c49212;
-  --storm-hu: #c24d24;
-  --storm-mh: #922818;
-  --storm-cone: rgb(154 61 0 / .18);
+  --storm-td: #557085;
+  --storm-ts: #b89060;
+  --storm-hu: #9a3d2c;
+  --storm-mh: #7a2a1c;
+  --storm-cone: rgb(154 61 44 / .18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #141210;
-    --surface: #1e1b17;
-    --surface-2: #2a261f;
-    --card: #1e1b17;
+    /* The mockup ships no dark scheme at all — every card colour in it is a raw hex.
+       These are derived: the neutrals from the mockup page chrome, the rest lifted and
+       desaturated until each clears 4.5:1 on --bg and on --card. */
+    --bg: #241d17;
+    --surface: #2e2620;
+    --surface-2: #3a3028;
+    --card: #2d251f;
     --card-shadow: 0 0 0 1px rgb(255 255 255 / .07);  /* dark: a hairline ring, no shadow */
-    --ink: #f1ede6;
-    --ink-2: #cdc7bb;
-    --line: #342f28;
-    --brand: #5ccad0;
-    --brand-ink: #0a2a2c;
-    --danger: #ff6b5e;  --danger-bg: #3a1512;
-    --warn: #fb923c;    --warn-bg: #3a1f0c;
+    --ink: #f4ece0;
+    --ink-2: #e2d6c6;
+    --mute: #b8a892;        /* 7.2:1 */
+    --line: rgb(200 180 150 / .22);
+    --hairline: rgb(200 180 150 / .18);
+    --tint: rgb(200 180 150 / .10);
+    --brand: #8fb0c4;
+    --brand-ink: #241d17;
+    --sea: #9dbcd0;         /* 8.3:1 */
+    /* Both fills invert in dark: the slate and the brick are light now, so their text is the ground. */
+    --danger: #e8907c;  --danger-bg: rgb(232 144 124 / .14);
+    --danger-ink: #241d17;
+    --danger-edge: #f0a898;
+    --ok: #8fc4c8;
+    --brand-hover: #a6c2d4;
+    --amber: #c9a06a;
+    --warn: #d9ae72;    --warn-bg: rgb(201 160 106 / .16);
     --precip: #4fb8cc;
     --night-band: rgb(255 255 255 / .07);
     --cond-clear: #f2c14e; --cond-cloud: #b4bcc8; --cond-showers: #6cc4dc; --cond-rain: #5aa6e6;
     --cond-storm: #a99af0; --cond-fog: #c9ad86; --cond-windy: #7fc8a4; --cond-night: #8fa0d8;
-    --map-water: #163448;
-    --map-water-line: rgb(140 190 220 / .08);
-    --map-shore: #1e4a5c;
-    --map-land: #3d4a32;
-    --map-coast: #8aa47a;
-    --map-relief: #aab28d;
+    --map-water: #1d3238;
+    --map-water-line: rgb(157 188 208 / .08);
+    --map-shore: #24404a;
+    --map-land: #3b3128;
+    --map-coast: rgb(200 180 150 / .55);
+    --map-relief: #4a3e32;
     --map-road-case: #2a2e30;
     --map-road: #d8d4c8;
     --map-highway: #c9a227;
@@ -81,11 +108,11 @@
     --map-town: #f1ede6;
     --map-label-halo: #3d4a32;
     --map-you: #8ab4f8;
-    --storm-td: #7eb0c0;
-    --storm-ts: #e0b84a;
-    --storm-hu: #e07a4a;
-    --storm-mh: #f09080;
-    --storm-cone: rgb(240 160 144 / .22);
+    --storm-td: #8fb0c4;
+    --storm-ts: #c9a06a;
+    --storm-hu: #e8907c;
+    --storm-mh: #f0a898;
+    --storm-cone: rgb(232 144 124 / .22);
   }
 }
 
@@ -97,6 +124,13 @@
   --shadow-card: var(--card-shadow);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-mute: var(--mute);
+  --color-sea: var(--sea);
+  --color-amber: var(--amber);
+  --color-ok: var(--ok);
+  --color-danger-ink: var(--danger-ink);
+  --color-hairline: var(--hairline);
+  --color-tint: var(--tint);
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
@@ -110,15 +144,21 @@
   --color-cond-rain: var(--cond-rain); --color-cond-storm: var(--cond-storm); --color-cond-fog: var(--cond-fog);
   --color-cond-windy: var(--cond-windy); --color-cond-night: var(--cond-night);
   --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-heading), Georgia, "Times New Roman", serif;
+  /* Amatic is a condensed, small-x-height display face: everything set in it needs to run
+     roughly 1.4x the size a serif wanted, which is what the display scale below is for.
+     Numerals are the exception — Amatic's are weak above ~40px, so a loud number is Nunito. */
+  --font-display: var(--font-heading), "Bradley Hand", cursive;
+  --font-num: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 
   /*
     Five text styles, all rem so the phone's text-size setting (and Kilo's own) scales everything.
     Nothing under 1rem (16px). Body is 19px, GOV.UK's tested size.
   */
-  --text-number: 3.5rem;      --text-number--line-height: 1;     --text-number--letter-spacing: -0.03em;
-  --text-display: 2rem;       --text-display--line-height: 1.15;
-  --text-title: 1.5rem;       --text-title--line-height: 1.2;
+  --text-number: 3.5rem;      --text-number--line-height: 1;     --text-number--letter-spacing: -0.02em;
+  /* Display sizes are for Amatic, so they run large and tight: 2rem of Merriweather and
+     2.75rem of Amatic occupy about the same optical weight. Line-height drops with them. */
+  --text-display: 2.75rem;    --text-display--line-height: .94;   --text-display--letter-spacing: 0.01em;
+  --text-title: 2rem;         --text-title--line-height: .96;     --text-title--letter-spacing: 0.01em;
   --text-body: 1.1875rem;     --text-body--line-height: 1.5;
   --text-small: 1rem;         --text-small--line-height: 1.4;
 
@@ -129,6 +169,9 @@
 
 /* shared building blocks */
 @utility num { font-variant-numeric: tabular-nums; }
+/* A loud numeral is never Amatic — its figures go spindly above ~40px. Use this, not
+   `font-display`, wherever a number is the biggest thing in a card. */
+@utility bignum { font-family: var(--font-num); font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 @utility h-display { @apply font-display text-display font-bold text-ink; }
 @utility h-title { @apply font-display text-title font-bold text-ink; }
 @utility card { @apply relative overflow-hidden rounded-card bg-card p-5 shadow-card; }
@@ -192,144 +235,12 @@ body {
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }
 
 /* Now page — island cards. Other pages keep the paper tokens. */
-.now-island {
-  --now-bg: #efe8dc;
-  --now-sand: #fff8ee;
-  --now-hot: #f8ebe6;
-  --now-storm: #e4eef5;
-  --now-road: #f5eadf;
-  --now-wx: #eaf4ef;
-  --now-coral: #9a3d2c;
-  --now-sky: #35597a;
-  --now-earth: #8a4b22;
-  --now-mint: #2a6b56;
-  --now-lagoon: #d9e8ea;
-  background: var(--now-bg);
-  color: var(--ink);
-}
-@media (prefers-color-scheme: dark) {
-  .now-island {
-    --now-bg: #141210;
-    --now-sand: #1e1b17;
-    --now-hot: #3a221c;
-    --now-storm: #1a2830;
-    --now-road: #2a2218;
-    --now-wx: #1a2824;
-    --now-coral: #f0a090;
-    --now-sky: #9ec0dc;
-    --now-earth: #e0b48a;
-    --now-mint: #8fd0b4;
-    --now-lagoon: #243436;
-  }
-}
-.now-island .isl-story {
-  margin: 1.1rem 0 0.35rem;
-  font-family: var(--font-display);  /* the same serif as every page title */
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.15;
-  text-wrap: balance;
-}
-.now-island .isl-sub { margin: 0 0 1.1rem; color: var(--ink-2); }
-.now-island .isl-stack { display: flex; flex-direction: column; gap: 0.85rem; }
-.now-island .isl-card {
-  display: block;
-  background: var(--now-sand);
-  border-radius: 1.35rem;
-  padding: 1.1rem 1.15rem 1.15rem;
-  box-shadow: 0 1px 0 rgb(28 25 21 / 0.04), 0 10px 28px -18px rgb(28 25 21 / 0.28);
-  color: inherit;
-  text-decoration: none;
-}
-.now-island .isl-hot { background: var(--now-hot); }
-.now-island .isl-storm { background: var(--now-storm); }
-.now-island .isl-road { background: var(--now-road); }
-.now-island .isl-kicker {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-.now-island .isl-hot .isl-kicker { color: var(--now-coral); }
-.now-island .isl-storm .isl-kicker { color: var(--now-sky); }
-.now-island .isl-road .isl-kicker { color: var(--now-earth); }
-.now-island .isl-wx .isl-kicker { color: var(--now-mint); }
-.now-island .isl-bubble {
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 0.85rem;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.now-island .isl-bubble svg { width: 1.2rem; height: 1.2rem; }
-.now-island .isl-hot .isl-bubble { background: #f4c7b8; color: var(--now-coral); }
-.now-island .isl-storm .isl-bubble { background: #c5d9ea; color: var(--now-sky); }
-.now-island .isl-road .isl-bubble { background: #f0c9a8; color: var(--now-earth); }
-.now-island .isl-wx .isl-bubble { background: #d3ebe0; color: var(--now-mint); }
-.now-island .isl-mini .isl-bubble { background: var(--now-lagoon); color: #3a6a6e; }
-@media (prefers-color-scheme: dark) {
-  .now-island .isl-hot .isl-bubble { background: #5a3228; }
-  .now-island .isl-storm .isl-bubble { background: #2a4050; }
-  .now-island .isl-road .isl-bubble { background: #4a3828; }
-  .now-island .isl-wx .isl-bubble { background: #2a443c; }
-  .now-island .isl-mini .isl-bubble { color: var(--now-sky); }
-}
-.now-island .isl-h {
-  margin: 0.55rem 0 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.now-island .isl-p { margin: 0.4rem 0 0; }
-.now-island .isl-note {
-  margin: 0.75rem 0 0;
-  padding-top: 0.75rem;
-  border-top: 1px solid color-mix(in srgb, var(--now-coral) 25%, transparent);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--now-coral);
-}
-.now-island .isl-more {
-  margin: 0.65rem 0 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--now-earth);
-}
-.now-island .isl-wx-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
-.now-island .isl-wx-row img { flex-shrink: 0; }
-.now-island .isl-deg {
-  font-size: 2.35rem;
-  font-weight: 650;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--now-mint);
-}
-.now-island .isl-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
-  margin-top: 0.75rem;
-}
-.now-island .isl-mini {
-  background: color-mix(in srgb, var(--now-bg) 70%, var(--now-sand));
-  border-radius: 1.1rem;
-  padding: 0.85rem 0.9rem 0.95rem;
-  color: inherit;
-  text-decoration: none;
-  min-height: 6.5rem;
-}
-.now-island .isl-mini h3 { margin: 0.5rem 0 0; font-size: 1rem; font-weight: 700; }
-.now-island .isl-mini p { margin: 0.15rem 0 0; font-size: 1rem; color: var(--ink-2); line-height: 1.35; }
-.now-island .isl-map {
-  margin: 0.9rem -0.15rem -0.15rem;
-  overflow: hidden;
-  border-radius: 1rem;
-}
+/* The Now screen used to be its own visual world — .now-island painted a --now-* palette
+   (its own paper, its own six card tints) and .isl-* drew the cards inside it. The card
+   system replaced all of it: one cream for every card, severity on the border and the icon
+   tile instead of a card wash. 138 lines deleted, including the last two colours in this
+   file still on the pre-token paper (#efe8dc / #141210). */
+
 .storm-map-key {
   display: flex;
   align-items: center;
@@ -422,23 +333,16 @@ body {
 
 /* ── /traffic ─────────────────────────────────────────────────────────────
    The Roads page borrows Now's card language instead of copying it: the page
-   content sits inside a .now-island wrapper, so .isl-card / .isl-kicker /
-   .isl-bubble / .isl-p / .isl-note all apply as written. --now-bg is the same
+   content used to sit inside a .now-island wrapper. That wrapper is gone; the card
+   system carries these now.
    paper as --bg, so the wrapper paints nothing new. Only four things Now had
    no use for live here. */
 
 /* An untinted card: Now colours its kicker per tone, a quiet card has none. */
-.now-island .tr-quiet .isl-kicker { color: var(--ink-2); }
-.now-island .tr-quiet .isl-bubble { background: var(--surface-2); color: var(--ink-2); }
 /* The trust line under a control, in the page's quiet ink rather than a warning colour. */
-.now-island .tr-note { color: var(--ink-2); border-top-color: var(--line); }
 /* A whole card that is one tap target (the report link). */
-.now-island .tr-go { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; }
 /* Twenty rows have to stay scannable, so the card wraps the group, not each row:
    hairlines run out past the card's padding while the text stays on the card's grid. */
-.now-island .tr-rows { margin-left: -0.75rem; margin-right: -0.75rem; }
-.now-island .tr-rows > * { padding-left: 0.75rem; padding-right: 0.75rem; }
-.now-island .tr-rows > * + * { border-top: 1px solid var(--line); }
 /* The map's key, riding under the picture on the same frame. */
 .tr-cap {
   padding: 0.7rem 1.15rem 0.85rem;
@@ -470,7 +374,6 @@ body {
    2. the observatory's notice. It is not a card: a matte sheet with a quote
       rule down the left edge, so their words are visibly not ours, and the
       feed's own section headings arrive as tags, not as our headings. */
-.now-island .vo-quiet .isl-bubble { background: var(--surface-2); color: var(--ink-2); }
 .vo-notice {
   padding: 0.9rem 1rem 1rem;
   border-radius: 0.25rem 1rem 1rem 0.25rem;
@@ -582,9 +485,7 @@ body {
    The page wraps its stack in .now-island, so its cards are the Now screen's
    own (.isl-card / .isl-h / .isl-note). Only what that family has no shape
    for lives here: a field, a picker tile, a full-bleed hairline. */
-.now-island .rp-head { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
 /* No card on this page carries a tone, so the bubble borrows the quiet lagoon fill. */
-.now-island .rp-head .isl-bubble { background: var(--now-lagoon); color: var(--brand); }
 
 .rp-label { display: block; margin: 0.9rem 0 0.4rem; color: var(--ink); }
 .rp-field {
@@ -629,10 +530,1268 @@ body {
 .rp-tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* Waiting for a person is amber, not brick: nothing is wrong, it just takes a day. */
-.now-island .rp-hold { color: var(--warn); border-top-color: color-mix(in srgb, var(--warn) 25%, transparent); }
 /* A hairline the full width of the card, the way a source line is set off. */
 .rp-rule { margin: 0.9rem -1.15rem 0; border: 0; border-top: 1px solid var(--line); }
 /* A card holding one quiet line. .isl-card sets color:inherit, so the quiet ink is set here. */
-.now-island .rp-quiet { color: var(--ink-2); }
 .rp-chiprow { margin-top: 1.25rem; }
 .rp-bad { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 1rem; font-weight: 600; color: var(--danger); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   The card system, ported from the mockup (artifact "Every Card").
+   Two deliberate departures from the source, both load-bearing:
+
+   1. Every colour goes through a token. The mockup is 200-odd raw hex values and
+      ships no dark scheme at all; on this app's volcanic dark ground that would
+      have rendered brown ink on brown paper.
+   2. No backdrop-filter. The glass was drawn to float over the illustrated
+      island. There is no island yet, so the blur costs GPU on every card and
+      shows nothing; --card is the exact colour that glass composites to. When
+      the scene lands, put the filter back here and nowhere else.
+
+   Amatic sets display type including Hawaiian place names — it carries ā ī ū ō
+   and the ʻokina, checked against the real font, not assumed. What it must never
+   set is a loud numeral: use the `bignum` utility.
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* ── Kilo card system ─────────────────────────────────────────────────────
+   Glass cards that float over the illustrated island. The scene carries the
+   weather; these carry the facts. Lift any block by <template data-card="…">.
+   Column: 402px wide, 18px side padding → 366px of card.
+   Amatic SC = short English display strings ONLY (no ā ī ū ʻ coverage).
+   Hawaiian place names always .cs-haw (Nunito 700).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.all,.cs,.cs-col{
+  font-family:var(--font-body);
+  font-weight:400;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ── column ── */
+.cs-col{
+  width:402px;
+  padding:0 18px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* ── the glass ── */
+.cs-card{
+  box-sizing:border-box;
+  width:100%;
+  padding:16px 18px;
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:var(--card-radius);
+  box-shadow:var(--card-shadow);
+}
+.cs-hero{
+  padding:20px 18px 18px;
+  background:var(--card);
+  border-radius:24px;
+  box-shadow:var(--card-shadow);
+}
+.cs-hero--amber{ border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
+
+/* ── type ── */
+.cs-display{
+  font-family:var(--font-display);
+  font-weight:700;
+  line-height:.94;
+  letter-spacing:.01em;
+  color:var(--ink);
+  margin:0;
+}
+.cs-display--hero{ font-size:38px; }
+.cs-display--card{ font-size:31px; }
+/* Hawaiian never renders in Amatic — no ā ī ū ʻokina in that face. */
+.cs-haw{ font-family:var(--font-body); font-weight:700; }
+.cs-title{
+  margin:0;
+  font-size:17px;
+  font-weight:700;
+  line-height:1.3;
+  color:var(--ink);
+}
+.cs-body{
+  margin:8px 0 0;
+  font-size:15px;
+  line-height:1.5;
+  color:var(--ink-2);
+}
+.cs-body--hero{ font-size:15.5px; line-height:1.55; }
+.cs-meta{
+  margin:0;
+  font-size:13px;
+  line-height:1.45;
+  color:var(--mute);
+}
+
+/* ── accent label above a card title ── */
+.cs-label{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 9px;
+  font-size:.75rem;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  color:var(--mute);
+}
+
+/* ── pulsing status dot ── */
+.cs-dot{
+  width:.375rem;
+  height:.375rem;
+  border-radius:9999px;
+  background:var(--brand);
+  flex:0 0 auto;
+  animation:cs-pulse 2s cubic-bezier(.4,0,.6,1) infinite;
+}
+.cs-dot--cream{ background:var(--brand-ink); }
+@keyframes cs-pulse{ 0%,100%{opacity:1} 50%{opacity:.5} }
+@media (prefers-reduced-motion:reduce){ .cs-dot{ animation:none } }
+
+/* ── buttons ── */
+.cs-actions{ display:flex; align-items:center; gap:14px; margin-top:15px; flex-wrap:wrap; }
+.cs-cta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.45rem;
+  min-height:2.75rem;
+  padding:0 1.05rem;
+  border:0;
+  border-radius:10px;
+  background:var(--brand);
+  color:var(--brand-ink);
+  font-family:inherit;
+  font-size:15px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+.cs-cta:hover{ background:var(--brand-hover); }
+.cs-cta-arrow{ font-weight:400; }
+.cs-ghost{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:2.75rem;
+  padding:0 1rem;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:transparent;
+  color:var(--ink-2);
+  font-family:inherit;
+  font-size:15px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+.cs-link{
+  border:0;
+  /* A text link is a control: 44px minimum. Three routes each raised this on their own
+     before it was fixed here — the shared class was 32px tall. */
+  display:inline-flex;
+  align-items:center;
+  min-height:2.75rem;
+  padding:.55rem 0;
+  background:none;
+  font-family:inherit;
+  font-size:14.5px;
+  font-weight:700;
+  color:var(--sea);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1px;
+  text-decoration-color:color-mix(in srgb, var(--sea) 45%, transparent);
+  cursor:pointer;
+}
+
+/* ── chips ── */
+.cs-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  font-size:.75rem;
+  font-weight:700;
+  line-height:1;
+  padding:.4rem .7rem;
+  border-radius:9999px;
+  background:var(--tint);
+  color:var(--ink-2);
+}
+.cs-chip--link{
+  border:0;
+  /* .cs-chip is a label; --link is the tappable one, so it takes the 44px target
+     and the roomier box. /quakes and /report had each re-typed this locally. */
+  min-height:2.75rem;
+  padding:0 1rem;
+  font-family:inherit;
+  font-size:.8125rem;
+  color:var(--sea);
+  text-decoration:none;
+  cursor:pointer;
+}
+.cs-chip--link:hover{ background:var(--tint); }
+.cs-chiprow{ display:flex; margin-top:13px; }
+
+/* ── icons ── */
+.cs-ic{ width:20px; height:20px; flex:0 0 auto; }
+.cs-ictile{
+  width:38px;
+  height:38px;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  background:color-mix(in srgb, var(--brand) 14%, transparent);
+  color:var(--sea);
+}
+.cs-ictile--amber{ background:var(--warn-bg); color:var(--mute); }
+.cs-ictile--teal{ background:color-mix(in srgb, var(--ok) 22%, transparent); color:var(--ok); }
+.cs-ictile .cs-ic{ width:21px; height:21px; }
+
+/* ── hairline ── */
+.cs-rule{
+  height:1px;
+  margin:13px 0 10px;
+  background:var(--line);
+}
+
+/* ── header (floats, not a card) ── */
+.cs-hdr{ width:100%; padding:2px 0 4px; }
+.cs-hdr-mark{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:44px;
+  line-height:.9;
+  letter-spacing:.02em;
+}
+.cs-hdr-place{
+  font-family:var(--font-body);
+  font-weight:700;
+  font-size:14px;
+  line-height:1.3;
+  margin-top:4px;
+}
+.cs-hdr-check{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:6px;
+  font-size:13px;
+  font-weight:400;
+}
+.cs-hdr--ink .cs-hdr-mark{ color:var(--ink); }
+.cs-hdr--ink .cs-hdr-place{ color:var(--ink-2); }
+.cs-hdr--ink .cs-hdr-check{ color:var(--mute); }
+.cs-hdr--cream .cs-hdr-mark{ color:var(--brand-ink); text-shadow:0 2px 10px rgb(20 34 44 / .5); }
+.cs-hdr--cream .cs-hdr-place{ color:var(--bg); text-shadow:0 1px 6px rgb(20 34 44 / .55); }
+.cs-hdr--cream .cs-hdr-check{ color:var(--brand-ink); text-shadow:0 1px 6px rgb(20 34 44 / .55); }
+
+/* ── weather ── */
+.cs-wx-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.cs-wx-now{ margin:6px 0 0; font-size:15px; font-weight:700; color:var(--ink-2); }
+.cs-wx-later{ margin:5px 0 0; font-size:13px; color:var(--mute); }
+.cs-wx-ic{ width:72px; height:72px; margin-top:-6px; flex:0 0 auto; }
+
+/* ── quiet grid ── */
+.cs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.cs-tile{
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:16px;
+  background:var(--tint);
+  border:1px solid var(--hairline);
+}
+.cs-tile-name{ margin:9px 0 0; font-size:13.5px; font-weight:700; color:var(--ink); }
+.cs-tile-line{ margin:3px 0 0; font-size:12.5px; line-height:1.35; color:var(--ink-2); }
+
+/* ── section title tile ── */
+.cs-sectitle{ display:flex; justify-content:center; padding:4px 0; }
+.cs-sectitle-in{
+  padding:.35rem .85rem;
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  box-shadow:var(--card-shadow);
+  font-size:.8125rem;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  color:var(--mute);
+}
+.cs-sectitle-in::before{ content:"— "; }
+.cs-sectitle-in::after{ content:" —"; }
+
+/* ── tab bar ── */
+.cs-tabs{
+  box-sizing:border-box;
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  padding:8px 6px;
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:var(--card-radius);
+  box-shadow:var(--card-shadow);
+}
+.cs-tab{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  padding:6px 0;
+  border:0;
+  border-radius:14px;
+  background:none;
+  font-family:inherit;
+  font-size:14px;
+  font-weight:700;
+  line-height:1;
+  color:var(--mute);
+  cursor:pointer;
+}
+.cs-tab .cs-ic{ width:22px; height:22px; }
+.cs-tab--on{ background:color-mix(in srgb, var(--brand) 14%, transparent); color:var(--sea); }
+
+/* ── footer ── */
+.cs-footer{
+  box-sizing:border-box;
+  width:100%;
+  padding:11px 14px;
+  text-align:center;
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:16px;
+  box-shadow:var(--card-shadow);
+  font-size:12.5px;
+  line-height:1.45;
+  color:var(--mute);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PROMOTED — twelve shapes that three or more routes each invented alone.
+   Every shape below started life inside one route's own prefix; the sets
+   now share one definition and keep only what is genuinely theirs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* meter defaults live on the root so a wrapper (.ts-scale) can set them too */
+.all,.cs-col{ --cs-lv:var(--brand); --cs-track:var(--tint); --cs-seg:8px; }
+
+/* ── 1 · list row — was .tr-row .qk-row .sr-row .wx-item .st-tl-li
+        .rp-rule .sr-rule .ts-steps-li .vo-air-li .tr-srcrow ── */
+.cs-row{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  padding:11px 0;
+  border-top:1px solid var(--hairline);
+}
+.cs-row:first-child,.cs-row--top{ border-top:0; padding-top:2px; }
+.cs-row--mid{ align-items:center; }
+.cs-rowmain{ flex:1 1 auto; min-width:0; }
+.cs-rowend{ flex:0 0 auto; text-align:right; }
+.cs-row > .cs-pip{ margin-top:6px; }
+.cs-row--mid > .cs-pip{ margin-top:0; }
+.cs-row .cs-source{ margin:0; }
+/* the row's title/sub pair — was .sr-name/.sr-what .qk-place/.qk-meta
+   .tr-name/.tr-meta .st-when/.st-where .vo-air-name .vo-row-name */
+.cs-rowname{ display:block; margin:0; font-size:14.5px; font-weight:700; line-height:1.3; color:var(--ink); }
+.cs-rowname em{ font-style:normal; font-weight:400; color:var(--mute); }
+.cs-rowsub{ display:block; margin:2px 0 0; font-size:13px; line-height:1.4; color:var(--mute); }
+
+/* ── 2 · source / freshness line — was .wx-attr .sr-when .tr-srcwhat and
+        nine hand-written "From … Checked …" .cs-meta lines ── */
+.cs-source{ margin:9px 0 0; font-size:12.5px; line-height:1.45; color:var(--mute); }
+.cs-source b{ display:block; font-weight:700; color:var(--ink); }
+.cs-source--warn b{ color:var(--warn); }
+.cs-source--down b{ color:var(--danger); }
+
+/* ── 3 · framed picture + caption — was .st-pic .qk-frame .tr-map .ts-map
+        .vo-cam .wx-radar-frame, at four radii and three border alphas ── */
+.cs-figure{
+  margin:12px 0 0;
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  background:color-mix(in srgb, var(--brand) 9%, transparent);
+  overflow:hidden;
+  line-height:0;
+}
+.cs-figure > svg{ display:block; width:100%; height:auto; }
+.cs-figcap{ margin:9px 0 0; font-size:12.5px; line-height:1.42; color:var(--mute); }
+
+/* ── 4 · legend — was .tr-tally .ts-keys .sr-legend .st-sw .wx-legend-span ── */
+.cs-keys{
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:7px 14px; margin:10px 0 0;
+  font-size:12.5px; font-weight:700; line-height:1.2; color:var(--ink-2);
+}
+.cs-key{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.cs-key-sw{ width:15px; height:3px; flex:0 0 auto; border-radius:2px; }
+.cs-key-sw--box{ width:11px; height:11px; border-radius:3px; }
+.cs-key-sw--dot{ width:8px; height:8px; border-radius:9999px; }
+.cs-key-sw--slate{ background:var(--brand); }
+.cs-key-sw--brick{ background:var(--danger); }
+
+/* ── 5 · four-step meter — was .vo-ladder AND .ts-scale AND .wx-aqi-bar.
+        Three routes drew the same ladder; one draws it now. ── */
+.cs-meter{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:4px; margin-top:12px;
+}
+.cs-meter--warn,.cs-meterlabs--warn{ --cs-lv:var(--amber); }
+.cs-meter--sm{ --cs-seg:6px; gap:3px; margin-top:0; }
+.cs-seg{
+  height:var(--cs-seg);
+  border-radius:4px;
+  background:var(--cs-track);
+  box-shadow:inset 0 0 0 1px var(--hairline);
+}
+.cs-seg--fill{ background:var(--cs-lv); opacity:.42; box-shadow:none; }
+.cs-seg--now{ background:var(--cs-lv); opacity:1; box-shadow:none; }
+.cs-meterlabs{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin:7px 0 0; }
+.cs-meterlab{
+  font-size:11px; font-weight:700; line-height:1.2;
+  letter-spacing:.05em; text-transform:uppercase;
+  color:var(--mute);
+  padding-bottom:3px;
+  border-bottom:2px solid transparent;
+}
+.cs-meterlab--now{ color:var(--ink); border-bottom-color:var(--cs-lv); }
+.cs-meterlabs--center .cs-meterlab{
+  text-align:center; font-size:10.5px; letter-spacing:.06em;
+  padding-bottom:0; border-bottom:0;
+}
+.cs-meterlabs--onbrick .cs-meterlab{ color:var(--bg); }
+.cs-meterlabs--onbrick .cs-meterlab--now{ color:var(--brand-ink); border-bottom-color:var(--brand-ink); }
+
+/* ── 6 · status pip — was .sr-pip and .vo-pip ── */
+.cs-pip{
+  width:7px; height:7px; flex:0 0 auto;
+  border-radius:9999px;
+  background:var(--ok);
+}
+.cs-pip--lg{ width:14px; height:14px; }
+.cs-pip--none{ background:var(--tint); box-shadow:inset 0 0 0 1px var(--line); }
+.cs-pip--ok{ background:var(--brand); }
+.cs-pip--warn{ background:var(--amber); }
+.cs-pip--down{ background:var(--danger); }
+
+/* ── 7 · severity edge — was .sr-edge and .ts-edge (which re-typed the base
+        shadow by hand, so it would have forked the day the shadow moved) ── */
+
+/* ── 8 · inline amber note — was .tr-stale and .rp-note ── */
+.cs-note{
+  display:flex; align-items:flex-start; gap:10px;
+  margin:12px 0 0; padding:11px 13px;
+  border-left:3px solid var(--amber);
+  border-radius:0 14px 14px 0;
+  background:var(--warn-bg);
+  font-size:14px; line-height:1.45; color:var(--ink);
+}
+.cs-note svg{ width:18px; height:18px; flex:0 0 auto; margin-top:1px; color:var(--warn); }
+
+/* ── 9 · hero line: tile + display heading — was one inline flex, thirteen
+        times, in every set including this one ── */
+.cs-heroline{ display:flex; align-items:flex-start; gap:12px; }
+.cs-heroline .cs-display{ padding-top:2px; }
+
+/* ── 10 · full-width control — was .tr-wide .rp-wide .ts-big + inline ── */
+.cs-wide{ width:100%; }
+.cs-wide--big{ min-height:3rem; font-size:16px; }
+.cs-wide[disabled]{ opacity:.6; cursor:default; }
+
+/* ── 11 · step numeral — was .ts-n (Amatic 28) .sr-num (Amatic 31)
+         .rp-num (Nunito 16, amber ink that could not be read) ── */
+.cs-num{
+  flex:0 0 auto; width:20px; padding-top:2px; text-align:center;
+  font-family:var(--font-display);
+  font-weight:700; font-size:30px; line-height:.82;
+  color:var(--warn);
+}
+
+/* ── 12 · the one loud numeral — was .cs-wx-temp 56/400, .wx-now-temp 64/300,
+         .qk-big 60/700, .sr-big 44/400. One weight, two sizes. Never Amatic. ── */
+.cs-bignum{
+  font-family:var(--font-body);
+  font-size:44px; font-weight:400; line-height:1;
+  letter-spacing:-.02em; color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.cs-bignum--lg{ font-size:60px; }
+
+/* ── 13 · SVG label type — was .st-mt .qk-t .tr-mlabel .tr-mshield .st-st ── */
+.cs-svgt{ font-family:var(--font-body); font-size:11.5px; font-weight:700; fill:var(--mute); }
+.cs-svgt--ink{ fill:var(--ink); }
+.cs-svgt--sea{ fill:var(--sea); }
+.cs-svgt--key{ font-size:10.5px; letter-spacing:.06em; }
+.cs-svgt--halo{ paint-order:stroke; stroke:var(--brand-ink); stroke-width:3.5px; stroke-linejoin:round; }
+
+/* severity tints for the shared icon tile — .qk-safety-ic did this right;
+   .rp-alarm-ic and .ts-alert-tile had each cloned .cs-ictile to get it */
+.cs-ictile--brick{ background:var(--danger-bg); color:var(--danger); }
+.cs-ictile--onbrick{ background:color-mix(in srgb, var(--danger-ink) 18%, transparent); color:var(--brand-ink);  }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Per-route rules. Everything here is what the shared .cs-* system genuinely could
+   not say for one route. Tokenized: no colour below resolves to a literal.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════ /home ══════════ */
+
+/* ══════════ / (home) ══════════ */
+/* ── / — the home set is the shared system, almost end to end ──────────────
+   The twelve blocks in the mockup's home set ARE .cs-*: hero, card, label,
+   title, body, meta, rule, chiprow, grid, tile, note, figure, footer. What
+   is left below is the column, the cards that are one whole tap target, and
+   the three places a live component sits inside a shared shape.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* the stack: .cs-col's 12px gap, on the app's own responsive container */
+.hm-col{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+
+/* Storms, Roads, Weather and each quiet tile are whole tap targets, so the
+   card and the tile are <a> here and nowhere else in the system. */
+.hm a.cs-card,
+.hm a.cs-tile{ display:block; color:inherit; text-decoration:none; }
+
+/* the heading half of a hero line — a live headline is a sentence, not the
+   mockup's three words, so it has to be allowed to wrap */
+.hm-heromain{ min-width:0; }
+
+/* the alarm hero: the same edge .cs-hero--amber draws, on the brick end of
+   the severity ramp. Nothing else about the card changes. */
+.hm-alarm{ border-color:color-mix(in srgb, var(--danger) 55%, transparent); }
+/* the level word ("Act now") is the one label that has to be read as severity */
+.hm-label--alarm{ color:var(--danger); }
+
+/* warnings under a card's own heading: ItemRow brings its own <li>, so the
+   list only supplies the hairline between rows */
+.hm-rows{ margin:9px 0 0; padding:0; list-style:none; }
+.hm-rows > li + li{ border-top:1px solid var(--hairline); }
+
+/* StormMap is a <div> (map + labels + its own scale strip), not the bare
+   <svg> .cs-figure was written for, so give the strip its line box back. */
+.hm-figure{ line-height:1.45; }
+
+/* .cs-body and .cs-note lead with a margin that belongs under something.
+   When one of them IS the card, or is a card in the stack, it starts flush. */
+.hm-flat{ margin-top:0; }
+
+/* ══════════ /weather ══════════ */
+/* ══════════ /weather ══════════════════════════════════════════════════════
+   Ported from the mockup's /weather section. Every block on the route is a
+   .cs-card now, so only what the shared system genuinely cannot say lives
+   here. The mockup ships raw hex and no dark scheme; every colour below is a
+   token, so the route carries into the volcanic dark ground unchanged.
+
+   Three departures from the mockup, all load-bearing:
+   1. The hourly strip and the metric switcher really scroll. The mockup's
+      overflow:hidden held a static picture; the fade has to ride a wrapper
+      so it stays pinned while the strip moves under it.
+   2. .wx-alert gained a danger tier. The mockup drew "Get ready" and "Heads
+      up"; the app also has "Act now", and it may not arrive in amber.
+   3. Anything the mockup drew in raw #445e72 / #557085 is --sea (text you can
+      tap) or --brand (a mark in a picture) — never both.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── town picker + page title (the h1 PageShell renders) ──
+   The h1 carries .h-display, so "Right Now" only needs to become its own
+   line; the picker has to opt OUT of 44px Amatic and back into body type. */
+.wx-townpick{
+  position:relative;
+  display:inline-flex; align-items:center; gap:5px;
+  min-height:2.75rem; padding:0;
+  font-family:var(--font-body); font-size:22px; font-weight:700; line-height:1;
+  white-space:nowrap; color:var(--sea); cursor:pointer;
+}
+.wx-title{ display:block; margin-top:2px; }
+
+/* ── Right Now hero ── */
+.wx-now{ display:flex; align-items:flex-start; gap:8px; }  /* 8, not 12: High/Low must hold one line */
+.wx-now-ic{ margin:-12px 0 -14px -22px; }
+.wx-now-read{ min-width:0; flex:1; padding-top:10px; }
+.wx-now-word{ margin:6px 0 0; font-size:24px; line-height:1.15; color:var(--ink-2); }
+.wx-now-hilo{ margin:3px 0 0; font-size:22px; line-height:1.2; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.wx-more{
+  display:inline-flex; align-items:center; gap:3px;
+  min-height:2.75rem; margin:2px 0 -8px -4px; padding:0 4px;
+  border:0; background:none; font-family:inherit; font-size:22px; line-height:1;
+  color:var(--ink); cursor:pointer;
+}
+/* One reading per .cs-tile. The app writes these as whole sentences
+   ("Wind from the NE, 12 mph"), so the tile holds a sentence, not a stat. */
+.wx-stat-v{ margin:0; font-size:17px; font-weight:700; line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; }
+
+/* ── alert pill → Heads up ──
+   The tint is a background IMAGE so the cream underneath stays .cs-card's own
+   and can never fork from it. */
+.wx-alert{ display:flex; align-items:center; gap:12px; padding:12px 14px; }
+.wx-alert--warn{
+  background-image:linear-gradient(var(--warn-bg),var(--warn-bg));
+  border-color:color-mix(in srgb, var(--amber) 55%, transparent);
+}
+.wx-alert--danger{
+  background-image:linear-gradient(var(--danger-bg),var(--danger-bg));
+  border-color:color-mix(in srgb, var(--danger) 55%, transparent);
+}
+.wx-alert-t{ min-width:0; flex:1; margin:0; font-size:15px; font-weight:700; line-height:1.35; color:var(--ink); }
+.wx-sev{ color:var(--warn); }
+.wx-alert--danger .wx-sev{ color:var(--danger); }
+.wx-caret{ flex:0 0 auto; color:var(--mute); }
+
+/* A .cs-link that is a real link: the shared shape has no tap target. */
+.wx-golink{ display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; }
+/* Shared blocks (EmptyState) bring their own top margin; the card pads already. */
+.wx-flush > :first-child{ margin-top:0; }
+
+/* ── radar card (RadarMap) ── */
+.wx-radar .cs-figure{ margin-top:0; }
+.wx-radar-frame{ background:color-mix(in srgb, var(--brand) 14%, transparent); }
+.wx-scrub{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin-top:10px; font-size:13px; color:var(--mute); font-variant-numeric:tabular-nums;
+}
+.wx-scrub b{ color:var(--ink); font-weight:700; }
+/* The real control, not the mockup's drawn track: a native range at 44px. */
+.wx-slider{ display:block; width:100%; height:2.75rem; margin-top:2px; accent-color:var(--brand); }
+
+/* ── hourly strip (HourlyChart — 1 hour = 14px, marks every 3rd hour) ──
+   The strip bleeds to the card's edges and is clipped by them, like a photo
+   wider than the page. The fade sits on the frame, not on the scroller. */
+.wx-strip{ position:relative; margin:14px -18px 0; }
+.wx-strip::after,
+.wx-metrics::after{
+  content:""; position:absolute; top:0; right:0; bottom:0; pointer-events:none;
+  background:linear-gradient(to right, transparent, var(--card));
+}
+.wx-strip::after{ width:16px; }
+.wx-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.wx-chart{ position:relative; }
+.wx-chart > svg{ position:absolute; inset:0; }
+
+.wx-blk{ position:absolute; top:2px; transform:translateX(-50%); text-align:center; white-space:nowrap; line-height:1.15; }
+.wx-blk b{ font-size:17px; font-weight:700; color:var(--ink); }
+.wx-blk span{ display:flex; align-items:center; justify-content:center; gap:3px; font-size:15px; color:var(--sea); font-variant-numeric:tabular-nums; }
+.wx-drop{ width:17px; height:17px; flex:0 0 auto; }
+.wx-stack{
+  position:absolute; display:flex; flex-direction:column; align-items:center; gap:5px;
+  transform:translateX(-50%); white-space:nowrap;
+  /* the halo knocks the curve out from behind the figure — it is the card's
+     cream now, not the page's paper, because the strip lives on a card */
+  filter:drop-shadow(0 0 3px var(--card)) drop-shadow(0 0 3px var(--card));
+}
+.wx-stack b{ font-size:17px; font-weight:700; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+.wx-clk{ position:absolute; transform:translateX(-50%); white-space:nowrap; font-size:13px; line-height:1; color:var(--mute); font-variant-numeric:tabular-nums; }
+.wx-nowlbl{ position:absolute; transform:translateX(-50%); font-size:14px; font-weight:700; line-height:1; color:var(--sea); }
+
+/* .cs-keys carries the shape; the strip's legend is centred and sits on tint. */
+.wx-legend{
+  justify-content:center; gap:6px 18px;
+  margin-top:12px; padding:9px 12px; border-radius:14px; background:var(--tint);
+  font-size:14px; color:var(--ink);
+}
+
+.wx-metrics{ position:relative; margin:8px -18px 0; }
+.wx-metrics::after{ width:26px; }
+.wx-metrics-row{ display:flex; gap:2px; padding:0 18px; overflow-x:auto; }
+.wx-metric{
+  flex:0 0 auto; min-height:2.75rem; padding:0 9px; border:0; background:none;
+  font-family:inherit; font-size:19px; line-height:1; white-space:nowrap;
+  color:var(--sea); cursor:pointer;
+}
+.wx-metric[aria-pressed="true"]{ font-weight:700; }
+
+/* ── daily rows (DailyRows) — the numbers are the content, the bar is a
+      picture of them, so the bar is aria-hidden and the row is not a card. ── */
+.wx-days{ margin-top:8px; }
+.wx-day{ padding:10px 0; }
+.wx-day + .wx-day{ border-top:1px solid var(--hairline); }
+.wx-day-top{ display:flex; align-items:center; gap:12px; }
+.wx-day-name{ min-width:0; flex:1; font-size:15px; font-weight:700; color:var(--ink); }
+.wx-pop{ display:inline-flex; align-items:center; gap:3px; font-size:13px; font-weight:700; color:var(--sea); font-variant-numeric:tabular-nums; }
+.wx-day-bar{ display:flex; align-items:center; gap:12px; margin-top:5px; padding-left:44px; }
+.wx-t{ width:3ch; font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.wx-t--lo{ text-align:right; }
+.wx-t--hi{ font-weight:700; color:var(--ink); }
+.wx-bar{ position:relative; flex:1; height:6px; border-radius:999px; background:var(--tint); }
+.wx-bar i{ position:absolute; top:0; bottom:0; min-width:6px; border-radius:999px; background:var(--brand); }
+
+/* ── heads up — ItemRow keeps its shared .list markup (it is wired to live
+      data and used on five routes); on a card the list flattens to plain
+      hairline rows, because a card inside a card is never right. ── */
+.wx-rows{ margin-top:6px; }
+.wx-rows .list{ border-radius:0; background:transparent; box-shadow:none; }
+.wx-rows .list > *{ padding-left:0; padding-right:0; }
+
+/* ══════════ /storms ══════════ */
+/* ══════════ /storms ══════════
+   Everything on the route rides the shared card system: .cs-card / .cs-hero /
+   .cs-hero--amber / .cs-heroline / .cs-ictile / .cs-title / .cs-body /
+   .cs-meta / .cs-label / .cs-rule / .cs-figure / .cs-row + .cs-rowname +
+   .cs-rowsub / .cs-actions / .cs-link / .cs-ghost / .cs-wide / .cs-figcap /
+   .cs-haw. What is left below is only what the shared set cannot say: the
+   level wash on the hero, the watch/warning strip, the closest-approach band
+   in the timeline, and the map's own ground and pulse.
+   The mockup's picture palette is the app's --map-* / --storm-* tokens, which
+   already carry a dark value, so no colour is re-declared here.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* A card whose first child is a shared block that brings its own top margin
+   (.cs-figure, OfficialWording, EmptyState, a .cs-row list). The card pads. */
+.st-flush > :first-child { margin-top: 0; }
+
+/* ── summary hero ── */
+/* "Act now" keeps the brick wash the route has always used; "Get ready" takes
+   .cs-hero--amber straight from the shared set. */
+.st-hero--danger {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: var(--danger-bg);
+}
+.st-herotext { min-width: 0; }
+.st-herotext .cs-body { margin-top: 6px; }
+/* a body that sits beside a .cs-ictile instead of a display heading */
+.st-heroline-body { margin-top: 0; padding-top: 7px; }
+/* the body that follows a .cs-label — the label already carries the gap */
+.st-do { margin-top: 0; }
+
+/* ── watch / warning strip ──
+   Not a card: a bare rule between the summary and the track, so the level
+   colour is the only thing on it. */
+.st-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+  border-radius: 16px;
+  background: var(--warn-bg);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.st-strip-ic { margin-top: 1px; color: var(--warn); }
+.st-strip--danger {
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+  background: var(--danger-bg);
+  color: var(--ink);
+}
+.st-strip--danger .st-strip-ic { color: var(--danger); }
+
+/* ── the track picture ──
+   .cs-figure's tint is for line drawings; the storm map paints its own ocean
+   and its key strip sits on the same water, so the frame matches it. */
+.st-pic { background: var(--map-water); }
+/* The "now" ring: a CSS keyframe, not SMIL, so the global reduced-motion
+   reset can stop it. The base opacity is what a stopped ring shows. */
+.st-pulse { opacity: .2; animation: st-pulse 2.6s cubic-bezier(.4, 0, .6, 1) infinite; }
+@keyframes st-pulse { 0%, 100% { opacity: .30 } 50% { opacity: .07 } }
+
+/* ── where it will be ── */
+.st-tl { margin: 4px 0 0; padding: 0; list-style: none; }
+/* the closest pass: a band, not a coloured word, so it reads at a glance */
+.st-tl-peak {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand) 11%, transparent);
+}
+.st-mph {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.st-mph span { font-size: 12px; font-weight: 400; color: var(--mute); }
+
+/* ── other storms: a .cs-row that is a button ── */
+.st-row {
+  width: 100%;
+  min-height: 2.75rem;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.st-row .cs-ic { color: var(--mute); }
+
+/* ── official wording ── */
+.st-ql { margin: 7px 0 0; padding-left: 17px; list-style: disc; }
+.st-ql li { margin-top: 3px; }
+.st-adv { margin-top: 7px; }
+
+/* ── satellite pictures: only ever on screen after a tap ── */
+.st-shots { display: grid; gap: 16px; margin-top: 14px; }
+@media (min-width: 640px) { .st-shots { grid-template-columns: 1fr 1fr; } }
+.st-shot { margin-top: 0; }
+
+/* ══════════ /traffic ══════════ */
+/* ── /traffic ─────────────────────────────────────────────────────────────
+   The Roads page is a column of .cs-card glass on the paper ground. Almost
+   everything it needs the shared set already says: .cs-card .cs-label .cs-row
+   .cs-rowname .cs-rowsub .cs-figure .cs-figcap .cs-keys .cs-rule .cs-actions
+   .cs-cta .cs-link .cs-ghost .cs-wide .cs-ictile. What is left is the one
+   thing this route owns — a severity rail that repeats the map's colours down
+   the left of every row — plus the spacing a card's first block needs and the
+   two swatches the shared key set has no shape for. */
+
+/* an element that opens a card: the shared shapes all carry a top margin */
+.tr-top { margin-top: 0; }
+/* the trust line under a control, and the "Until …" line under a block */
+.tr-gap { margin-top: 8px; }
+/* a full-width control with an icon in it */
+.tr-wide { gap: .45rem; }
+.tr-more { margin-top: 13px; }
+
+/* ── the map's key ──
+   Two swatches the shared set has no shape for: the dashed orange lane the
+   map draws, and the dashed ring it uses when a report is only good to the
+   neighborhood. "Blue dot: you" wears the map's own blue, not the brand's. */
+.tr-swatch--lane { background: repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 8px); }
+.tr-swatch--approx { width: 11px; height: 11px; background: none; border: 1.5px dashed var(--danger); }
+.tr-swatch--you { background: var(--map-you); }
+
+/* ── the list ──
+   Twenty rows have to stay scannable. The row itself is the tap target, so
+   .cs-row rides on a <button>: strip the control's own chrome, and move the
+   hairline onto the <li> so the button can keep its padding. */
+.tr-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.tr-list > li + li { border-top: 1px solid var(--hairline); }
+.tr-list .tr-btn {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 11px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tr-list > li:first-child > .tr-btn { padding-top: 2px; }
+
+/* ── the severity rail ──
+   The list and the picture say the same thing: red closed, orange one lane,
+   and a crash is a dot on the map so it is a dotted rail in the list. */
+.tr-rail {
+  width: 3px;
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 32px;
+  margin-top: 2px;
+  border-radius: 2px;
+  background: var(--danger);
+}
+.tr-rail--lane { background: var(--amber); }
+.tr-rail--spot { background: repeating-linear-gradient(var(--danger) 0 4px, transparent 4px 8px); }
+
+/* the level word — the same three words as the rest of Kilo, and the same
+   level colours, so the colour comes from the text-* class, not from here */
+.tr-word { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 700; line-height: 1.1; }
+
+/* the district a run of rows belongs to */
+.tr-dist { margin: 16px 0 0; }
+
+/* ── caret ── */
+.tr-caret { flex: 0 0 auto; color: var(--mute); }
+.tr-btn .tr-caret { margin-top: 5px; transition: transform .15s ease-out; }
+.tr-caret--open { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .tr-btn .tr-caret { transition: none; } }
+
+/* ── what opens under a row ──
+   Indented to clear the rail, not the 36px tile the row used to carry. */
+.tr-detail { padding: 0 0 12px 14px; }
+.tr-detail .cs-cta { text-decoration: none; }
+.tr-detail .cs-link { min-height: 2.75rem; }
+.tr-subtitle { font-size: 15px; }
+
+/* ── a whole card that is one tap target (the report link) ── */
+.tr-tell { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.tr-tell > .cs-title { flex: 1 1 auto; min-width: 0; }
+
+/* ══════════ /quakes ══════════ */
+/* ── /quakes ──────────────────────────────────────────────────────────────
+   Two cards on the shared .cs-* system: the month drawn as a framed picture,
+   and the list of the ones people actually noticed. Everything the mockup
+   said with a hex value is said here with a token, so the page holds up on
+   the dark ground too. Five rules is all the route genuinely owns. */
+
+/* The dot map, framed. DotMap is a <figure>, so .cs-figure lands straight on
+   it; this only kills the frame's own top margin (it is the card's first
+   child, and the card already pads) and neutralises the older .qk-frame that
+   rounded and ringed the svg itself — .cs-figure clips it now. */
+.qk-frame { margin: 0; }
+.qk-frame > svg { border-radius: 0; box-shadow: none; }
+/* DotMap keeps its caption inside the figure, where a figcaption belongs, so
+   the .cs-figcap type scale is applied there instead of to a loose <p>. */
+.qk-frame > figcaption {
+  padding: 0.7rem 0.85rem 0.75rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--mute);
+}
+
+/* The list's own zeroing — .cs-row draws every row. */
+.qk-list { list-style: none; margin: 6px 0 0; padding: 0; }
+
+/* Magnitude as a dot, on the same "bigger dot, bigger quake" idea as the map.
+   The size is set per row in the JSX; the lane keeps them on one centre line. */
+.qk-mark { width: 30px; flex: 0 0 auto; display: flex; justify-content: center; }
+.qk-bullet { display: block; border-radius: 9999px; background: var(--ink); }
+
+/* The row's magnitude. A value at the end of a row, not a loud numeral, so it
+   is 19px rather than .cs-bignum's 44 — but it is the same body face, never
+   the display one: Amatic must not set a number. */
+.qk-mag {
+  font-family: var(--font-num);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Both ways out to the USGS are real links on a phone, so they carry a real
+   44px tap target that the mockup's flat gallery buttons did not need. */
+.qk-out { display: inline-flex; align-items: center; min-height: 2.75rem; }
+
+/* ══════════ /volcano ══════════ */
+/* ── /volcano ─────────────────────────────────────────────────────────────
+   Three .cs-card blocks and one sheet of borrowed words. Everything the cards
+   need is already in the .cs-* system; what lives here is the three things it
+   has no rule for: the meter's own tokens on a stack that is not .cs-col, the
+   camera's caption inside the frame, and the observatory's notice — which is
+   paper, not glass, so it must not inherit the card at all. */
+
+/* The card stack. .cs-col is the mockup's 402px artboard column; the app is
+   fluid inside PageShell, so this is the same rhythm without the fixed width.
+   The meter's three variables are declared on .all/.cs-col in the shared
+   system — neither wraps this page, so the stack carries them. */
+.vo-stack {
+  --cs-lv: var(--brand);
+  --cs-track: var(--tint);
+  --cs-seg: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+/* The meter's top step is the one the shared file has no modifier for: when the
+   air is unhealthy for everyone, the ladder is brick, not amber. */
+.vo-meter--bad { --cs-lv: var(--danger); }
+/* Both full-width controls carry a whole sentence, so they wrap; .cs-cta and
+   .cs-ghost are built for one line at line-height 1. */
+.vo-cam-go {
+  min-height: 3rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* ── the air rows ── */
+.vo-air { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+
+/* ── the camera, once they spend the data ──
+   .cs-figure sets line-height:0 for the image; the caption has to take its own back. */
+.vo-cam-cap {
+  margin: 0;
+  padding: 0.55rem 0.75rem 0.6rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--mute);
+}
+
+/* ── the observatory's notice: paper, not glass ──
+   No card ground, no 20px radius, no shadow — a matte sheet with an amber quote
+   rule down the left, squared off on that edge, so their words are visibly not
+   ours. OfficialWording keeps its own type: it is a shared component and the
+   agency's sentences are the last thing on this page that should shrink. */
+.vo-notice {
+  margin-top: 1.75rem;  /* + the stack gap = the s7 the page had */
+  padding: 0.75rem 0.875rem 0.8125rem;
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-left: 2px solid color-mix(in srgb, var(--amber) 70%, transparent);
+  border-radius: 3px 12px 12px 3px;
+}
+.vo-notice > div { margin-top: 0; }  /* the sheet already spaces it */
+/* Their headings arrive as tags, not as titles — a document's structure, not ours. */
+.vo-sec-h {
+  display: inline-block;
+  margin: 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* ══════════ /tsunami ══════════ */
+/* ── /tsunami ─────────────────────────────────────────────────────────────
+   The route is the .cs-* card system plus five shapes that system has no
+   word for. Everything else — the card, the icon tile, the display heading,
+   the CTA, the hairline, the step numeral, the meta line — is shared.
+   Colour: the warning card is the only filled object in the app, so it is
+   the only place --danger is a ground rather than a tint. --danger-ink is
+   the ink that belongs on it, and both flip in the dark scheme, so the card
+   is brick-on-cream by day and salmon-on-volcanic by night without a second
+   rule.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── the one card that is not glass ── */
+.ts-alert {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 18px 18px 17px;
+  background: var(--danger);
+  border: 1px solid var(--danger-edge);
+  border-radius: 24px;
+  box-shadow: var(--card-shadow);
+  color: var(--danger-ink);
+}
+.ts-alert-hd { display: flex; align-items: center; gap: 9px; }
+.ts-alert-kicker {
+  margin: 0;
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--danger-ink);
+}
+/* Not Amatic. The instruction has to be unambiguous, not charming. */
+.ts-shout {
+  margin: 12px 0 0;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -.01em;
+  color: var(--danger-ink);
+}
+.ts-act { margin: 9px 0 0; font-size: 16.5px; font-weight: 700; line-height: 1.4; color: var(--danger-ink); }
+.ts-alert-rule { height: 1px; margin: 15px 0 12px; background: color-mix(in srgb, var(--danger-ink) 28%, transparent); }
+/* the meta line steps back without leaving the cream: cream cut with its own ground */
+.ts-alert-meta { margin: 0; font-size: 13px; line-height: 1.45; color: color-mix(in srgb, var(--danger-ink) 86%, var(--danger)); }
+
+/* ── the answer, once they tap ── */
+.ts-answer {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: var(--danger-bg);
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent);
+}
+.ts-answer--safe {
+  background: color-mix(in srgb, var(--brand) 9%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+}
+.ts-verdict { margin: 0; font-size: 15.5px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+.ts-caveat { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+
+/* A siren nobody should wait for: brick ink on the card, not a filled block —
+   the warning card above is the only thing on this page allowed to shout. */
+.ts-siren {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 11px 0 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--danger);
+}
+.ts-siren svg { margin-top: 2px; }
+
+/* ── the steps ── each row is a .cs-row, the numeral a .cs-num ── */
+.ts-steps { margin: 8px 0 0; padding: 0; list-style: none; }
+.ts-steps p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+
+/* A shared block (EmptyState, OfficialWording) carries its own top margin;
+   the card has already padded. */
+.ts-flush > :first-child { margin-top: 0; }
+
+/* In their words, set in the card system's type. OfficialWording keeps its own
+   markup and its stance — always visible, never behind a tap — so the type is
+   put on it from here rather than by rebuilding it. */
+.ts-official > div > p:first-child { font-size: 17px; font-weight: 700; line-height: 1.3; color: var(--ink); }
+.ts-official > div > p + p { margin-top: 8px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+
+/* .cs-link is a text link; these two are also the tap target for a map that
+   people open one-handed in the dark, so they keep the 44px floor and the
+   app's caret. */
+.ts-link { display: inline-flex; align-items: center; gap: .3rem; min-height: 2.75rem; }
+
+/* ══════════ /report ══════════ */
+/* ── /report — the composer ───────────────────────────────────────────────
+   The page moved off the Now screen's .isl-* family onto the shared card
+   system: every block is a .cs-card, the buttons are .cs-cta / .cs-ghost,
+   the hold note is .cs-note, the result is a .cs-hero. Only what that system
+   has no shape for lives here — a field, a picker tile, a checkbox, and a
+   neighbour's post in the feed.
+
+   The mockup's raw hex is gone. Every colour below is a token with a light
+   AND a dark value, so the fields keep their inset look on volcanic ground:
+   --surface is one step off --card in both schemes, and the tan --line reads
+   as a border on either.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Shared blocks bring their own top margin; a .cs-card already pads. */
+.rp-page .cs-card > :first-child{ margin-top:0; }
+.rp-cards{ display:flex; flex-direction:column; gap:12px; }
+/* a card's Amatic heading, then its first control */
+.rp-cardh{ margin-bottom:13px; }
+
+/* ── fields ── */
+.rp-label{
+  display:block; margin:0 0 8px;
+  font-size:14.5px; font-weight:700; line-height:1.35;
+  color:var(--ink);
+}
+/* the second question in a card ("Which part of the island?") */
+.rp-field + .rp-label{ margin-top:16px; }
+.rp-field{
+  box-sizing:border-box; display:block; width:100%;
+  min-height:50px; padding:0 14px;
+  font-family:inherit; font-size:15.5px; color:var(--ink);
+  background:var(--surface);          /* an inset in the card, the way a well is */
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+.rp-field::placeholder{ color:var(--mute); }
+.rp-field:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; border-color:var(--brand); }
+.rp-area{ min-height:0; padding:11px 14px; line-height:1.45; resize:none; }
+.rp-select{ appearance:none; -webkit-appearance:none; padding-right:40px; }
+.rp-selwrap{ position:relative; display:block; }
+.rp-caret{
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  pointer-events:none; color:var(--mute);
+}
+
+/* ── the district the line already gave away: a quiet confirmation, never a warning ── */
+.rp-guess{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  margin-top:10px; padding:10px 12px;
+  border-radius:13px;
+  background:color-mix(in srgb, var(--ok) 20%, transparent);
+  font-size:14px; line-height:1.4; color:var(--ink);
+}
+.rp-guess svg{ color:var(--sea); }
+
+/* ── the what-did-you-see tiles ── */
+.rp-tiles{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:2px; }
+.rp-tile{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px;
+  min-height:88px; padding:12px 8px;
+  border:1px solid var(--hairline); border-radius:16px;
+  background:var(--tint); color:var(--ink);
+  font-family:inherit; font-size:13.5px; font-weight:700; line-height:1.25; text-align:center;
+  cursor:pointer;
+}
+/* The catch-all tile is last and takes a wide row of its own, not a lonely half. */
+.rp-tile--wide{ grid-column:1 / -1; flex-direction:row; min-height:56px; gap:11px; }
+.rp-tile--on{
+  background:var(--brand); border-color:var(--brand); color:var(--brand-ink);
+  box-shadow:0 2px 10px color-mix(in srgb, var(--brand) 28%, transparent);
+}
+.rp-tile:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+.rp-tilelbl{ display:inline-flex; align-items:center; gap:5px; }
+
+/* ── consent ── */
+.rp-check{
+  display:flex; align-items:flex-start; gap:11px; width:100%;
+  min-height:2.75rem;                 /* the tap target the row must keep */
+  margin:0; padding:0; border:0; background:none; text-align:left;
+  font-family:inherit; cursor:pointer;
+}
+.rp-check:focus-visible{ outline:2px solid var(--brand); outline-offset:3px; border-radius:10px; }
+.rp-box{
+  width:26px; height:26px; flex:0 0 auto; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--mute); border-radius:8px;
+  color:transparent;                  /* the tick is drawn, unseen, until it is checked */
+}
+.rp-box--on{ background:var(--brand); border-color:var(--brand); color:var(--brand-ink); }
+.rp-checktxt{ font-size:15px; line-height:1.4; color:var(--ink); }
+
+/* ── send ── */
+.rp-stack{ display:flex; flex-direction:column; gap:9px; margin-top:15px; }
+.rp-bad{
+  display:flex; align-items:flex-start; gap:9px; margin:14px 0 0;
+  font-size:14.5px; font-weight:700; line-height:1.45;
+  color:var(--danger);
+}
+/* the chip out to the rules, kept at the 44px tap target a link needs */
+.rp-chiprow{ margin-top:18px; }
+
+/* ── the feed: a neighbour's post, its own ground and a dashed edge ── */
+.rp-quiet{ margin:0; font-size:15px; line-height:1.5; color:var(--ink-2); }
+.rp-feed{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }
+.rp-feed > li{
+  position:relative;
+  padding:12px 13px 12px 15px;
+  border:0;                            /* the row's own border-left is drawn below instead */
+  border-radius:14px;
+  background:var(--tint);
+}
+.rp-feed > li::before{
+  content:""; position:absolute; left:0; top:10px; bottom:10px;
+  border-left:3px dashed color-mix(in srgb, var(--mute) 60%, transparent);
+}
+
+/* ══════════ /sources ══════════ */
+/* ══════════ /sources — Settings and about ══════════ */
+/* The page is now the shared card language end to end: .cs-card ground, .cs-heroline
+   (tile + display heading) where it used to write its own flex row, .cs-row for the feed
+   list, .cs-rule / .cs-actions / .cs-ictile for the rest. Three things are left over.
+
+   THE ISLAND TINT IS GONE. The stack used to sit inside .now-island, which exists to paint
+   the Now screen's --now-* tints. Nothing on a settings page is toned, so the wrapper only
+   cost a second paper colour (#efe8dc against --bg) and made two rules here depend on a
+   variable that is not defined outside it. Removed; the cards float on the page's own paper
+   like every other ported route.
+
+   WHAT IS DELIBERATELY NOT HERE: the mockup's sr-health / sr-feeds freshness column and its
+   .cs-source--warn / .cs-source--down ink. Feed health lives in the manifest, which this app
+   never fetches on the client, so every word of that card ("13 of 14 feeds answered",
+   "No answer", "HTTP 403") would be invented copy over invented data. The row keeps the pip
+   slot the day the health data lands; until then it is .cs-pip--none, which claims nothing.
+   ────────────────────────────────────────────────────────────────────────────────────── */
+
+/* 1 · The one line on this page that earns the brick. It was --now-coral, which only exists
+      inside .now-island; --danger is the same red as a token that has both schemes. */
+.sr-911{ color: var(--danger); }
+
+/* 2 · A row that is a link (Neighbor rules, Privacy): the card's own row shape, the tap
+      colour, and a 44px target — .cs-row pads to 40px on its own and the first one to 31px. */
+.sr-go{ min-height: 2.75rem; color: var(--sea); }
+
+/* 3 · The pip rides the first line of the source row. .cs-row's 6px is measured against the
+      mockup's 14.5px row title; these rows keep the app's reading size (19px), which the text
+      size setting on this very page scales, so the dot has further to fall. */
+.sr-src > .cs-row > .cs-pip{ margin-top: .6rem; }

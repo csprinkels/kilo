@@ -51,13 +51,13 @@ export default function WeatherPage() {
   // Town picker above the heading: a native <select> behind the words, so iPhones get their wheel. The h1 is "Right Now".
   const title = !d || !town ? "Weather" : (
     <>
-      <label className="relative mx-auto flex min-h-11 w-fit items-center justify-center gap-1 whitespace-nowrap font-display text-[1.375rem] font-bold leading-none text-brand">
-        <Icon name="navigation-arrow" size={18} aria-hidden /> {town.name} <Icon name="caret-down" size={16} aria-hidden />
+      <label className="wx-townpick">
+        <Icon name="navigation-arrow" size={17} aria-hidden /> {town.name} <Icon name="caret-down" size={17} aria-hidden />
         <select aria-label="Town" value={town.id} onChange={(e) => setTownId(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
           {d.towns.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </label>
-      <span className="mt-s5 block text-[2.75rem] leading-none">Right Now</span>
+      <span className="wx-title">Right Now</span>
     </>
   );
 
@@ -74,68 +74,78 @@ export default function WeatherPage() {
   return (
     <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
       {!d && (w || slow
-        ? <section className="wx-card mt-s4"><EmptyState kind="error" title="Can't load right now."><>Try again when you have signal. In an emergency call 911.<br /><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></></EmptyState></section>
-        : <p className="mt-s4 text-body text-ink-2">Loading the weather…</p>)}
+        ? <section className="cs-card wx-flush mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
+        : <p className="cs-body mt-s3">Loading the weather…</p>)}
 
       {d && town && h && meta && (
         <>
           <RightNow town={town} meta={meta} now={now} />
 
           {alerts.map(({ i, p }) => (
-            <a key={i.key} href="#heads-up" className={`wx-card mt-s4 flex items-center gap-s3 py-s3 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : "bg-surface-2"}`}>
-              <span className={`tile ${p.level >= 4 ? "bg-danger/15 text-danger" : p.level >= 3 ? "bg-warn/15 text-warn" : "text-ink-2"}`}><Icon name="warning-fill" size={20} /></span>
-              <span className="min-w-0 flex-1 text-body font-semibold text-ink">{p.word ?? LEVEL_WORD[p.level]}: {p.headline}</span>
-              <Icon name="caret-right" size={18} className="text-ink-2" />
+            <a key={i.key} href="#heads-up" className={`cs-card wx-alert mt-s3 ${p.level >= 4 ? "wx-alert--danger" : p.level >= 3 ? "wx-alert--warn" : ""}`}>
+              <span className={`cs-ictile ${p.level >= 4 ? "cs-ictile--brick" : p.level >= 3 ? "cs-ictile--amber" : ""}`}><Icon name="warning-fill" size={21} /></span>
+              <p className="wx-alert-t">
+                {p.level >= 3 ? <span className="wx-sev">{p.word ?? LEVEL_WORD[p.level]}:</span> : <>{p.word ?? LEVEL_WORD[p.level]}:</>} {p.headline}
+              </p>
+              <Icon name="caret-right" size={17} className="wx-caret" />
             </a>
           ))}
 
           {(alerts.length > 0 || rainSoon || showRadar)
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
-            : <button className="btn mt-s4" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>}
+            : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>}
           {storm && (
-            <section className="wx-card mt-s4">
-              <p className="flex items-start gap-s3 text-body font-semibold text-ink">
-                <span className="tile"><Icon name="wind-fill" size={20} /></span>
-                <span className="min-w-0 flex-1 pt-1">{storm.text}</span>
-              </p>
-              <Link href="/storms/" className="btn mt-s3">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link>
+            <section className="cs-card mt-s3">
+              <div className="cs-heroline">
+                <span className="cs-ictile"><Icon name="wind-fill" size={21} /></span>
+                <p className="cs-title">{storm.text}</p>
+              </div>
+              <div className="cs-actions">
+                <Link href="/storms/" className="cs-link wx-golink">See the storm <Icon name="caret-right" size={16} aria-hidden /></Link>
+              </div>
             </section>
           )}
 
-          <section className="wx-card mt-s4">
-            <h2 className="h-title">Next 24 Hours</h2>
-            <p className="mt-s2 max-w-[36rem] text-body text-ink-2 num">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
+          <section className="cs-card mt-s3">
+            <h2 className="cs-display cs-display--hero">Next 24 Hours</h2>
+            <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
             <HourlyChart h={h} />
           </section>
 
           {town.fc.length > 0 && (
-            <section className="wx-card mt-s4">
-              <h2 className="h-title">{daysTitle(town.fc)}</h2>
-              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{weekSentence(town.fc)}</p>
+            <section className="cs-card mt-s3">
+              <h2 className="cs-display cs-display--hero">{daysTitle(town.fc)}</h2>
+              <p className="cs-body max-w-[36rem]">{weekSentence(town.fc)}</p>
               <DailyRows fc={town.fc} />
             </section>
           )}
 
           {d.surf && Object.keys(d.surf.zones).length > 0 && (
-            <section className="wx-card mt-s4">
-              <h2 className="h-title flex items-center gap-s3"><span className="tile"><Icon name="waves-fill" size={20} /></span>Surf</h2>
-              <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{surfSentence(d.surf.zones, island)}</p>
+            <section className="cs-card mt-s3">
+              <h2 className="cs-display cs-display--hero">Surf</h2>
+              <p className="cs-body max-w-[36rem]">{surfSentence(d.surf.zones, island)}</p>
             </section>
           )}
 
           {d.air.length > 0 && (
-            <section className="wx-card mt-s4">
-              <h2 className="h-title flex items-center gap-s3"><span className="tile"><Icon name="wind-fill" size={20} /></span>Air</h2>
-              <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{airSentence(d.air, town.name, island)}</p>
-              {island === "hawaii" && <Link href="/volcano/" className="btn mt-s3">Vog details <Icon name="caret-right" className="size-5" aria-hidden /></Link>}
+            <section className="cs-card mt-s3">
+              <h2 className="cs-display cs-display--hero">Air</h2>
+              <p className="cs-body max-w-[36rem]">{airSentence(d.air, town.name, island)}</p>
+              {island === "hawaii" && (
+                <div className="cs-actions">
+                  <Link href="/volcano/" className="cs-link wx-golink">Vog details <Icon name="caret-right" size={16} aria-hidden /></Link>
+                </div>
+              )}
             </section>
           )}
 
           {headsUp.length > 0 && (
-            <section id="heads-up" className="wx-card mt-s4 scroll-mt-s4">
-              <h2 className="h-title">Heads up</h2>
-              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Nothing dangerous, but good to know.</p>
-              <ul className="list mt-s3">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((h) => h.source)).size > 1} />)}</ul>
+            <section id="heads-up" className="cs-card mt-s3 scroll-mt-s4">
+              <h2 className="cs-display cs-display--hero">Heads up</h2>
+              <p className="cs-body max-w-[36rem]">Nothing dangerous, but good to know.</p>
+              <div className="wx-rows">
+                <ul className="list">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((x) => x.source)).size > 1} />)}</ul>
+              </div>
             </section>
           )}
         </>
@@ -153,7 +163,7 @@ function sunLine(meta: { lat: number; lon: number }, now: number) {
   return `Sunrise at ${fmtTime(s.rise)}, sets at ${fmtTime(s.set)}.`;
 }
 
-/** The weather picture: big icon, then the temperature, the sky word, high and low, and a "More" fold with the rest. */
+/** The weather picture: big icon, then the temperature, the sky word, high and low, and a "More" card with the rest. */
 function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon: number }; now: number }) {
   const [open, setOpen] = useState(false);
   const h = town.hourly!;
@@ -167,27 +177,31 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
   const deg = fresh && town.obs?.wDir != null ? town.obs.wDir : h.wd[0] * 22.5;
   const sun = sunTimes(dayStartHST(now), meta.lat, meta.lon);
   return (
-    <section className="wx-card mt-s4" aria-label={`${town.name} right now`}>
-      <div className="flex flex-wrap items-start gap-3">
-        <ConditionIcon code={code} night={!!h.n[0]} size={164} className="-my-3 -ml-4" />
-        <div className="min-w-0 flex-1 basis-36 pt-s3">
-          <p className="text-[4rem] font-light leading-none text-ink num">{temp != null ? `${temp}°` : "—"}</p>
-          <p className="mt-s2 text-[1.5rem] leading-tight text-ink-2">{condWord(code)}</p>
-          {hi != null && lo != null && <p className="mt-1 text-[1.375rem] leading-tight text-ink-2 num">High {hi}° Low {lo}°</p>}
-          <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="-ml-1 mt-1 inline-flex min-h-11 items-center gap-0.5 px-1 text-[1.375rem] text-ink">
-            More <Icon name="caret-down" size={16} className={open ? "rotate-180" : ""} aria-hidden />
-          </button>
+    <>
+      <section className="cs-card cs-hero mt-s3" aria-label={`${town.name} right now`}>
+        <div className="wx-now">
+          <ConditionIcon code={code} night={!!h.n[0]} size={164} className="wx-now-ic" />
+          <div className="wx-now-read">
+            <p className="cs-bignum cs-bignum--lg">{temp != null ? `${temp}°` : "—"}</p>
+            <p className="wx-now-word">{condWord(code)}</p>
+            {hi != null && lo != null && <p className="wx-now-hilo">High {hi}° Low {lo}°</p>}
+            <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="wx-more">
+              More <Icon name="caret-down" size={16} className={open ? "rotate-180" : ""} aria-hidden />
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
       {open && (
-        <div className="mt-s3 border-t border-line pt-s3 text-body text-ink-2 num">
-          {fl != null && <p>Feels like {fl}°</p>}
-          {mph != null && <p>{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p>}
-          {rh != null && <p>Humidity {rh}%</p>}
-          <p>Sunrise {fmtTime(sun.rise)} · Sunset {fmtTime(sun.set)}</p>
-        </div>
+        <section className="cs-card mt-s3">
+          <div className="cs-grid">
+            {fl != null && <div className="cs-tile"><p className="wx-stat-v">Feels like {fl}°</p></div>}
+            {mph != null && <div className="cs-tile"><p className="wx-stat-v">{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p></div>}
+            {rh != null && <div className="cs-tile"><p className="wx-stat-v">Humidity {rh}%</p></div>}
+            <div className="cs-tile"><p className="wx-stat-v">Sunrise {fmtTime(sun.rise)} · Sunset {fmtTime(sun.set)}</p></div>
+          </div>
+        </section>
       )}
-    </section>
+    </>
   );
 }
 

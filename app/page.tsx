@@ -27,6 +27,11 @@ const fromDigest = (d: DigestItem, at: number): Item => ({
 });
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
+/** A notification deep link lands on a card: put it on screen. */
+function useFocusScroll(key: string | undefined, focus?: boolean) {
+  useEffect(() => { if (focus && key) document.getElementById(`item-${hashOf(key)}`)?.scrollIntoView({ block: "center" }); }, [focus, key]);
+}
+
 export default function Home() {
   const [island, setIsland] = useStoredIsland();
   const chosen = useIslandChosen();
@@ -88,111 +93,121 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const alsoToday = rows.filter((r) => r.quiet);
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: lead && !stormCovered ? plain.get(lead.key) : undefined, island: islandName(island) });
 
+  /* The one "there is more of this" control, shared by the two cards that can hold the rest. */
+  const moreWarnings = rest.length > 2 && !showAll && (
+    <div className="cs-chiprow">
+      <button type="button" className="cs-chip cs-chip--link" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" size={14} className="cs-ic" /></button>
+    </div>
+  );
+  const restRows = (headlinesOnly.length > 0 || extraWarnings.length > 0) && (
+    <ul className="hm-rows">
+      {headlinesOnly.map((a) => (
+        <li key={a.h} className="py-s3">
+          <span className="cs-rowname">{a.title}</span>
+          <span className="cs-rowsub">Details load when the signal is better.</span>
+        </li>
+      ))}
+      {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
+    </ul>
+  );
+
   return (
-    <main className="now-island relative z-[1] min-h-dvh w-full">
+    <main className="hm relative z-[1] min-h-dvh w-full">
       <div className="mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
         <TopBar island={island} onIsland={setIsland} />
         <SectionNav />
         <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
 
-        {loaded && (
-          <>
-            <h1 className="isl-story">{story.title}</h1>
-            {story.sub && <p className="isl-sub">{story.sub}</p>}
-          </>
-        )}
+        <div className="hm-col">
+          {loaded && (
+            <section className="cs-card cs-hero">
+              <h1 className="cs-display cs-display--hero">{story.title}</h1>
+              {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
+            </section>
+          )}
 
-        <div className="isl-stack">
           {lead && !(approaching && (lead.type === "storm" || lead.type === "advisory")) && (
-            <ItemCard tone="hot" icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : lead.type === "outage" ? (lead.fields?.kind ? "drop" : "lightning-slash") : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} now={now} focus={lead.key === focusKey}>
-              {plain.get(lead.key)!.action && <p className="isl-p">{plain.get(lead.key)!.action}</p>}
-              {staleLine(lead, now) && <p className="isl-note">{staleLine(lead, now)}</p>}
-              {(extraWarnings.length > 0 || headlinesOnly.length > 0) && (
-                <ul className="mt-s3 divide-y divide-line">
-                  {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
-                  {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-                </ul>
-              )}
-              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" className="size-4" aria-hidden /></button>}
+            <ItemCard icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : lead.type === "outage" ? (lead.fields?.kind ? "drop" : "lightning-slash") : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} focus={lead.key === focusKey}>
+              {plain.get(lead.key)!.action && <p className="cs-body">{plain.get(lead.key)!.action}</p>}
+              {staleLine(lead, now) && <><div className="cs-rule" /><p className="cs-meta">{staleLine(lead, now)}</p></>}
+              {restRows}
+              {moreWarnings}
             </ItemCard>
           )}
 
           {approaching && mainStorm && (
-            <Link href="/storms/" className="isl-card isl-storm" aria-label={mainStorm.text}>
-              <p className="isl-kicker"><span className="isl-bubble"><Icon name="wind" aria-hidden /></span>{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
-              <h2 className="isl-h">{stormName(mainStorm.s).replace(/-/g, "\u2011")}</h2>{/* non-breaking hyphen: never "Two-" / "C" */}
-              <p className="isl-p">{mainStorm.text}</p>
-              {mainStorm.level >= 3 && <p className="isl-note" style={{ color: "var(--now-sky)", borderColor: "color-mix(in srgb, var(--now-sky) 25%, transparent)" }}>Finish getting ready. Follow Civil Defense.</p>}
-              <div className="isl-map"><StormMap storm={mainStorm.s} place={place} compact /></div>
+            <Link href="/storms/" className="cs-card cs-hero cs-hero--amber" aria-label={mainStorm.text}>
+              <div className="cs-heroline">
+                <span className="cs-ictile cs-ictile--amber"><Icon name="wind" size={21} className="cs-ic" /></span>
+                <div className="hm-heromain">
+                  <p className="cs-label">{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
+                  {/* non-breaking hyphen: never "Two-" / "C" */}
+                  <h2 className="cs-display cs-display--hero">{stormName(mainStorm.s).replace(/-/g, "‑")}</h2>
+                </div>
+              </div>
+              <p className="cs-body cs-body--hero">{mainStorm.text}</p>
+              {mainStorm.level >= 3 && <p className="cs-note"><Icon name="warning" size={18} />Finish getting ready. Follow Civil Defense.</p>}
+              <div className="cs-figure hm-figure"><StormMap storm={mainStorm.s} place={place} compact /></div>
             </Link>
           )}
 
-          {(!lead || (approaching && (lead.type === "storm" || lead.type === "advisory"))) && (headlinesOnly.length > 0 || extraWarnings.length > 0) && (
-            <article className="isl-card">
-              <p className="isl-kicker" style={{ color: "var(--ink-2)" }}>Also in effect</p>
-              <ul className="mt-s2 divide-y divide-line">
-                {headlinesOnly.map((a) => <li key={a.h} className="py-s3 text-body font-semibold">{a.title}<span className="block text-small font-normal text-ink-2">Details load when the signal is better.</span></li>)}
-                {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-              </ul>
-              {rest.length > 2 && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" className="size-4" aria-hidden /></button>}
-            </article>
+          {(!lead || (approaching && (lead.type === "storm" || lead.type === "advisory"))) && restRows && (
+            <section className="cs-card">
+              <p className="cs-label">Also in effect</p>
+              {restRows}
+              {moreWarnings}
+            </section>
           )}
 
-          {shelters.map((i) => {
-            const p = plain.get(i.key)!;
-            return (
-              <ItemCard key={i.key} tone="hot" icon="tent" kicker={p.word ?? "Shelter open"} title={p.headline} item={i} now={now} focus={i.key === focusKey}>
-                {p.action && <p className="isl-p">{p.action}</p>}
-                {staleLine(i, now) && <p className="isl-note">{staleLine(i, now)}</p>}
-              </ItemCard>
-            );
-          })}
+          {shelters.map((i) => <ShelterCard key={i.key} item={i} plain={plain.get(i.key)!} now={now} focus={i.key === focusKey} />)}
 
           {!roads.quiet && (
-            <Link href="/traffic/" className="isl-card isl-road">
-              <p className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone" aria-hidden /></span> Roads</p>
-              <h2 className="isl-h">{roads.text.replace(/\s+\d+ more\.$/, "")}</h2>
-              <p className="isl-p">Tap for the map and detours.</p>
-              {/\d+ more/.test(roads.text) && <p className="isl-more">{roads.text.match(/(\d+ more)\.?$/)?.[1]}</p>}
+            <Link href="/traffic/" className="cs-card">
+              <p className="cs-label"><Icon name="traffic-cone" size={15} className="cs-ic" /> Roads</p>
+              <h2 className="cs-title">{roads.text.replace(/\s+\d+ more\.$/, "")}</h2>
+              <p className="cs-body">Tap for the map and detours.</p>
+              {/\d+ more/.test(roads.text) && <div className="cs-chiprow"><span className="cs-chip cs-chip--link">{roads.text.match(/(\d+ more)\.?$/)?.[1]}</span></div>}
             </Link>
           )}
 
           {mode === "low" || offline
-            ? <p className="isl-card text-ink-2">Weather loads when the signal is better.</p>
+            ? <p className="cs-card cs-body hm-flat">Weather loads when the signal is better.</p>
             : <WeatherNow island={island} />}
 
           {headsUp.map((i) => {
             const p = plain.get(i.key)!;
-            return <p key={i.key} className="isl-p px-1"><span className="font-semibold">Heads up:</span> {p.headline}. <span className="text-ink-2">{p.action}</span></p>;
+            return (
+              <p key={i.key} className="cs-note hm-flat">
+                <Icon name="warning" size={18} />
+                <span><span className="font-semibold">Heads up:</span> {p.headline}. <span className="text-ink-2">{p.action}</span></span>
+              </p>
+            );
           })}
 
           {loaded && alsoToday.length > 0 && (
-            <section className="isl-card" aria-label="Also today">
-              <p className="isl-kicker" style={{ color: "var(--ink-2)" }}>Also today</p>
-              <div className="isl-grid">
-                {alsoToday.map((r) => {
-                  const glyph = MINI_ICON[r.key] ?? "cloud-sun";
-                  return (
-                    <Link key={r.key} href={r.href} className="isl-mini">
-                      <span className="isl-bubble"><Icon name={`${glyph}-fill`} size={20} /></span>
-                      <h3>{r.label}</h3>
-                      <p>{r.text}</p>
-                    </Link>
-                  );
-                })}
+            <section className="cs-card" aria-label="Also today">
+              <p className="cs-label">Also today</p>
+              <div className="cs-grid">
+                {alsoToday.map((r) => (
+                  <Link key={r.key} href={r.href} className="cs-tile">
+                    <span className="cs-ictile"><Icon name={MINI_ICON[r.key] ?? "cloud-sun"} size={21} className="cs-ic" /></span>
+                    <p className="cs-tile-name">{r.label}</p>
+                    <p className="cs-tile-line">{r.text}</p>
+                  </Link>
+                ))}
               </div>
             </section>
           )}
 
-          {!loaded && !offline && <p className="text-body text-ink-2">Loading what is happening around {islandName(island)}…</p>}
+          {!loaded && !offline && <p className="cs-body hm-flat">Loading what is happening around {islandName(island)}…</p>}
 
-          <AlertsCard island={island} compact />
+          <div className="cs-card"><AlertsCard island={island} compact /></div>
         </div>
 
         <Link href="/sources/" className="row mt-s5 border-t border-line text-small font-semibold text-ink-2">
           <Icon name="gear" size={18} /> <span className="flex-1">Settings and about</span> <Icon name="caret-right" size={16} />
         </Link>
-        <footer className="mt-s4 pb-s4 text-small leading-relaxed text-ink-2">
+        <footer className="cs-footer mt-s4">
           Free. No ads. No account. Not an emergency service — call 911.
         </footer>
       </div>
@@ -206,24 +221,44 @@ const MINI_ICON: Record<string, IconName> = {
 
 type Row = { key: string; label: string; text: string; href: string; quiet: boolean };
 
-function ItemCard({ tone, icon, kicker, title, children, item, focus }: {
-  tone: "hot" | "storm" | "road" | "wx";
+/** The loudest card on the page: a hero on the brick edge, the level word over the plain headline. */
+function ItemCard({ icon, kicker, title, children, item, focus }: {
   icon: IconName;
   kicker: string;
   title: string;
   children?: React.ReactNode;
   item?: Item;
-  now?: number;
   focus?: boolean;
 }) {
   const extra = item ? officialExtra(item, title) : undefined;
-  useEffect(() => { if (focus && item) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item]);
+  useFocusScroll(item?.key, focus);
   return (
-    <article id={item ? `item-${hashOf(item.key)}` : undefined} className={`isl-card isl-${tone}`} aria-label={title}>
-      <p className="isl-kicker"><span className="isl-bubble"><Icon name={`${icon}-fill`} size={20} /></span> {kicker}</p>
-      <h2 className="isl-h">{title}</h2>
+    <article id={item ? `item-${hashOf(item.key)}` : undefined} className="cs-card cs-hero hm-alarm" aria-label={title}>
+      <div className="cs-heroline">
+        <span className="cs-ictile cs-ictile--brick"><Icon name={icon} size={21} className="cs-ic" /></span>
+        <div className="hm-heromain">
+          <p className="cs-label hm-label--alarm">{kicker}</p>
+          <h2 className="cs-display cs-display--card">{title}</h2>
+        </div>
+      </div>
       {children}
-      {extra && <p className="isl-p text-ink-2">{extra}</p>}
+      {extra && <p className="cs-body">{extra}</p>}
+    </article>
+  );
+}
+
+/** An open shelter: the calm card, because the thing to do is already in the sentence. */
+function ShelterCard({ item, plain, now, focus }: { item: Item; plain: Plain; now: number; focus?: boolean }) {
+  const stale = staleLine(item, now);
+  const extra = officialExtra(item, plain.headline);
+  useFocusScroll(item.key, focus);
+  return (
+    <article id={`item-${hashOf(item.key)}`} className="cs-card" aria-label={plain.headline}>
+      <p className="cs-label"><Icon name="tent" size={15} className="cs-ic" /> {plain.word ?? "Shelter open"}</p>
+      <h2 className="cs-title">{plain.headline}</h2>
+      {plain.action && <p className="cs-body">{plain.action}</p>}
+      {stale && <><div className="cs-rule" /><p className="cs-meta">{stale}</p></>}
+      {extra && <p className="cs-body">{extra}</p>}
     </article>
   );
 }
@@ -311,14 +346,14 @@ function topicRows(
   return rows;
 }
 
-/** Weather as an ordinary sand card — never the page hero, never a tinted wash. */
+/** Weather as an ordinary card — never the page hero, never a tinted wash. */
 function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const w = useJson<Weather>(`v1/${island}/weather.json`);
   const townId = useSyncExternalStore(() => () => {}, () => localStorage.getItem("town"), () => null);
   const town = w?.data?.towns.find((t) => t.id === townId) ?? w?.data?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
-  if (!w) return <p className="isl-card text-ink-2">Loading the weather…</p>;
-  if (!town?.hourly) return <p className="isl-card text-ink-2">Weather is not available right now.</p>;
+  if (!w) return <p className="cs-card cs-body hm-flat">Loading the weather…</p>;
+  if (!town?.hourly) return <p className="cs-card cs-body hm-flat">Weather is not available right now.</p>;
   const h = town.hourly;
   const obsFresh = town.obs && w.fetchedAt - town.obs.at < 2 * 3_600_000;
   const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0], night = !!h.n[0];
@@ -330,20 +365,20 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const nextSun = sun ? (sun.rise > w.fetchedAt ? { k: "Sunrise", at: sun.rise } : sun.set > w.fetchedAt ? { k: "Sunset", at: sun.set } : undefined) : undefined;
   const tempLabel = temp != null ? `${temp}°` : "—";
   return (
-    <Link href="/weather/" className="isl-card isl-wx" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
-      <p className="isl-kicker">Weather in {town.name}</p>
-      <div className="isl-wx-row">
-        <ConditionIcon code={code} night={night} size={72} />
+    <Link href="/weather/" className="cs-card" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
+      <p className="cs-label">Weather in {town.name}</p>
+      <div className="cs-wx-row">
         <div className="min-w-0">
-          <p className="isl-deg">{tempLabel}</p>
-          <p className="isl-p" style={{ marginTop: "0.15rem" }}>
+          <p className="cs-bignum cs-bignum--lg">{tempLabel}</p>
+          <p className="cs-wx-now">
             {condWord(code)}
             {fl != null && Math.abs(fl - (temp ?? fl)) >= 3 ? `. Feels like ${fl}°` : ""}
             {hi != null && lo != null ? `. High ${hi}°, low ${lo}°` : ""}.
           </p>
         </div>
+        <ConditionIcon code={code} night={night} size={72} className="cs-wx-ic" />
       </div>
-      <p className="isl-p text-ink-2">
+      <p className="cs-wx-later">
         {nowAndLater(obsFresh ? code : undefined, h)}
         {nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}
       </p>

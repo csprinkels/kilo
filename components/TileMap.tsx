@@ -45,6 +45,7 @@ function Tiles({ island, segments, focus, detour, you, label, className }: Props
       const { segments, focus, detour, you } = JSON.parse(drawn) as Props;
       const css = getComputedStyle(document.documentElement);
       const color = (v: string) => css.getPropertyValue(v).trim();
+      const halo = color("--map-mark-halo"); // the tile map is light in both schemes, but the halo is not: it is a token
       const zoomed = !!focus?.length; // marks are thinner on the whole-island view so short closures read as lines, not blobs
 
       map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.5 });
@@ -56,15 +57,15 @@ function Tiles({ island, segments, focus, detour, you, label, className }: Props
         const c = color(g.kind === "lane" ? "--warn" : "--danger");
         if (g.path && g.path.length >= 2) {
           const w = (g.kind === "lane" ? 5 : 7) - (zoomed ? 0 : 2);
-          L.polyline(g.path, { color: "#fff", weight: w + 4, opacity: 0.9 }).addTo(map); // halo so the mark reads on any tile
+          L.polyline(g.path, { color: halo, weight: w + 4, opacity: 0.9 }).addTo(map); // halo so the mark reads on any tile
           L.polyline(g.path, { color: c, weight: w, dashArray: g.kind === "lane" ? "10 8" : undefined }).addTo(map);
         } else if (g.lat != null && g.lon != null) {
           L.circleMarker([g.lat, g.lon], g.approx
             ? { radius: 16, color: c, weight: 2, dashArray: "4 4", fillColor: c, fillOpacity: 0.25 } // "about here": neighborhood only
-            : { radius: zoomed ? 9 : 7, color: "#fff", weight: 3, fillColor: c, fillOpacity: 1 }).addTo(map);
+            : { radius: zoomed ? 9 : 7, color: halo, weight: 3, fillColor: c, fillOpacity: 1 }).addTo(map);
         }
       }
-      if (you) L.circleMarker(you, { radius: 9, color: "#fff", weight: 3, fillColor: color("--brand"), fillOpacity: 1 }).addTo(map);
+      if (you) L.circleMarker(you, { radius: 9, color: halo, weight: 3, fillColor: color("--brand"), fillOpacity: 1 }).addTo(map);
 
       let bounds: import("leaflet").LatLngBounds;
       if (focus?.length) {

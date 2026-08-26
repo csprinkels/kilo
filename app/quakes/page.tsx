@@ -52,29 +52,29 @@ function QuakesBody({ retry }: { retry: () => void }) {
       )}
       {d && (
         <>
-          {/* The month, framed as a picture: the map, its caption under a hairline, the way out to the full one. */}
-          <section className="card mt-s5">
-            <DotMap className="qk-frame" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
-            <a className="qk-chip mt-s4" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <Icon name="caret-right" className="size-5 shrink-0" aria-hidden /></a>
+          {/* qk-map — the month as a picture: the framed map, its caption, the way out to the full one. */}
+          <section className="cs-card mt-s5">
+            <DotMap className="cs-figure qk-frame" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
+            <div className="cs-chiprow">
+              <a className="cs-chip cs-chip--link qk-out" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <Icon name="caret-right" size={14} /></a>
+            </div>
           </section>
 
-          {/* One card, one list: the quakes people actually noticed. */}
-          <section className="card mt-s4">
-            <h2 className="h-title flex items-center gap-s3">
-              <span className="tile"><Icon name="pulse-fill" size={20} aria-hidden /></span> Ones people felt
-            </h2>
+          {/* qk-felt — one card, one list: the quakes people actually noticed. */}
+          <section className="cs-card mt-s4">
+            <h2 className="cs-label"><Icon name="pulse" size={15} /> Ones people felt</h2>
             {felt.length > 0 ? (
-              <ul className="mt-s3 divide-y divide-line">
+              <ul className="qk-list">
                 {felt.map((e) => {
                   const dot = (8 + Math.min(Math.max(e.m - 3, 0), 3) * 6) / 16; // same idea as the map: bigger dot, bigger quake
                   return (
-                    <li key={e.i} className="flex items-center gap-s3 py-s3">
-                      <span className="flex w-8 shrink-0 justify-center" aria-hidden><span className="rounded-full bg-ink" style={{ width: `${dot}rem`, height: `${dot}rem` }} /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-body font-semibold text-ink">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
-                        <span className="block text-small text-ink-2 num">{when(e.t * 1000, now)}{e.f ? ` · ${people(e.f)}` : ""}</span>
+                    <li key={e.i} className="cs-row cs-row--mid">
+                      <span className="qk-mark" aria-hidden><span className="qk-bullet" style={{ width: `${dot}rem`, height: `${dot}rem` }} /></span>
+                      <span className="cs-rowmain">
+                        <span className="cs-rowname">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
+                        <span className="cs-rowsub num">{when(e.t * 1000, now)}{e.f ? ` · ${people(e.f)}` : ""}</span>
                       </span>
-                      <span className="shrink-0 font-display text-title font-bold text-ink num" aria-label={`magnitude ${e.m.toFixed(1)}`}>{e.m.toFixed(1)}</span>
+                      <span className="cs-rowend qk-mag" aria-label={`magnitude ${e.m.toFixed(1)}`}>{e.m.toFixed(1)}</span>
                     </li>
                   );
                 })}
@@ -83,10 +83,13 @@ function QuakesBody({ retry }: { retry: () => void }) {
               <EmptyState title="None this month." />
             )}
             {tell && (
-              <a className="qk-chip mt-s4" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it <Icon name="caret-right" className="size-5 shrink-0" aria-hidden /></a>
+              <div className="cs-actions">
+                <a className="cs-link qk-out" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it</a>
+              </div>
             )}
           </section>
 
+          {/* qk-safety — the standing rule, in the app's shared Notice (card + brick tile + title + line). */}
           <Notice title="If the ground shakes hard near the coast, go uphill right away." icon="waves">Do not wait for a siren.</Notice>
         </>
       )}
