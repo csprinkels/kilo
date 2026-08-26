@@ -367,3 +367,21 @@ body {
 .leaflet-control-attribution { font-size: .75rem; line-height: 1.2; padding: .125rem .375rem; background: transparent; color: var(--ink); opacity: .55; }
 .leaflet-container .leaflet-control-attribution a { color: inherit; text-decoration: none; }
 @media (prefers-color-scheme: dark) { .leaflet-container .leaflet-tile { filter: brightness(.82) saturate(.9); } }
+
+/* Now with the ambient island behind it: the page ground goes transparent so the
+   scene reads in the gaps between cards. The cards keep their own opaque sand —
+   this is not frosted glass, and the paper tokens still carry every other page. */
+.now-island--scene { background: transparent; }
+/* The type keeps the paper it was contrast-tested on. A soft wash of --bg fades
+   out just past the story, so the header, freshness line and headline sit on
+   ground that clears 4.5:1, and the scene takes over in the card gaps below.
+   Without this the story is #1b1a17 ink on a mid-blue sky — about 2.4:1. */
+.now-island--scene::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 26rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(var(--bg) 0%, var(--bg) 42%, color-mix(in srgb, var(--bg) 70%, transparent) 68%, transparent 100%);
+}
