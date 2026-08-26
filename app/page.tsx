@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import IslandScene, { condNow, useDarkScheme } from "@/components/IslandScene";
 import Icon, { type IconName } from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
 import AlertsCard from "@/components/AlertsCard";
@@ -89,12 +88,8 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const alsoToday = rows.filter((r) => r.quiet);
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: lead && !stormCovered ? plain.get(lead.key) : undefined, island: islandName(island) });
 
-  const dark = useDarkScheme();
-
   return (
-    <>
-    <IslandScene cond={condNow(now, mainStorm ? mainStorm.level >= 3 : false)} dark={dark} />
-    <main className="now-island now-island--scene relative z-[1] min-h-dvh w-full">
+    <main className="now-island relative z-[1] min-h-dvh w-full">
       <div className="mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
         <TopBar island={island} onIsland={setIsland} />
         <SectionNav />
@@ -202,7 +197,6 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
         </footer>
       </div>
     </main>
-    </>
   );
 }
 
