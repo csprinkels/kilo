@@ -106,63 +106,66 @@ export default function TsunamiPage() {
     >
       <div className="mt-s6 flex flex-col gap-s3">
         {d && warning && (
-          <section role="alert" aria-label="Tsunami warning" className="ts-card ts-alert">
-            <p className="flex items-center gap-s2 font-display text-title font-bold text-danger"><span className="tile bg-danger/15"><Icon name="siren-fill" size={20} /></span> Act now</p>
-            <h2 className="mt-s2 font-display text-display font-bold leading-tight text-ink">Tsunami warning</h2>
-            <p className="mt-s2 text-body font-semibold text-ink">{WARNING_ACTION}</p>
-            <p className="mt-s3 border-t border-danger/25 pt-s3 text-small text-ink-2 num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>
+          <section role="alert" aria-label="Tsunami warning" className="ts-alert">
+            <div className="ts-alert-hd">
+              <span className="cs-ictile cs-ictile--onbrick"><Icon name="siren-fill" size={21} /></span>
+              <p className="ts-alert-kicker">Act now</p>
+            </div>
+            <h2 className="ts-shout">Tsunami warning</h2>
+            <p className="ts-act">{WARNING_ACTION}</p>
+            <div className="ts-alert-rule" />
+            <p className="ts-alert-meta num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>
           </section>
         )}
 
         {t && !d && (
-          <section className="ts-card">
+          <section className="cs-card ts-flush">
             <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
-            <button type="button" onClick={() => window.dispatchEvent(new Event("online"))} className="btn mt-s3">Try again</button>
+            <button type="button" onClick={() => window.dispatchEvent(new Event("online"))} className="cs-cta mt-s3">Try again</button>
           </section>
         )}
 
-        <section className="ts-card">
-          <div className="flex items-center gap-s3">
-            <span className="tile bg-brand/12 text-brand"><Icon name="map-pin" size={20} /></span>
-            <h2 className="h-title">Am I in an evacuation zone?</h2>
+        <section className="cs-card">
+          <div className="cs-heroline">
+            <span className="cs-ictile"><Icon name="map-pin" size={21} /></span>
+            <h2 className="cs-display cs-display--card">Am I in an evacuation zone?</h2>
           </div>
-          <p className="mt-s3 text-body text-ink-2">Tap to check your spot on the state evacuation map. {APP_NAME} does not save your location.</p>
-          <button type="button" onClick={lookup} disabled={busy} className="btn btn-primary btn-big mt-s3 disabled:opacity-50">{busy ? "Checking…" : "Check where I am"}</button>
+          <p className="cs-body">Tap to check your spot on the state evacuation map. {APP_NAME} does not save your location.</p>
+          <button type="button" onClick={lookup} disabled={busy} className="cs-cta cs-wide cs-wide--big mt-s4">{busy ? "Checking…" : "Check where I am"}</button>
           {result && (
-            <p role="status" className={`well ts-answer mt-s3 p-s3 text-body text-ink${"error" in result || result.zone != null ? " ts-answer--flag" : ""}`}>
-              {"error" in result ? result.error : (result.zone != null && ZONE_TEXT[result.zone]) || SAFE_TEXT}{!("error" in result) && result.edge ? " You are right at the edge of the zone, so treat it as inside." : ""}
-            </p>
+            <div role="status" className={`ts-answer${"error" in result || result.zone != null ? "" : " ts-answer--safe"}`}>
+              <p className="ts-verdict">{"error" in result ? result.error : (result.zone != null && ZONE_TEXT[result.zone]) || SAFE_TEXT}</p>
+              {!("error" in result) && result.edge && <p className="ts-caveat">You are right at the edge of the zone, so treat it as inside.</p>}
+            </div>
           )}
           {sirenLine && (
-            <p className="mt-s3 flex items-start gap-s2 text-body font-semibold text-ink">
-              <Icon name="warning-fill" size={22} className="mt-1 text-warn" /><span>{sirenLine}</span>
-            </p>
+            <p className="ts-siren"><Icon name="warning" size={17} /><span>{sirenLine}</span></p>
           )}
-          <div className="mt-s3 border-t border-line">
-            <a className="inline-flex min-h-11 items-center gap-1 text-body font-semibold text-brand" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" className="size-5" aria-hidden /></a>
-          </div>
+          <div className="cs-rule" />
+          <a className="cs-link ts-link" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" size={16} /></a>
         </section>
 
-        <section className="ts-card">
-          <div className="flex items-center gap-s3">
-            <span className="tile bg-brand/12 text-brand"><Icon name="lightbulb-filament-fill" size={20} /></span>
-            <h2 className="h-title">What to do</h2>
+        <section className="cs-card">
+          <div className="cs-heroline">
+            <span className="cs-ictile"><Icon name="lightbulb-filament-fill" size={21} /></span>
+            <h2 className="cs-display cs-display--card">What to do</h2>
           </div>
-          <ol className="mt-s2 divide-y divide-line">
+          <ol className="ts-steps">
             {WHAT_TO_DO.map((s, i) => (
-              <li key={s} className="flex items-start gap-s3 py-s3 text-body text-ink">
-                <span className="w-6 shrink-0 font-display text-title font-bold leading-snug text-brand num" aria-hidden>{i + 1}</span>
-                <span>{s}</span>
+              <li key={s} className="cs-row">
+                <span className="cs-num" aria-hidden="true">{i + 1}</span>
+                <p>{s}</p>
               </li>
             ))}
           </ol>
-          <p className="border-t border-line pt-s3 text-small text-ink-2">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
+          <div className="cs-rule" />
+          <p className="cs-meta">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
         </section>
 
         {d && (
-          <section className="ts-card">
+          <section className="cs-card ts-flush ts-official">
             <OfficialWording title={d.status.event || "No tsunami message in effect"} body={[d.status.headline, d.status.issued ? `Issued ${fmtClock(d.status.issued, now)}` : ""].filter(Boolean).join("\n")}>
-              <a className="mt-s2 inline-flex min-h-11 items-center gap-1 font-semibold text-brand" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="caret-right" className="size-4" aria-hidden /></a>
+              <a className="cs-link ts-link mt-s2" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="caret-right" size={16} /></a>
             </OfficialWording>
           </section>
         )}

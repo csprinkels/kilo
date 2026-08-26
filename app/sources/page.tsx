@@ -57,7 +57,11 @@ const getPlatform = () => {
 };
 const usePlatform = () => useSyncExternalStore(() => () => {}, getPlatform, () => "other" as ReturnType<typeof getPlatform>);
 
-/** One settings card in the Now screen's language: a bubble tile beside the serif heading, then the sentence, then the controls. */
+/**
+ * One card in the shared card language: .cs-card glass, and the icon tile beside the heading
+ * as .cs-heroline — the shape thirteen cards had each written by hand. `tone="hot"` swaps the
+ * tile to the system's brick one; nothing else on the card changes colour.
+ */
 function Card({ icon, tone, title, sentence, children }: {
   icon: IconName;
   tone?: "hot";
@@ -66,12 +70,12 @@ function Card({ icon, tone, title, sentence, children }: {
   children?: React.ReactNode;
 }) {
   return (
-    <section className={`isl-card${tone ? ` isl-${tone}` : ""}`}>
-      <div className="sr-head">
-        <span className="isl-bubble"><Icon name={icon} size={20} /></span>
-        <h2 className="isl-h">{title}</h2>
+    <section className="cs-card">
+      <div className="cs-heroline">
+        <span className={`cs-ictile${tone === "hot" ? " cs-ictile--brick" : ""}`}><Icon name={icon} size={20} /></span>
+        <h2 className="cs-display h-title">{title}</h2>
       </div>
-      {sentence && <p className="isl-p max-w-[36rem]">{sentence}</p>}
+      {sentence && <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{sentence}</p>}
       {children}
     </section>
   );
@@ -88,77 +92,83 @@ export default function Settings() {
 
   return (
     <PageShell title="Settings and about" sentence={`Pick your island and text size, turn on warnings, and see where ${APP_NAME}'s information comes from.`}>
-      <div className="now-island">
-        <div className="isl-stack mt-s7">
-          <Card icon="mountains-fill" title="Your island" sentence="Everything in Kilo is about this island.">
-            <div className="mt-s4 flex flex-col gap-s2">
-              {ISLANDS.map((i) => (
-                <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
-                  {islandName(i, true)}
-                </button>
-              ))}
-            </div>
-          </Card>
+      <div className="mt-s6 flex flex-col gap-s3">
+        <Card icon="mountains-fill" title="Your island" sentence="Everything in Kilo is about this island.">
+          <div className="mt-s4 flex flex-col gap-s2">
+            {ISLANDS.map((i) => (
+              <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
+                {islandName(i, true)}
+              </button>
+            ))}
+          </div>
+        </Card>
 
-          <Card icon="note-pencil" title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
-            <div className="mt-s4 flex gap-s2" role="group" aria-label="Text size">
-              {SIZES.map(([v, label]) => (
-                <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>
-              ))}
-            </div>
-          </Card>
+        <Card icon="note-pencil" title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
+          <div className="mt-s4 flex gap-s2" role="group" aria-label="Text size">
+            {SIZES.map(([v, label]) => (
+              <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>
+            ))}
+          </div>
+        </Card>
 
-          {/* AlertsCard is shared with the Now screen; it gets the card ground here, not a rewrite. */}
-          <div className="isl-card sr-embed"><AlertsCard island={island} /></div>
+        {/* AlertsCard is shared with the Now screen; it gets the card ground here, not a rewrite. */}
+        <div className="cs-card sr-embed"><AlertsCard island={island} /></div>
 
-          <Card icon="siren-fill" title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
-            <a className="btn mt-s4" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <Icon name="caret-right" className="size-5" aria-hidden /></a>
-          </Card>
+        <Card icon="siren-fill" title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
+          <div className="cs-actions">
+            <a className="btn" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <Icon name="caret-right" className="size-5" aria-hidden /></a>
+          </div>
+        </Card>
 
-          <Card icon="house-fill" title={`Add ${APP_NAME} to your Home Screen`} sentence={
-            platform === "standalone" ? `${APP_NAME} is on your Home Screen.`
-            : platform === "ios" ? <>Tap the Share button, then &ldquo;Add to Home Screen&rdquo;. It then opens full screen and works with no signal.</>
-            : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
-            : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
-          } />
+        <Card icon="house-fill" title={`Add ${APP_NAME} to your Home Screen`} sentence={
+          platform === "standalone" ? `${APP_NAME} is on your Home Screen.`
+          : platform === "ios" ? <>Tap the Share button, then &ldquo;Add to Home Screen&rdquo;. It then opens full screen and works with no signal.</>
+          : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
+          : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
+        } />
 
-          <Card icon="megaphone-fill" title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
-            <ul className="mt-s4 divide-y divide-line">
-              {SOURCES.map(([name, what]) => (
-                <li key={name} className="py-s3 text-body first:pt-0 last:pb-0">
+        <Card icon="megaphone-fill" title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
+          {/* The feed row from the mockup: pip · who · what. The pip is the neutral one on purpose —
+              nothing on this phone knows whether a feed answered, so it may not claim one did. */}
+          <ul className="sr-src mt-s3">
+            {SOURCES.map(([name, what]) => (
+              <li key={name} className="cs-row">
+                <span className="cs-pip cs-pip--none" aria-hidden />
+                <div className="cs-rowmain">
                   <span className="block font-semibold text-ink">{name}</span>
                   <span className="block text-small text-ink-2">{what}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-s4 max-w-[36rem] border-t border-line pt-s3 text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
-          </Card>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="cs-rule" />
+          <p className="max-w-[36rem] text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
+        </Card>
 
-          <Card icon="warning-fill" tone="hot" title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="sr-911">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
+        <Card icon="warning-fill" tone="hot" title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="sr-911">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
 
-          <Card icon="check-circle" title={`What ${APP_NAME} will never do`}>
-            <ul className="mt-s4 flex flex-col gap-s3">
-              {NEVER.map((line) => (
-                <li key={line} className="flex items-start gap-s3 text-body">
-                  <Icon name="x" size={18} className="mt-s1 text-ink-2" />
-                  <span className="max-w-[34rem]">{line}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
+        <Card icon="check-circle" title={`What ${APP_NAME} will never do`}>
+          <ul className="mt-s4 flex flex-col gap-s3">
+            {NEVER.map((line) => (
+              <li key={line} className="flex items-start gap-s3 text-body">
+                <Icon name="x" size={18} className="mt-s1 text-ink-2" />
+                <span className="max-w-[34rem]">{line}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
-        <nav className="list mt-s5">
-          <Link href="/guidelines/" className="row font-semibold text-brand">
-            <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+        <nav className="cs-card">
+          <Link href="/guidelines/" className="cs-row cs-row--mid sr-go">
+            <span className="cs-rowmain font-semibold">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
           </Link>
-          <Link href="/privacy/" className="row font-semibold text-brand">
-            <span className="flex-1">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+          <Link href="/privacy/" className="cs-row cs-row--mid sr-go">
+            <span className="cs-rowmain font-semibold">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
           </Link>
         </nav>
-
-        <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
       </div>
+
+      <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
     </PageShell>
   );
 }

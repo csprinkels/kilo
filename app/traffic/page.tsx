@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Icon, { type IconName } from "@/components/Icon";
+import Icon from "@/components/Icon";
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
@@ -38,6 +38,8 @@ const isClosed = (i: Item) => /both|closed/i.test(i.status ?? "") && !/open|lane
 /** How an item is drawn; an open detour is not drawn at all. */
 const segmentKind = (i: Item): Segment["kind"] | null =>
   /alternate|detour/i.test(i.status ?? "") ? null : isRoadwork(i) ? "lane" : i.type === "road_closure" && isClosed(i) ? "closed" : i.type === "road_closure" ? "lane" : "spot";
+/** The list's rail says what the map says: red = closed, orange = one lane, dotted = a spot. */
+const RAIL: Record<Segment["kind"], string> = { closed: "tr-rail", lane: "tr-rail tr-rail--lane", spot: "tr-rail tr-rail--spot" };
 
 /** One sentence: the worst closure and its detour, then how many more, then crashes. Quiet days count roadwork. */
 function roadsSentence(island: IslandId, closures: Item[], trouble: Item[], roadwork: number, plain: Map<string, Plain>): string {
@@ -86,7 +88,15 @@ export default function RoadsPage() {
   const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon, approx: i.fields?.approx === "area" }] : []; });
   const drawn = { closed: segments.filter((g) => g.kind === "closed").length, lane: segments.filter((g) => g.kind === "lane").length, spot: segments.filter((g) => g.kind === "spot" && g.lat != null && g.lon != null).length };
   const anyApprox = segments.some((g) => g.approx);
-  const legend = [drawn.closed && "Red: closed.", drawn.lane && "Orange: one lane or roadwork.", drawn.spot && (anyApprox ? "Dotted circles: crashes or lights out, by neighborhood." : "Dots: crashes or lights out.")].filter(Boolean).join(" ");
+  // The same words as before, each now carrying the swatch it names, so the key reads at a glance.
+  const keys: { sw: string; text: string }[] = [];
+  if (drawn.closed) keys.push({ sw: "cs-key-sw--brick", text: "Red: closed." });
+  if (drawn.lane) keys.push({ sw: "tr-swatch--lane", text: "Orange: one lane or roadwork." });
+  if (drawn.spot) keys.push(anyApprox
+    ? { sw: "cs-key-sw--dot tr-swatch--approx", text: "Dotted circles: crashes or lights out, by neighborhood." }
+    : { sw: "cs-key-sw--dot cs-key-sw--brick", text: "Dots: crashes or lights out." });
+  // Only alongside a map key, the way the old legend read: "Blue dot: you." never stood alone.
+  if (you && keys.length) keys.push({ sw: "cs-key-sw--dot tr-swatch--you", text: "Blue dot: you." });
   // The county sometimes enters one road three times (one row per stretch). One row per road + status; the map still draws every stretch.
   const grouped: { key: string; item: Item; also: Item[] }[] = [];
   for (const i of official) {
@@ -120,8 +130,8 @@ export default function RoadsPage() {
   return (
     <PageShell title="Roads" sentence={loaded ? roadsSentence(island, closures, trouble, roadwork.length, plain) : undefined} island={island} onIsland={setIsland}
       fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source={SOURCE[island]}>
-      {/* .now-island carries the card language (.isl-*) the Now screen uses; its ground is the same --bg. */}
-      <div className="now-island mt-s5">
+      {/* One column of glass cards on the paper ground, the way the mockup stacks them. */}
+      <div className="mt-s5 flex flex-col gap-s3">
         {!loaded && offline && (
           <>
             <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
@@ -131,82 +141,90 @@ export default function RoadsPage() {
         )}
         {!loaded && !offline && <p className="text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
         {loaded && (
-          <div className="isl-stack">
-            {/* The island map stays framed like a picture; its key rides under it on the same frame. */}
-            <div className="picture">
-              <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
-              {legend && <p className="tr-cap">{legend}{you ? " Blue dot: you." : ""}</p>}
-            </div>
+          <>
+            {/* The island map is the card's picture; its key rides under it, each word wearing its own swatch. */}
+            <section className="cs-card">
+              <div className="cs-figure tr-top">
+                <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+              </div>
+              {keys.length > 0 && (
+                <div className="cs-keys">
+                  {keys.map((k) => <span key={k.text} className="cs-key"><i className={`cs-key-sw ${k.sw}`} aria-hidden /> {k.text}</span>)}
+                </div>
+              )}
+            </section>
 
             {official.length > 0 && (
-              <section className="isl-card tr-quiet">
+              <section className="cs-card">
                 {you ? (
-                  <p className="text-body text-ink">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
+                  <p className="cs-body tr-top">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
                 ) : (
                   <>
-                    <button className="btn btn-big" onClick={locate} disabled={locating}><Icon name="crosshair" className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
-                    <p className="isl-note tr-note">{APP_NOTE}</p>
+                    <button className="cs-ghost cs-wide tr-wide" onClick={locate} disabled={locating}><Icon name="crosshair" size={18} aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
+                    <p className="cs-meta tr-gap">{APP_NOTE}</p>
                   </>
                 )}
               </section>
             )}
-            {youMsg && <p className="isl-p px-1 text-ink-2">{youMsg}</p>}
+            {youMsg && <p className="cs-body">{youMsg}</p>}
 
-            <section className="isl-card isl-road">
-              <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone-fill" size={20} /></span> Closed or blocked</h2>
+            <section className="cs-card">
+              <p className="cs-label"><Icon name="traffic-cone-fill" size={18} aria-hidden /> Closed or blocked</p>
               {official.length ? (
                 <>
-                  {anyStale && <p className="isl-p text-ink-2">Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</p>}
+                  {anyStale && <p className="cs-meta">Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</p>}
                   {byDistrict.map((d) => (
                     <div key={d.name ?? "-"}>
-                      {byDistrict.length > 1 && d.name && <h3 className="now-label mt-s4">{d.name}</h3>}
-                      <ul className={`tr-rows ${byDistrict.length > 1 ? "mt-s2" : "mt-s3"}`}>
+                      {byDistrict.length > 1 && d.name && <h3 className="cs-label tr-dist">{d.name}</h3>}
+                      <ul className="tr-list">
                         {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
                       </ul>
                     </div>
                   ))}
                 </>
               ) : (
-                <p className="isl-p text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
+                <p className="cs-body">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
               )}
-              {grouped.length > rows.length && !showAll && <button className="btn mt-s4" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-down" className="size-5" aria-hidden /></button>}
+              {grouped.length > rows.length && !showAll && <button className="cs-ghost cs-wide tr-wide tr-more" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-down" size={16} aria-hidden /></button>}
             </section>
 
             {island === "hawaii" && (
-              <section className="isl-card tr-quiet">
-                <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="users-three-fill" size={20} /></span> What neighbors say</h2>
-                {neighbors.length ? <ul className="tr-rows mt-s3">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="isl-p text-ink-2">Nothing from neighbors today.</p>}
+              <section className="cs-card">
+                <p className="cs-label"><Icon name="users-three-fill" size={18} aria-hidden /> What neighbors say</p>
+                {neighbors.length ? <ul className="tr-list">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="cs-body">Nothing from neighbors today.</p>}
               </section>
             )}
 
             {roadwork.length > 0 && (
               showWork ? (
-                <section className="isl-card tr-quiet">
-                  <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone-fill" size={20} /></span> Roadwork</h2>
-                  <p className="isl-p text-ink-2">Planned work. Expect a wait, not a closed road.</p>
-                  <ul className="tr-rows mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
+                <section className="cs-card">
+                  <p className="cs-label"><Icon name="traffic-cone-fill" size={18} aria-hidden /> Roadwork</p>
+                  <p className="cs-body tr-top">Planned work. Expect a wait, not a closed road.</p>
+                  <ul className="tr-list">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
                 </section>
               ) : (
-                <button className="btn btn-big" onClick={() => setShowWork(true)}><Icon name="traffic-cone" className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
+                <button className="cs-ghost cs-wide tr-wide" onClick={() => setShowWork(true)}><Icon name="traffic-cone" size={18} aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
               )
             )}
 
             {showMap ? (
-              <div className="picture">
-                <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
-              </div>
+              <section className="cs-card">
+                <div className="cs-figure tr-top">
+                  <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
+                </div>
+              </section>
             ) : (
-              <button className="btn btn-big" onClick={() => setShowMap(true)}><Icon name="car" className="size-5" aria-hidden /> Open the live traffic map (needs a good signal)</button>
+              <button className="cs-ghost cs-wide tr-wide" onClick={() => setShowMap(true)}><Icon name="car" size={18} aria-hidden /> Open the live traffic map (needs a good signal)</button>
             )}
 
             {island === "hawaii" && (
-              <Link href="/report/?type=road_blocked" className="isl-card tr-quiet tr-go">
-                <span className="isl-bubble"><Icon name="note-pencil" size={20} /></span>
-                <span className="flex-1 text-body font-semibold text-ink">Saw something on the road? Tell your neighbors</span>
-                <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
+              <Link href="/report/?type=road_blocked" className="cs-card tr-tell">
+                <span className="cs-ictile"><Icon name="note-pencil" size={21} /></span>
+                <span className="cs-title">Saw something on the road? Tell your neighbors</span>
+                <Icon name="caret-right" size={18} className="tr-caret" aria-hidden />
               </Link>
             )}
-          </div>
+          </>
         )}
       </div>
     </PageShell>
@@ -222,6 +240,7 @@ function roadName(item: Item) {
 /**
  * A closure or crash row, like ItemRow but with the closed stretch drawn when you open it.
  * Headline and action come from plainAlert so the words match the rest of the app.
+ * The rail down the left says what the map says: red closed, orange one lane, dotted a spot.
  */
 function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, district, showSource }: { item: Item; also?: Item[]; island: IslandId; now: number; plain: Plain; roads: RoadLine[]; miles?: number; you?: LatLon; district?: string; showSource?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -231,10 +250,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   const county = item.source.startsWith("hccda") && isClosed(item);
   const cd = CIVIL_DEFENSE[island];
   const [copied, setCopied] = useState(false);
-  const glyph: IconName = item.type === "traffic" ? "car" : "traffic-cone";
-  // The same colours as the map: red = closed, orange = one lane, so the list and the picture say the same thing.
   const kind = segmentKind(item);
-  const tone = kind === "lane" ? "text-warn" : kind ? "text-danger" : LEVEL_TEXT[p.level];
   // Under a district heading the headline need not repeat the district.
   const title = district ? p.headline.replace(` in ${district}`, "") : p.headline;
   const updated = lastUpdated(item, now);
@@ -257,43 +273,44 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   };
   return (
     <li id={`item-${hashOf(item.key)}`}>
-      <button className="row items-start" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={`tile mt-0.5 ${kind === "closed" ? "bg-danger-bg" : kind === "lane" ? "bg-warn-bg" : ""}`}><Icon name={`${glyph}-fill`} size={20} className={tone} /></span>
-        <span className="min-w-0 flex-1">
-          {(p.word || p.level >= 3) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
-          <span className="block text-body font-semibold leading-snug text-ink">{title}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
-          <span className="mt-0.5 block text-small text-ink-2 num">{meta}</span>
+      <button className="cs-row tr-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <i className={kind ? RAIL[kind] : "tr-rail tr-rail--spot"} aria-hidden />
+        <span className="cs-rowmain">
+          {(p.word || p.level >= 3) && <span className={`tr-word ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
+          <span className="cs-rowname">{title}{also.length ? ` (${also.length + 1} stretches)` : ""}</span>
+          <span className="cs-rowsub num">{meta}</span>
         </span>
-        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" size={16} className={`tr-caret ${open ? "tr-caret--open" : ""}`} aria-hidden />
       </button>
       {open && (
-        <div className="fade-up mb-s4 pl-9">
+        <div className="fade-up tr-detail">
           {path && (
             <>
-              <div className="well"><TileMap className="h-[15rem]" island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
-              <p className="mt-s3 text-small text-ink-2">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
+              <div className="cs-figure tr-top"><TileMap className="h-[15rem]" island={island} segments={stretches.map((i) => ({ key: i.key, kind: segmentKind(i) ?? "lane", path: i.path }))} focus={allPoints} detour={detour} you={you} label={caption} /></div>
+              <p className="cs-figcap">{caption}.{detour.length ? " Blue line: the way around." : ""}{you ? " Blue dot: you." : ""}</p>
             </>
           )}
           {county && (
-            <div className="mt-s3">
-              <p className="text-body font-semibold text-ink">Way around</p>
+            <>
+              <div className="cs-rule" />
+              <h4 className="cs-title tr-subtitle">Way around</h4>
               {alt ? (
-                <p className="mt-1 text-body text-ink-2">Civil Defense says: use {alt}.{detour.length ? " It is the blue line on the map." : ""}</p>
+                <p className="cs-body">Civil Defense says: use {alt}.{detour.length ? " It is the blue line on the map." : ""}</p>
               ) : (
                 <>
-                  <p className="mt-1 text-body text-ink-2">Civil Defense has not listed a way around this yet. If you live nearby and need to get through, call them.</p>
-                  {cd && <a className="btn mt-s2" href={`tel:${cd.tel}`}><Icon name="phone" className="size-5" aria-hidden /> Call Civil Defense {cd.shown}</a>}
+                  <p className="cs-body">Civil Defense has not listed a way around this yet. If you live nearby and need to get through, call them.</p>
+                  {cd && <div className="cs-actions"><a className="cs-cta" href={`tel:${cd.tel}`}><Icon name="phone" size={16} aria-hidden /> Call Civil Defense {cd.shown}</a></div>}
                 </>
               )}
-            </div>
+            </>
           )}
-          {item.body && !path && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
-          {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
-          <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
-            {mid && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.fields?.approx === "area" ? `https://maps.apple.com/?q=${encodeURIComponent(`${item.title.split(/:|—/).slice(1).join(" ").trim()}, Oahu`)}` : `https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><Icon name="map-pin" className="size-4" aria-hidden /> Open in Maps</a>}
-            {item.srcUrl && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><Icon name="arrow-square-out" className="size-4" aria-hidden /> Read it on their site</a>}
-            <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Icon name="share-network" className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
-          </p>
+          {item.body && !path && <p className="cs-body tr-top">{item.body}</p>}
+          {item.expiresAt && <p className="cs-meta tr-gap num">Until {fmtClock(item.expiresAt, now)}.</p>}
+          <div className="cs-actions">
+            {mid && <a className="cs-cta" href={item.fields?.approx === "area" ? `https://maps.apple.com/?q=${encodeURIComponent(`${item.title.split(/:|—/).slice(1).join(" ").trim()}, Oahu`)}` : `https://maps.apple.com/?ll=${mid[0].toFixed(5)},${mid[1].toFixed(5)}&q=${encodeURIComponent(roadName(item))}`} target="_blank" rel="noreferrer"><Icon name="map-pin" size={16} aria-hidden /> Open in Maps</a>}
+            {item.srcUrl && <a className="cs-link" href={item.srcUrl} target="_blank" rel="noreferrer">Read it on their site</a>}
+            <button className="cs-link" onClick={share}>{copied ? "Copied." : "Share"}</button>
+          </div>
         </div>
       )}
     </li>

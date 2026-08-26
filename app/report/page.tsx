@@ -44,22 +44,12 @@ type Draft = { type?: ReportType; district?: string; locText: string; text: stri
 const EMPTY: Draft = { locText: "", text: "", agreed: false };
 const isType = (s: string | null): s is ReportType => !!s && s in REPORT_TYPES;
 
-/** A card's headline in the Now card language: the picture in its bubble tile, then the serif line. */
-function CardHead({ icon, children }: { icon: IconName; children: React.ReactNode }) {
-  return (
-    <h2 className="isl-h rp-head">
-      <span className="isl-bubble"><Icon name={icon} size={20} /></span>
-      {children}
-    </h2>
-  );
-}
-
 /** The chip-shaped way out of a card, to the rules. */
 function RulesChip({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rp-chiprow">
-      <Link href="/guidelines/" className="btn">
-        <Icon name="users-three" size={18} />{children}<Icon name="caret-right" size={16} className="text-ink-2" />
+    <p className="cs-chiprow rp-chiprow">
+      <Link href="/guidelines/" className="cs-chip cs-chip--link">
+        {children}<Icon name="caret-right" size={14} />
       </Link>
     </p>
   );
@@ -86,23 +76,23 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
 
   return (
     <PageShell title="Reports" sentence={SENTENCE} island={island} onIsland={setIsland} fetchedAt={snap?.fetchedAt ?? ess?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source="your neighbors">
-      <div className="now-island">
+      <div className="rp-page">
         {open ? (
           <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
         ) : (
           <>
-            <button className="btn btn-primary btn-big mt-s5" onClick={() => setWriting(true)}>
+            <button className="cs-cta cs-wide cs-wide--big mt-s5" onClick={() => setWriting(true)}>
               <Icon name="note-pencil" size={20} />Report something
             </button>
             <H2>Reported near you</H2>
             {!snap?.data ? (
               offline
-                ? <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
-                : <p className="isl-card rp-quiet mt-s3">Loading what neighbors reported…</p>
+                ? <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
+                : <p className="cs-card rp-quiet mt-s3">Loading what neighbors reported…</p>
             ) : posts.length === 0 ? (
-              <p className="isl-card rp-quiet mt-s3">Nothing reported today.</p>
+              <section className="cs-card cs-hero mt-s3"><p className="cs-display cs-display--hero">Nothing reported today.</p></section>
             ) : (
-              <ul className="list mt-s3">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
+              <section className="cs-card mt-s3"><ul className="rp-feed">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul></section>
             )}
             <RulesChip>Rules for reports</RulesChip>
           </>
@@ -164,14 +154,14 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       : r.merged ? "Someone already reported this. We added your “me too”."
       : `Posted to ${district}. Neighbors see it marked “not checked”. It clears by itself around ${fmtClock(r.expiresAt, result.at)}.`;
     return (
-      <section className="isl-card mt-s6">
-        <CardHead icon={r.status === "pending" ? "note-pencil" : r.merged ? "users-three" : "check-circle"}>
+      <section className={`cs-card cs-hero mt-s6${r.status === "pending" ? " cs-hero--amber" : ""}`}>
+        <h2 className="cs-display cs-display--hero">
           {r.status === "pending" ? "Saved for a person to read" : r.merged ? "Already reported" : "Posted"}
-        </CardHead>
-        <p className="isl-p max-w-[36rem] text-ink-2">{line}</p>
-        <div className="mt-s4 flex flex-col gap-s2">
-          <button className="btn btn-primary btn-big" onClick={onClose}>Back to Reports</button>
-          <button className="btn btn-big" onClick={again}>Report another</button>
+        </h2>
+        <p className="cs-body cs-body--hero max-w-[36rem]">{line}</p>
+        <div className="rp-stack">
+          <button className="cs-cta cs-wide" onClick={onClose}>Back to Reports</button>
+          <button className="cs-ghost cs-wide" onClick={again}>Report another</button>
         </div>
       </section>
     );
@@ -181,29 +171,29 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
     <form className="mt-s2" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <Notice title="Hurt or in danger? Call 911 first.">This tells neighbors. It does not call for help.</Notice>
 
-      <div className="isl-stack mt-s3">
-        <section className="isl-card">
-          <CardHead icon="camera">What did you see?</CardHead>
+      <div className="rp-cards mt-s3">
+        <section className="cs-card">
+          <h2 className="cs-display cs-display--card rp-cardh">What did you see?</h2>
           <div className="rp-tiles">
             {REPORT_TYPE_KEYS.map((k) => {
               const t = TILE[k], on = d.type === k;
               return (
                 <button key={k} type="button" onClick={() => setD({ ...d, type: k })} aria-pressed={on}
                   className={`rp-tile${on ? " rp-tile--on" : ""}${k === "other" ? " rp-tile--wide" : ""}`}>
-                  <Icon name={`${t.icon}-fill`} size={30} />
-                  <span className="inline-flex items-center gap-1">{on && <Icon name="check" className="size-5" aria-hidden />}{t.label}</span>
+                  <Icon name={`${t.icon}-fill`} size={28} />
+                  <span className="rp-tilelbl">{on && <Icon name="check" size={15} aria-hidden />}{t.label}</span>
                 </button>
               );
             })}
           </div>
         </section>
 
-        <section className="isl-card">
-          <CardHead icon="map-pin">Where?</CardHead>
+        <section className="cs-card">
+          <h2 className="cs-display cs-display--card rp-cardh">Where?</h2>
           <label htmlFor="where" className="rp-label">Near which road or town?</label>
           <input id="where" value={d.locText} maxLength={LOC_MAX} onChange={(e) => setD({ ...d, locText: e.target.value })}
             placeholder="Highway 130 by the Pāhoa post office" autoComplete="off" className="rp-field" />
-          {guessed && <p className="rp-guess"><Icon name="check" size={18} />Looks like {guessed}.</p>}
+          {guessed && <p className="rp-guess"><Icon name="check" size={17} />Looks like {guessed}.</p>}
           {needPick && (
             <>
               <label htmlFor="district" className="rp-label">Which part of the island?</label>
@@ -212,28 +202,28 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
                   <option value="">Pick one</option>
                   {Object.keys(HAWAII_DISTRICTS).map((k) => <option key={k} value={k}>{k}</option>)}
                 </select>
-                <Icon name="caret-down" size={20} className="rp-caret" />
+                <Icon name="caret-down" size={16} className="rp-caret" />
               </span>
             </>
           )}
         </section>
 
-        <section className="isl-card">
-          <CardHead icon="note-pencil">Anything else?</CardHead>
+        <section className="cs-card">
+          <h2 className="cs-display cs-display--card rp-cardh">Anything else?</h2>
           <label htmlFor="more" className="rp-label">What you saw, not who you think did it.</label>
           <textarea id="more" value={d.text} maxLength={TEXT_MAX} rows={4} onChange={(e) => setD({ ...d, text: e.target.value })}
             placeholder={d.type ? REPORT_TYPES[d.type].hint : undefined} className="rp-field rp-area" />
           {hold
-            ? <p className="isl-note rp-hold">{HOLD_WHY[hold]}, so a person will read it before it shows.</p>
-            : d.type && HELD_BY_DEFAULT.includes(d.type) && <p className="isl-note rp-hold">A person reads &ldquo;Something else&rdquo; reports before they show.</p>}
+            ? <p className="cs-note"><Icon name="flag" size={18} /><span>{HOLD_WHY[hold]}, so a person will read it before it shows.</span></p>
+            : d.type && HELD_BY_DEFAULT.includes(d.type) && <p className="cs-note"><Icon name="flag" size={18} /><span>A person reads &ldquo;Something else&rdquo; reports before they show.</span></p>}
         </section>
 
-        <section className="isl-card">
-          <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="row items-start">
-            <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${d.agreed ? "border-brand bg-brand text-brand-ink" : "border-ink-2"}`} aria-hidden>{d.agreed && <Icon name="check" className="size-5" />}</span>
-            <span className="text-body text-ink">This is not an emergency and I am 18 or older.</span>
+        <section className="cs-card">
+          <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="rp-check">
+            <span className={`rp-box${d.agreed ? " rp-box--on" : ""}`} aria-hidden><Icon name="check" size={16} /></span>
+            <span className="rp-checktxt">This is not an emergency and I am 18 or older.</span>
           </button>
-          <hr className="rp-rule" />
+          <div className="cs-rule" />
           <RulesChip>Neighbor rules</RulesChip>
 
           {TURNSTILE_KEY && (
@@ -243,11 +233,11 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
             </>
           )}
 
-          {tried && problem && <p className="rp-bad" role="alert"><Icon name="warning-fill" size={20} />{problem}</p>}
-          {result && !result.r.ok && <p className="rp-bad" role="alert"><Icon name="wifi-slash" size={20} />{result.r.error}</p>}
-          <div className="mt-s4 flex flex-col gap-s2">
-            <button type="submit" disabled={busy || checking} className="btn btn-primary btn-big disabled:opacity-60">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
-            <button type="button" className="btn btn-big" onClick={onClose}>Back to Reports</button>
+          {tried && problem && <p className="rp-bad" role="alert"><Icon name="warning-fill" size={18} />{problem}</p>}
+          {result && !result.r.ok && <p className="rp-bad" role="alert"><Icon name="wifi-slash" size={18} />{result.r.error}</p>}
+          <div className="rp-stack">
+            <button type="submit" disabled={busy || checking} className="cs-cta cs-wide">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
+            <button type="button" className="cs-ghost cs-wide" onClick={onClose}>Back to Reports</button>
           </div>
         </section>
       </div>

@@ -123,12 +123,8 @@ export default function StormMap({ storm, place, className }: Props) {
           const fill = p.outlook ? "var(--map-water)" : windColor(p.windKt);
           return (
             <g key={i}>
-              {i === 0 && (
-                <circle cx={x} cy={y} r={18} fill={windColor(p.windKt)} opacity={0.28}>
-                  <animate attributeName="r" values="12;26;12" dur="2.4s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
-                </circle>
-              )}
+              {/* SMIL ignores prefers-reduced-motion; the CSS keyframe is caught by the global reset. */}
+              {i === 0 && <circle className="st-pulse" cx={x} cy={y} r={17} fill={windColor(p.windKt)} />}
               <circle cx={x} cy={y} r={r} fill={fill} stroke={windColor(p.windKt)} strokeWidth={2.25} />
             </g>
           );

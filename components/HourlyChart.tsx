@@ -78,72 +78,75 @@ export default function HourlyChart({ h }: { h: Hourly }) {
   }, [metric]);
 
   return (
-    <div className="mt-s4">
-      {/* The strip bleeds to the screen edges and is clipped by them, like a photo wider than the page. */}
-      <div className="no-scrollbar -mx-5 overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" }}>
-        <div className="relative" style={{ width: W, height: TOTAL }}>
-          <svg width={W} height={TOTAL} viewBox={`0 0 ${W} ${TOTAL}`} className="absolute inset-0" aria-hidden>
-            {blocks.slice(1).map((p) => <line key={p.from} x1={PAD + p.from * COL} y1={0} x2={PAD + p.from * COL} y2={HEAD + PLOT + AXIS} stroke="var(--line)" strokeWidth={1} />)}
-            {/* where we are right now */}
-            <line x1={x(0)} y1={HEAD} x2={x(0)} y2={HEAD + PLOT} stroke="var(--brand)" strokeWidth={1.5} strokeDasharray="4 4" />
-            {/* other models' guesses sit behind the forecast */}
-            {alts.map((a, k) => <path key={k} d={smooth(pts(a))} fill="none" stroke="var(--ink)" strokeOpacity={0.28} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />)}
-            <path d={smooth(pts(main))} fill="none" stroke="var(--ink)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
-            {marks.map((i) => <circle key={i} cx={x(i)} cy={y(main[i])} r={5} fill="var(--ink)" stroke="var(--bg)" strokeWidth={2.5} />)}
-          </svg>
+    <>
+      {/* The strip bleeds to the card's edges and is clipped by them, like a photo wider than the page. */}
+      <div className="wx-strip">
+        <div className="no-scrollbar wx-scroll">
+          <div className="wx-chart" style={{ width: W, height: TOTAL }}>
+            <svg width={W} height={TOTAL} viewBox={`0 0 ${W} ${TOTAL}`} aria-hidden>
+              {blocks.slice(1).map((p) => <line key={p.from} x1={PAD + p.from * COL} y1={0} x2={PAD + p.from * COL} y2={HEAD + PLOT + AXIS} stroke="var(--hairline)" strokeWidth={1} />)}
+              {/* where we are right now */}
+              <line x1={x(0)} y1={HEAD} x2={x(0)} y2={HEAD + PLOT} stroke="var(--brand)" strokeWidth={1.5} strokeDasharray="4 4" />
+              {/* other models' guesses sit behind the forecast */}
+              {alts.map((a, k) => <path key={k} d={smooth(pts(a))} fill="none" stroke="var(--ink)" strokeOpacity={0.28} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />)}
+              <path d={smooth(pts(main))} fill="none" stroke="var(--ink)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+              {marks.map((i) => <circle key={i} cx={x(i)} cy={y(main[i])} r={5} fill="var(--ink)" stroke="var(--card)" strokeWidth={2.5} />)}
+            </svg>
 
-          {/* Period names with the chance of rain, centred over their hours */}
-          {blocks.map((p) => (
-            <div key={p.from} className="absolute top-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap leading-tight" style={{ left: PAD + (p.from + p.len / 2) * COL }}>
-              <span className="text-[1.0625rem] font-bold text-ink">{p.name}</span>
-              <span className="flex items-center gap-1 text-[0.9375rem] text-ink-2 num">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/weather/raindrop.svg" alt="" className="size-5" /> {p.pop}%
-              </span>
-            </div>
-          ))}
+            {/* Period names with the chance of rain, centred over their hours */}
+            {blocks.map((p) => (
+              <div key={p.from} className="wx-blk" style={{ left: PAD + (p.from + p.len / 2) * COL }}>
+                <b>{p.name}</b>
+                <span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/weather/raindrop.svg" alt="" className="wx-drop" /> {p.pop}%
+                </span>
+              </div>
+            ))}
 
-          {/* Sky icon over the figure over the dot, riding the curve */}
-          {marks.map((i) => (
-            // The stack leans a little downhill so a steep curve passes beside the figure, not through it; a --bg halo knocks out what still touches.
-            <div key={i} className="absolute flex -translate-x-1/2 flex-col items-center gap-1.5 whitespace-nowrap"
-              style={{ left: x(i) + Math.max(-6, Math.min(6, (y(main[Math.min(n - 1, i + 1)]) - y(main[Math.max(0, i - 1)])) * 0.3)), bottom: TOTAL - y(main[i]) + 10, filter: "drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 3px var(--bg))" }}>
-              <ConditionIcon code={h.c[i]} night={!!h.n[i]} size={28} />
-              <span className="text-[1.0625rem] font-bold leading-none text-ink num">{main[i]}{unit}</span>
-            </div>
-          ))}
+            {/* Sky icon over the figure over the dot, riding the curve */}
+            {marks.map((i) => (
+              // The stack leans a little downhill so a steep curve passes beside the figure, not through it; a --card halo knocks out what still touches.
+              <div key={i} className="wx-stack"
+                style={{ left: x(i) + Math.max(-6, Math.min(6, (y(main[Math.min(n - 1, i + 1)]) - y(main[Math.max(0, i - 1)])) * 0.3)), bottom: TOTAL - y(main[i]) + 10 }}>
+                <ConditionIcon code={h.c[i]} night={!!h.n[i]} size={28} />
+                <b>{main[i]}{unit}</b>
+              </div>
+            ))}
 
-          {/* Clock times, and "Now" under the first */}
-          {marks.map((i) => (
-            <span key={i} className="absolute -translate-x-1/2 whitespace-nowrap text-[0.8125rem] leading-none text-ink-2 num" style={{ left: x(i), top: HEAD + PLOT + 4 }}>{clock(h.t0 + i * 3_600_000)}</span>
-          ))}
-          <span className="absolute -translate-x-1/2 text-[0.875rem] font-semibold leading-none text-brand" style={{ left: x(0), top: HEAD + PLOT + AXIS + 2 }}>Now</span>
+            {/* Clock times, and "Now" under the first */}
+            {marks.map((i) => (
+              <span key={i} className="wx-clk" style={{ left: x(i), top: HEAD + PLOT + 4 }}>{clock(h.t0 + i * 3_600_000)}</span>
+            ))}
+            <span className="wx-nowlbl" style={{ left: x(0), top: HEAD + PLOT + AXIS + 2 }}>Now</span>
+          </div>
         </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-s3 flex flex-wrap items-center justify-center gap-x-s4 gap-y-1 rounded-[1.75rem] bg-surface-2 px-s3 py-3 text-[1rem] font-semibold text-ink">
-        <span className="flex items-center gap-2 whitespace-nowrap">
-          <svg width="28" height="14" viewBox="0 0 28 14" aria-hidden><line x1="2" y1="7" x2="26" y2="7" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" /><circle cx="14" cy="7" r="5" fill="var(--ink)" stroke="var(--surface-2)" strokeWidth="2" /></svg>
+      <div className="wx-legend cs-keys">
+        <span className="cs-key">
+          <svg width="28" height="14" viewBox="0 0 28 14" aria-hidden><line x1="2" y1="7" x2="26" y2="7" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" /><circle cx="14" cy="7" r="5" fill="var(--ink)" stroke="var(--card)" strokeWidth="2" /></svg>
           Forecast
         </span>
         {alts.length > 0 && (
-          <span className="flex items-center gap-2">
-            <svg className="shrink-0" width="28" height="14" viewBox="0 0 28 14" aria-hidden><line x1="2" y1="7" x2="26" y2="7" stroke="var(--ink)" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" /></svg>
+          <span className="cs-key">
+            <svg width="28" height="14" viewBox="0 0 28 14" aria-hidden><line x1="2" y1="7" x2="26" y2="7" stroke="var(--ink)" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" /></svg>
             Alternate predictions
           </span>
         )}
       </div>
 
       {/* Which figure the curve shows */}
-      <div ref={row} className="no-scrollbar -mx-5 mt-s2 flex overflow-x-auto px-5">
-        {METRICS.map((m) => (
-          <button key={m.id} type="button" aria-pressed={m.id === metric} onClick={() => setMetric(m.id)}
-            className={`min-h-11 shrink-0 whitespace-nowrap px-3 text-[1.25rem] text-brand ${m.id === metric ? "font-semibold" : ""}`}>{m.label}</button>
-        ))}
+      <div className="wx-metrics">
+        <div ref={row} className="no-scrollbar wx-metrics-row">
+          {METRICS.map((m) => (
+            <button key={m.id} type="button" aria-pressed={m.id === metric} onClick={() => setMetric(m.id)} className="wx-metric">{m.label}</button>
+          ))}
+        </div>
       </div>
 
       <p className="sr-only">{marks.map((i) => `${i === 0 ? "Now" : clock(h.t0 + i * 3_600_000)}: ${main[i]}${unit}.`).join(" ")}</p>
-    </div>
+    </>
   );
 }

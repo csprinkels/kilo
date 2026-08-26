@@ -37,39 +37,54 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
   const cat = categoryOf(storm.windKt, storm.cls);
   // +12/24/36/48/72 h, then the two outlook points; the 60 h point adds nothing a reader needs.
   const where = storm.forecast.filter((p) => Math.round(p.hour / 12) !== 5);
-  const tone = level >= 4 ? " st-card--danger" : level >= 3 ? " st-card--warn" : "";
+  // The hero carries the level: brick edge + wash at "act now", amber edge at "get ready", plain glass below.
+  const tone = level >= 4 ? " st-hero--danger" : level >= 3 ? " cs-hero--amber" : "";
+  const tile = level >= 4 ? " cs-ictile--brick" : level >= 3 ? " cs-ictile--amber" : "";
 
   return (
     <>
-      <article className={`st-card${tone}`}>
-        <p className="st-kicker num"><span className="st-bubble"><Icon name="wind-fill" size={20} /></span>{windsLine(storm)}</p>
-        <p className="st-p max-w-[36rem] text-body text-ink">{line.text}</p>
-        {warn && <p className={`st-note ${warn.level >= 4 ? "text-danger" : "text-warn"}`}>A {warn.kind} is out for {place.label}.</p>}
+      {/* Summary: winds now, then the one sentence. */}
+      <article className={`cs-card cs-hero${tone}`}>
+        <div className="cs-heroline">
+          <span className={`cs-ictile${tile}`}><Icon name="wind-fill" size={21} className="cs-ic" /></span>
+          <div className="st-herotext">
+            <p className="cs-title num">{windsLine(storm)}</p>
+            <p className="cs-body cs-body--hero">{line.text}</p>
+          </div>
+        </div>
       </article>
 
-      <section className="st-card">
-        <div className="st-figure"><StormMap storm={storm} place={place} /></div>
-        <p className="mt-s3 max-w-[36rem] text-small text-ink-2">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+      {warn && (
+        <p className={`st-strip${warn.level >= 4 ? " st-strip--danger" : ""}`}>
+          <Icon name="warning" size={19} className="st-strip-ic" />
+          <span>A {warn.kind} is out for <span className="cs-haw">{place.label}</span>.</span>
+        </p>
+      )}
+
+      <section className="cs-card st-flush">
+        <div className="cs-figure st-pic"><StormMap storm={storm} place={place} /></div>
+        <div className="cs-rule" />
+        <p className="cs-meta">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
       </section>
 
-      <section className="st-card">
-        <h2 className="st-kicker"><span className="st-bubble"><Icon name="check-circle" size={20} /></span>What to do</h2>
-        <p className="st-p max-w-[36rem]">{todo}</p>
+      <section className="cs-card">
+        <p className="cs-label"><Icon name="check-circle" size={15} className="cs-ic" /> What to do</p>
+        <p className="cs-body st-do">{todo}</p>
       </section>
 
-      <section className="st-card">
-        <h2 className="st-kicker"><span className="st-bubble"><Icon name="map-pin" size={20} /></span>Where it will be</h2>
-        <ul className="mt-s3 divide-y divide-line">
+      <section className="cs-card">
+        <p className="cs-label"><Icon name="map-pin" size={15} className="cs-ic" /> Where it will be</p>
+        <ul className="st-tl">
           {where.map((p) => {
             const mi = nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon));
             const closest = mi === Math.min(...where.map((q) => nmToMi(distanceNm(q.lat, q.lon, place.lat, place.lon))));
             return (
-              <li key={p.hour} className="flex items-center gap-s3 py-s3 num">
-                <span className="min-w-0 flex-1">
-                  <span className="block text-body font-semibold text-ink">{fmtDayTime(p.at)}{p.outlook ? <span className="font-normal text-ink-2"> · less certain</span> : ""}</span>
-                  <span className="block text-small text-ink-2">{mi.toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))}{closest ? <span className="font-semibold text-brand"> · closest to {place.label}</span> : ""}</span>
+              <li key={p.hour} className={`cs-row cs-row--mid${closest ? " st-tl-peak" : ""}`}>
+                <span className="cs-rowmain">
+                  <span className="cs-rowname num">{fmtDayTime(p.at)}{p.outlook ? <em> · less certain</em> : ""}</span>
+                  <span className="cs-rowsub num">{mi.toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))}{closest ? <> · closest to <span className="cs-haw">{place.label}</span></> : ""}</span>
                 </span>
-                <span className="shrink-0 text-right text-body text-ink">{round5(ktToMph(p.windKt))} <span className="text-small text-ink-2">mph</span></span>
+                <span className="st-mph num">{round5(ktToMph(p.windKt))} <span>mph</span></span>
               </li>
             );
           })}
@@ -77,14 +92,14 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
       </section>
 
       {/* The agency's own words, and the other raw source on this page, in one card. */}
-      <section className="st-card">
+      <section className="cs-card st-flush">
         <OfficialWording title={storm.headline ? `${storm.headline}.` : `${cat.label} ${storm.name}`}>
-          {storm.warnings.length > 0 && <ul className="mt-s2 list-disc pl-s4">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
-          <p className="mt-s2 num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
-          <p className="num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
-          <p className="mt-s2 flex flex-wrap gap-x-s4">
-            {storm.links.public && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
-            {storm.links.graphics && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
+          {storm.warnings.length > 0 && <ul className="st-ql">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
+          <p className="cs-meta st-adv num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
+          <p className="cs-meta num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
+          <p className="cs-actions">
+            {storm.links.public && <a className="cs-link inline-flex min-h-11 items-center" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
+            {storm.links.graphics && <a className="cs-link inline-flex min-h-11 items-center" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
           </p>
         </OfficialWording>
         <Imagery id={storm.id} />
@@ -101,17 +116,17 @@ function Imagery({ id }: { id: string }) {
   if (stamp === null) {
     return (
       <>
-        <hr className="st-rule" />
-        <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="btn btn-big mt-s4"><Icon name="camera" className="size-5" aria-hidden /> See the satellite picture (big download)</button>
+        <div className="cs-rule" />
+        <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="cs-ghost cs-wide gap-2"><Icon name="camera" size={19} className="cs-ic" /> See the satellite picture (big download)</button>
       </>
     );
   }
   return (
-    <div className="mt-s4 grid gap-s4 sm:grid-cols-2">
+    <div className="st-shots">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <figure><div className="st-figure"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centerd on the storm" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">Close-up of the storm. From NOAA.</figcaption></figure>
+      <figure><div className="cs-figure st-shot"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centerd on the storm" className="block w-full" loading="lazy" /></div><figcaption className="cs-figcap">Close-up of the storm. From NOAA.</figcaption></figure>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <figure><div className="st-figure"><img src={`${sector}?t=${stamp}`} alt="Satellite picture of the Hawaiian Islands" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">The Hawaiian Islands. From NOAA.</figcaption></figure>
+      <figure><div className="cs-figure st-shot"><img src={`${sector}?t=${stamp}`} alt="Satellite picture of the Hawaiian Islands" className="block w-full" loading="lazy" /></div><figcaption className="cs-figcap">The Hawaiian Islands. From NOAA.</figcaption></figure>
     </div>
   );
 }

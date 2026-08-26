@@ -23,11 +23,11 @@ export default function DotMap({ dots, caption, label = "Map of the Hawaiian Isl
   return (
     <figure className={className}>
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
-        <rect width={W} height={H} fill="var(--surface)" />
-        {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--surface-2)" stroke="var(--ink-2)" strokeWidth={1} />)}
+        <rect width={W} height={H} fill="var(--map-water)" />
+        {coast?.coordinates.map((poly, i) => <path key={i} d={path(poly[0])} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1} />)}
         {dots.map((d) => {
           const [x, y] = f(d.lon, d.lat);
-          return <circle key={d.id} cx={x} cy={y} r={d.r} fill="var(--ink)" fillOpacity={d.opacity ?? 0.9} stroke="var(--surface)" strokeWidth={1} />;
+          return <circle key={d.id} cx={x} cy={y} r={d.r} fill="var(--ink)" fillOpacity={d.opacity ?? 0.9} stroke="var(--map-land)" strokeWidth={1} />;
         })}
       </svg>
       {caption && <figcaption className="px-s4 py-s3 text-small text-ink-2">{caption}</figcaption>}

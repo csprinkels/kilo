@@ -60,7 +60,7 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
       L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © CARTO · <a href="https://www.rainviewer.com/">RainViewer</a>' }).addTo(map);
       layers.current = frames.map((f) => L.tileLayer(RADAR(host, f.path), { opacity: 0, tileSize: 512, zoomOffset: -1, maxNativeZoom: 8, maxZoom: 11, zIndex: 5 }).addTo(map!));
       layers.current[frames.length - (frames.filter((f) => f.future).length) - 1]?.setOpacity(0.72);
-      L.circleMarker([lat, lon], { radius: 5, color: "#fff", weight: 2, fillColor: css.getPropertyValue("--brand").trim(), fillOpacity: 1, interactive: false }).addTo(map); // small, so the town's own name still reads
+      L.circleMarker([lat, lon], { radius: 5, color: css.getPropertyValue("--map-mark-halo").trim(), weight: 2, fillColor: css.getPropertyValue("--brand").trim(), fillOpacity: 1, interactive: false }).addTo(map); // small, so the town's own name still reads
       map.setView([lat, lon], 8.5);
       map.setMaxZoom(11);
     });
@@ -76,17 +76,19 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
   const when = !f ? "" : at === (nowIdx < 0 ? frames!.length - 1 : nowIdx) ? "Now" : f.future ? `Expected at ${fmtTime(f.time * 1000)}` : fmtTime(f.time * 1000);
 
   return (
-    <div className="picture mt-s3">
-      <div ref={ref} className="h-[20rem] w-full" role="img" aria-label={label} />
+    <div className="cs-card wx-radar mt-s3">
+      <div className="cs-figure wx-radar-frame">
+        <div ref={ref} className="h-[20rem] w-full" role="img" aria-label={label} />
+      </div>
       {frames && frames.length > 1 && (
-        <div className="px-s4 pb-s3 pt-s2">
-          <div className="flex items-center justify-between text-small text-ink-2 num">
+        <>
+          <div className="wx-scrub">
             <span>2 hours ago</span>
-            <span className="font-semibold text-ink">{when}</span>
+            <b>{when}</b>
             <span>{frames.some((x) => x.future) ? "Next half hour" : ""}</span>
           </div>
-          <input type="range" min={0} max={frames.length - 1} value={at} onChange={(e) => setAt(Number(e.target.value))} aria-label="Time" className="mt-s1 h-11 w-full accent-[var(--brand)]" />
-        </div>
+          <input type="range" min={0} max={frames.length - 1} value={at} onChange={(e) => setAt(Number(e.target.value))} aria-label="Time" className="wx-slider" />
+        </>
       )}
     </div>
   );

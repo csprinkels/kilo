@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Merriweather } from "next/font/google";
+import { Nunito, Amatic_SC } from "next/font/google";
 import Script from "next/script";
 import NativeBoot from "@/components/NativeBoot";
 import StatTracker from "@/components/StatTracker";
@@ -7,9 +7,12 @@ import "./globals.css";
 import { APP_NAME, TAGLINE } from "@/lib/brand";
 
 // Two faces, self-hosted by next/font at build time so the offline shell carries them.
-// Inter for everything you read; Merriweather (a sturdy serif, like Acme's) for headings only.
-const body = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
-const heading = Merriweather({ subsets: ["latin", "latin-ext"], weight: ["700"], variable: "--font-heading", display: "swap" });
+// Nunito for everything you read; Amatic SC for display headings only.
+// latin-ext carries the Hawaiian set both faces need — ā ī ū ō and the ʻokina (U+02BB).
+// Amatic renders all of them (checked, not assumed), so a place name is a heading like any other.
+// What Amatic must never set is a large numeral: see --font-num below.
+const body = Nunito({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
+const heading = Amatic_SC({ subsets: ["latin", "latin-ext"], weight: ["700"], variable: "--font-heading", display: "swap" });
 
 export const metadata: Metadata = {
   title: `${APP_NAME} — ${TAGLINE}`,
@@ -21,8 +24,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f1ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#121311" },
+    { media: "(prefers-color-scheme: light)", color: "#f0e4d2" },
+    { media: "(prefers-color-scheme: dark)", color: "#241d17" },
   ],
   width: "device-width",
   initialScale: 1,
