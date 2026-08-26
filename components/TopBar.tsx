@@ -14,7 +14,7 @@ const TAB_PATHS = ["/", "/weather/", "/traffic/", "/report/"];
  * Settings lives in the footer: it is a place you go once, not a control you need on every screen.
  * The island control is a native <select> so iPhones show their big wheel; it looks like a button, not plain text.
  */
-export default function TopBar({ island: islandProp, onIsland: onIslandProp, quiet }: { island?: Island; onIsland?: (i: Island) => void; quiet?: boolean }) {
+export default function TopBar({ island: islandProp, onIsland: onIslandProp }: { island?: Island; onIsland?: (i: Island) => void }) {
   const path = usePathname();
   const isTab = TAB_PATHS.includes(path);
   // Pages that aren't per-island still show the control, so it is in the same place on every screen.

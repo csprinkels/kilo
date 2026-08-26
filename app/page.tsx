@@ -96,7 +96,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
     <IslandScene cond={condNow(now, mainStorm ? mainStorm.level >= 3 : false)} dark={dark} />
     <main className="now-island now-island--scene relative z-[1] min-h-dvh w-full">
       <div className="mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
-        <TopBar island={island} onIsland={setIsland} quiet />
+        <TopBar island={island} onIsland={setIsland} />
         <SectionNav />
         <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
 

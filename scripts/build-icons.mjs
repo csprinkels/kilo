@@ -11,7 +11,7 @@ const NAMES = [
   // topics and item types
   "house", "cloud-sun", "car", "users-three", "traffic-cone", "traffic-signal", "tent", "student",
   "mountains", "waves", "wind", "pulse", "siren", "warning", "megaphone", "lightning-slash", "drop", "first-aid",
-  "paw-print", "lightbulb-filament", "question",
+  "paw-print", "lightbulb-filament", "question", "bell",
 ];
 // These also get a "<name>-fill" twin: outline is the default, fill marks the active tab and icons inside a tinted tile.
 const BOTH = new Set(["house", "cloud-sun", "car", "users-three", "traffic-cone", "traffic-signal", "tent", "student",

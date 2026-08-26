@@ -5,7 +5,7 @@ import EmptyState from "@/components/EmptyState";
 import PageShell from "@/components/PageShell";
 import StormTracker from "@/components/StormTracker";
 import { ISLAND_POINTS, bearingDeg, distanceNm, nmToMi, type StormsSnapshot } from "@/lib/storm";
-import { dirWord, rankStorms, stormName, windsLine } from "@/lib/plain";
+import { dirWord, rankStorms, stormName } from "@/lib/plain";
 import { useJson, useStoredIsland } from "@/lib/data";
 
 const SOURCE = "the Central Pacific Hurricane Center";
@@ -20,35 +20,59 @@ export default function StormsPage() {
   const miles = (s: { lat: number; lon: number }) => nmToMi(distanceNm(s.lat, s.lon, place.lat, place.lon));
   const storms = rankStorms(snap?.data?.storms ?? [], place).map((x) => x.s); // the one that matters here first
   const shown = storms.find((s) => s.id === pick) ?? storms[0];
+  const others = storms.filter((s) => s !== shown);
   const shell = { island, onIsland: setIsland, fetchedAt: snap?.fetchedAt, gen: snap?.data?.gen, offline: snap?.offline, source: SOURCE };
 
   if (snap && !snap.data) {
     return (
       <PageShell {...shell} fetchedAt={undefined} title="Storms">
-        <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
-        {/* useJson refetches on the window "online" event, so this is a retry without a page reload. */}
-        <button className="btn mt-s4" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
+        <div className="st-stack mt-s5">
+          <section className="st-card">
+            {/* useJson refetches on the window "online" event, so this is a retry without a page reload. */}
+            <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
+          </section>
+        </div>
       </PageShell>
     );
   }
 
+  // Most days. One card, one sentence, the calm mark beside it — the same shape the alarm uses.
   if (!shown) {
     return (
-      <PageShell {...shell} title="Storms" sentence={snap ? "No hurricanes or tropical storms near Hawaiʻi. Hurricane season runs June to November." : undefined}>
-        {!snap && <p className="mt-s4 text-body text-ink-2">Checking for storms…</p>}
+      <PageShell {...shell} title="Storms">
+        <div className="st-stack mt-s5">
+          <section className="st-card">
+            {snap ? (
+              <div className="st-hero">
+                <span className="st-bubble st-bubble--calm"><Icon name="check-circle" size={20} /></span>
+                <p className="st-h">No hurricanes or tropical storms near Hawaiʻi. Hurricane season runs June to November.</p>
+              </div>
+            ) : (
+              <p className="text-body text-ink-2">Checking for storms…</p>
+            )}
+          </section>
+        </div>
       </PageShell>
     );
   }
 
   return (
-    <PageShell {...shell} title={stormName(shown)} sentence={windsLine(shown)}>
-      <StormTracker key={shown.id} storm={shown} island={island} />
-      {storms.filter((s) => s !== shown).map((s) => (
-        <button key={s.id} className="row mt-s4 border-t border-line text-body text-ink num" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
-          <span className="min-w-0 flex-1">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
-          <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
-        </button>
-      ))}
+    <PageShell {...shell} title={stormName(shown)}>
+      <div className="st-stack mt-s5">
+        <StormTracker key={shown.id} storm={shown} island={island} />
+        {others.length > 0 && (
+          <section className="st-card">
+            <div className="divide-y divide-line">
+              {others.map((s) => (
+                <button key={s.id} className="row text-body text-ink num" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
+                  <span className="min-w-0 flex-1">Also: {stormName(s)}, {miles(s).toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, s.lat, s.lon))}</span>
+                  <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </PageShell>
   );
 }

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
-import PageShell, { Section } from "@/components/PageShell";
+import PageShell from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import TileMap from "@/components/TileMap";
 import { useRoads, type Segment } from "@/components/RoadMap";
@@ -120,73 +120,77 @@ export default function RoadsPage() {
   return (
     <PageShell title="Roads" sentence={loaded ? roadsSentence(island, closures, trouble, roadwork.length, plain) : undefined} island={island} onIsland={setIsland}
       fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source={SOURCE[island]}>
-      {!loaded && offline && (
-        <>
-          <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
-          {/* useFeed listens for "online" and re-polls a second later */}
-          <button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
-        </>
-      )}
-      {!loaded && !offline && <p className="mt-s4 text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
-      {loaded && (
-        <>
-          <div className="picture mt-s4">
-            <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
-          </div>
-          {legend && <p className="mt-s3 text-small text-ink-2">{legend}{you ? " Blue dot: you." : ""}</p>}
+      {/* .now-island carries the card language (.isl-*) the Now screen uses; its ground is the same --bg. */}
+      <div className="now-island mt-s5">
+        {!loaded && offline && (
+          <>
+            <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
+            {/* useFeed listens for "online" and re-polls a second later */}
+            <button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
+          </>
+        )}
+        {!loaded && !offline && <p className="text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
+        {loaded && (
+          <div className="isl-stack">
+            {/* The island map stays framed like a picture; its key rides under it on the same frame. */}
+            <div className="picture">
+              <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+              {legend && <p className="tr-cap">{legend}{you ? " Blue dot: you." : ""}</p>}
+            </div>
 
-          {official.length > 0 && (
-            you ? (
-              <p className="mt-s3 max-w-[36rem] text-body text-ink">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
-            ) : (
-              <>
-                <button className="btn mt-s3" onClick={locate} disabled={locating}><Icon name="crosshair" className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
-                <p className="mt-s1 text-small text-ink-2">{APP_NOTE}</p>
-              </>
-            )
-          )}
-          {youMsg && <p className="mt-s2 text-body text-ink-2">{youMsg}</p>}
-
-          <Section title="Closed or blocked">
-            {official.length ? (
-              <>
-                {anyStale && <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</p>}
-                {byDistrict.map((d) => (
-                  <div key={d.name ?? "-"}>
-                    {byDistrict.length > 1 && d.name && <h3 className="now-label mt-s4">{d.name}</h3>}
-                    <ul className={`list ${byDistrict.length > 1 ? "mt-s2" : "mt-s3"}`}>
-                      {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
-                    </ul>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
+            {official.length > 0 && (
+              <section className="isl-card tr-quiet">
+                {you ? (
+                  <p className="text-body text-ink">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
+                ) : (
+                  <>
+                    <button className="btn btn-big" onClick={locate} disabled={locating}><Icon name="crosshair" className="size-5" aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
+                    <p className="isl-note tr-note">{APP_NOTE}</p>
+                  </>
+                )}
+              </section>
             )}
-            {grouped.length > rows.length && !showAll && <button className="btn mt-s3" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-down" className="size-5" aria-hidden /></button>}
-          </Section>
+            {youMsg && <p className="isl-p px-1 text-ink-2">{youMsg}</p>}
 
-          {island === "hawaii" && (
-            <Section title="What neighbors say">
-              {neighbors.length ? <ul className="list mt-s3">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="mt-s2 text-body text-ink-2">Nothing from neighbors today.</p>}
-            </Section>
-          )}
-
-          {roadwork.length > 0 && (
-            <section className="mt-s7">
-              {showWork ? (
+            <section className="isl-card isl-road">
+              <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone-fill" size={20} /></span> Closed or blocked</h2>
+              {official.length ? (
                 <>
-                  <h2 className="h-title">Roadwork</h2>
-                  <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Planned work. Expect a wait, not a closed road.</p>
-                  <ul className="list mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
+                  {anyStale && <p className="isl-p text-ink-2">Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</p>}
+                  {byDistrict.map((d) => (
+                    <div key={d.name ?? "-"}>
+                      {byDistrict.length > 1 && d.name && <h3 className="now-label mt-s4">{d.name}</h3>}
+                      <ul className={`tr-rows ${byDistrict.length > 1 ? "mt-s2" : "mt-s3"}`}>
+                        {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
+                      </ul>
+                    </div>
+                  ))}
                 </>
               ) : (
-                <button className="btn btn-big" onClick={() => setShowWork(true)}><Icon name="traffic-cone" className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
+                <p className="isl-p text-ink-2">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
               )}
+              {grouped.length > rows.length && !showAll && <button className="btn mt-s4" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-down" className="size-5" aria-hidden /></button>}
             </section>
-          )}
 
-          <section className="mt-s4">
+            {island === "hawaii" && (
+              <section className="isl-card tr-quiet">
+                <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="users-three-fill" size={20} /></span> What neighbors say</h2>
+                {neighbors.length ? <ul className="tr-rows mt-s3">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="isl-p text-ink-2">Nothing from neighbors today.</p>}
+              </section>
+            )}
+
+            {roadwork.length > 0 && (
+              showWork ? (
+                <section className="isl-card tr-quiet">
+                  <h2 className="isl-kicker"><span className="isl-bubble"><Icon name="traffic-cone-fill" size={20} /></span> Roadwork</h2>
+                  <p className="isl-p text-ink-2">Planned work. Expect a wait, not a closed road.</p>
+                  <ul className="tr-rows mt-s3">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
+                </section>
+              ) : (
+                <button className="btn btn-big" onClick={() => setShowWork(true)}><Icon name="traffic-cone" className="size-5" aria-hidden /> Show {plural(roadwork.length, "roadwork site")}</button>
+              )
+            )}
+
             {showMap ? (
               <div className="picture">
                 <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
@@ -194,16 +198,17 @@ export default function RoadsPage() {
             ) : (
               <button className="btn btn-big" onClick={() => setShowMap(true)}><Icon name="car" className="size-5" aria-hidden /> Open the live traffic map (needs a good signal)</button>
             )}
-          </section>
 
-          {island === "hawaii" && (
-            <Link href="/report/?type=road_blocked" className="row mt-s4 border-t border-line">
-              <span className="flex-1 text-body font-semibold text-ink">Saw something on the road? Tell your neighbors</span>
-              <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
-            </Link>
-          )}
-        </>
-      )}
+            {island === "hawaii" && (
+              <Link href="/report/?type=road_blocked" className="isl-card tr-quiet tr-go">
+                <span className="isl-bubble"><Icon name="note-pencil" size={20} /></span>
+                <span className="flex-1 text-body font-semibold text-ink">Saw something on the road? Tell your neighbors</span>
+                <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
     </PageShell>
   );
 }
