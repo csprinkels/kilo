@@ -3,7 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import Icon, { type IconName } from "@/components/Icon";
-import PageShell, { H2, Section } from "@/components/PageShell";
+import PageShell, { H2 } from "@/components/PageShell";
 import { NeighborRow } from "@/components/ItemRow";
 import { Notice } from "@/components/AlertBlock";
 import EmptyState from "@/components/EmptyState";
@@ -44,6 +44,27 @@ type Draft = { type?: ReportType; district?: string; locText: string; text: stri
 const EMPTY: Draft = { locText: "", text: "", agreed: false };
 const isType = (s: string | null): s is ReportType => !!s && s in REPORT_TYPES;
 
+/** A card's headline in the Now card language: the picture in its bubble tile, then the serif line. */
+function CardHead({ icon, children }: { icon: IconName; children: React.ReactNode }) {
+  return (
+    <h2 className="isl-h rp-head">
+      <span className="isl-bubble"><Icon name={icon} size={20} /></span>
+      {children}
+    </h2>
+  );
+}
+
+/** The chip-shaped way out of a card, to the rules. */
+function RulesChip({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rp-chiprow">
+      <Link href="/guidelines/" className="btn">
+        <Icon name="users-three" size={18} />{children}<Icon name="caret-right" size={16} className="text-ink-2" />
+      </Link>
+    </p>
+  );
+}
+
 export default function NeighborsPage() {
   const [island, setIsland] = useStoredIsland();
   const onHawaii = island === "hawaii" || island === "state";
@@ -65,27 +86,28 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
 
   return (
     <PageShell title="Reports" sentence={SENTENCE} island={island} onIsland={setIsland} fetchedAt={snap?.fetchedAt ?? ess?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source="your neighbors">
-      {open ? (
-        <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
-      ) : (
-        <>
-          <button className="btn btn-primary btn-big mt-s5" onClick={() => setWriting(true)}>Report something</button>
-          <H2>Reported near you</H2>
-          {!snap?.data ? (
-            offline
-              ? <><EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></>
-              : <p className="mt-s2 text-body text-ink-2">Loading what neighbors reported…</p>
-          ) : posts.length === 0 ? (
-            <p className="mt-s2 text-body text-ink-2">Nothing reported today.</p>
-          ) : (
-            <ul className="list mt-s3">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
-          )}
-          <Link href="/guidelines/" className="row mt-s5 border-t border-line">
-            <span className="flex-1 text-body font-semibold text-ink">Rules for reports</span>
-            <Icon name="caret-right" className="size-5 shrink-0 text-ink-2" aria-hidden />
-          </Link>
-        </>
-      )}
+      <div className="now-island">
+        {open ? (
+          <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
+        ) : (
+          <>
+            <button className="btn btn-primary btn-big mt-s5" onClick={() => setWriting(true)}>
+              <Icon name="note-pencil" size={20} />Report something
+            </button>
+            <H2>Reported near you</H2>
+            {!snap?.data ? (
+              offline
+                ? <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
+                : <p className="isl-card rp-quiet mt-s3">Loading what neighbors reported…</p>
+            ) : posts.length === 0 ? (
+              <p className="isl-card rp-quiet mt-s3">Nothing reported today.</p>
+            ) : (
+              <ul className="list mt-s3">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
+            )}
+            <RulesChip>Rules for reports</RulesChip>
+          </>
+        )}
+      </div>
     </PageShell>
   );
 }
@@ -142,9 +164,11 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       : r.merged ? "Someone already reported this. We added your “me too”."
       : `Posted to ${district}. Neighbors see it marked “not checked”. It clears by itself around ${fmtClock(r.expiresAt, result.at)}.`;
     return (
-      <section className="mt-s6">
-        <h2 className="h-title">{r.status === "pending" ? "Saved for a person to read" : r.merged ? "Already reported" : "Posted"}</h2>
-        <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{line}</p>
+      <section className="isl-card mt-s6">
+        <CardHead icon={r.status === "pending" ? "note-pencil" : r.merged ? "users-three" : "check-circle"}>
+          {r.status === "pending" ? "Saved for a person to read" : r.merged ? "Already reported" : "Posted"}
+        </CardHead>
+        <p className="isl-p max-w-[36rem] text-ink-2">{line}</p>
         <div className="mt-s4 flex flex-col gap-s2">
           <button className="btn btn-primary btn-big" onClick={onClose}>Back to Reports</button>
           <button className="btn btn-big" onClick={again}>Report another</button>
@@ -157,70 +181,79 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
     <form className="mt-s2" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <Notice title="Hurt or in danger? Call 911 first.">This tells neighbors. It does not call for help.</Notice>
 
-      <Section title="What did you see?">
-        <div className="mt-s3 grid grid-cols-2 gap-s2">
-          {REPORT_TYPE_KEYS.map((k) => {
-            const t = TILE[k], on = d.type === k;
-            return (
-              <button key={k} type="button" onClick={() => setD({ ...d, type: k })} aria-pressed={on}
-                className={`flex min-h-24 flex-col items-center justify-center gap-s2 rounded-card px-s2 py-s3 text-center text-body font-semibold ${on ? "bg-brand text-brand-ink" : "bg-surface-2 text-ink"}`}>
-                <Icon name={`${t.icon}-fill`} size={30} />
-                <span className="inline-flex items-center gap-1">{on && <Icon name="check" className="size-5" aria-hidden />}{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </Section>
+      <div className="isl-stack mt-s3">
+        <section className="isl-card">
+          <CardHead icon="camera">What did you see?</CardHead>
+          <div className="rp-tiles">
+            {REPORT_TYPE_KEYS.map((k) => {
+              const t = TILE[k], on = d.type === k;
+              return (
+                <button key={k} type="button" onClick={() => setD({ ...d, type: k })} aria-pressed={on}
+                  className={`rp-tile${on ? " rp-tile--on" : ""}${k === "other" ? " rp-tile--wide" : ""}`}>
+                  <Icon name={`${t.icon}-fill`} size={30} />
+                  <span className="inline-flex items-center gap-1">{on && <Icon name="check" className="size-5" aria-hidden />}{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      <Section title="Where?">
-        <label htmlFor="where" className="mt-s3 block text-body text-ink">Near which road or town?</label>
-        <input id="where" value={d.locText} maxLength={LOC_MAX} onChange={(e) => setD({ ...d, locText: e.target.value })}
-          placeholder="Highway 130 by the Pāhoa post office" autoComplete="off"
-          className="mt-s2 min-h-14 w-full rounded-card border border-line bg-surface px-s4 text-body text-ink placeholder:text-ink-2" />
-        {guessed && <p className="mt-s2 text-body text-ink-2">Looks like {guessed}.</p>}
-        {needPick && (
-          <>
-            <label htmlFor="district" className="mt-s3 block text-body text-ink">Which part of the island?</label>
-            <select id="district" value={d.district ?? ""} onChange={(e) => setD({ ...d, district: e.target.value || undefined })}
-              className="mt-s2 min-h-14 w-full rounded-card border border-line bg-surface px-s4 text-body text-ink">
-              <option value="">Pick one</option>
-              {Object.keys(HAWAII_DISTRICTS).map((k) => <option key={k} value={k}>{k}</option>)}
-            </select>
-          </>
-        )}
-      </Section>
+        <section className="isl-card">
+          <CardHead icon="map-pin">Where?</CardHead>
+          <label htmlFor="where" className="rp-label">Near which road or town?</label>
+          <input id="where" value={d.locText} maxLength={LOC_MAX} onChange={(e) => setD({ ...d, locText: e.target.value })}
+            placeholder="Highway 130 by the Pāhoa post office" autoComplete="off" className="rp-field" />
+          {guessed && <p className="rp-guess"><Icon name="check" size={18} />Looks like {guessed}.</p>}
+          {needPick && (
+            <>
+              <label htmlFor="district" className="rp-label">Which part of the island?</label>
+              <span className="rp-selwrap">
+                <select id="district" value={d.district ?? ""} onChange={(e) => setD({ ...d, district: e.target.value || undefined })} className="rp-field rp-select">
+                  <option value="">Pick one</option>
+                  {Object.keys(HAWAII_DISTRICTS).map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+                <Icon name="caret-down" size={20} className="rp-caret" />
+              </span>
+            </>
+          )}
+        </section>
 
-      <Section title="Anything else?">
-        <label htmlFor="more" className="mt-s3 block text-body text-ink">What you saw, not who you think did it.</label>
-        <textarea id="more" value={d.text} maxLength={TEXT_MAX} rows={4} onChange={(e) => setD({ ...d, text: e.target.value })}
-          placeholder={d.type ? REPORT_TYPES[d.type].hint : undefined}
-          className="mt-s2 min-h-14 w-full rounded-card border border-line bg-surface px-s4 py-s3 text-body text-ink placeholder:text-ink-2" />
-        {hold
-          ? <p className="mt-s2 text-body text-ink-2">{HOLD_WHY[hold]}, so a person will read it before it shows.</p>
-          : d.type && HELD_BY_DEFAULT.includes(d.type) && <p className="mt-s2 text-body text-ink-2">A person reads &ldquo;Something else&rdquo; reports before they show.</p>}
-      </Section>
+        <section className="isl-card">
+          <CardHead icon="note-pencil">Anything else?</CardHead>
+          <label htmlFor="more" className="rp-label">What you saw, not who you think did it.</label>
+          <textarea id="more" value={d.text} maxLength={TEXT_MAX} rows={4} onChange={(e) => setD({ ...d, text: e.target.value })}
+            placeholder={d.type ? REPORT_TYPES[d.type].hint : undefined} className="rp-field rp-area" />
+          {hold
+            ? <p className="isl-note rp-hold">{HOLD_WHY[hold]}, so a person will read it before it shows.</p>
+            : d.type && HELD_BY_DEFAULT.includes(d.type) && <p className="isl-note rp-hold">A person reads &ldquo;Something else&rdquo; reports before they show.</p>}
+        </section>
 
-      <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="row mt-s6 items-start">
-        <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${d.agreed ? "border-brand bg-brand text-brand-ink" : "border-ink-2"}`} aria-hidden>{d.agreed && <Icon name="check" className="size-5" />}</span>
-        <span className="text-body text-ink">This is not an emergency and I am 18 or older.</span>
-      </button>
-      <Link href="/guidelines/" className="inline-flex min-h-11 items-center text-body font-semibold text-brand">Neighbor rules</Link>
+        <section className="isl-card">
+          <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="row items-start">
+            <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${d.agreed ? "border-brand bg-brand text-brand-ink" : "border-ink-2"}`} aria-hidden>{d.agreed && <Icon name="check" className="size-5" />}</span>
+            <span className="text-body text-ink">This is not an emergency and I am 18 or older.</span>
+          </button>
+          <hr className="rp-rule" />
+          <RulesChip>Neighbor rules</RulesChip>
 
-      {TURNSTILE_KEY && (
-        <>
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
-          <div className="cf-turnstile" data-sitekey={TURNSTILE_KEY} data-callback="onTurnstile" data-appearance="interaction-only" />
-        </>
-      )}
+          {TURNSTILE_KEY && (
+            <>
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
+              <div className="cf-turnstile mt-s3" data-sitekey={TURNSTILE_KEY} data-callback="onTurnstile" data-appearance="interaction-only" />
+            </>
+          )}
+
+          {tried && problem && <p className="rp-bad" role="alert"><Icon name="warning-fill" size={20} />{problem}</p>}
+          {result && !result.r.ok && <p className="rp-bad" role="alert"><Icon name="wifi-slash" size={20} />{result.r.error}</p>}
+          <div className="mt-s4 flex flex-col gap-s2">
+            <button type="submit" disabled={busy || checking} className="btn btn-primary btn-big disabled:opacity-60">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
+            <button type="button" className="btn btn-big" onClick={onClose}>Back to Reports</button>
+          </div>
+        </section>
+      </div>
+
       {/* Honeypot: bots fill it, people never see it */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-12" onChange={() => {}} />
-
-      {tried && problem && <p className="mt-s4 text-body font-semibold text-danger" role="alert">{problem}</p>}
-      {result && !result.r.ok && <p className="mt-s4 text-body font-semibold text-danger" role="alert">{result.r.error}</p>}
-      <div className="mt-s4 flex flex-col gap-s2">
-        <button type="submit" disabled={busy || checking} className="btn btn-primary btn-big disabled:opacity-60">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
-        <button type="button" className="btn btn-big" onClick={onClose}>Back to Reports</button>
-      </div>
     </form>
   );
 }

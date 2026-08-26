@@ -367,3 +367,290 @@ body {
 .leaflet-control-attribution { font-size: .75rem; line-height: 1.2; padding: .125rem .375rem; background: transparent; color: var(--ink); opacity: .55; }
 .leaflet-container .leaflet-control-attribution a { color: inherit; text-decoration: none; }
 @media (prefers-color-scheme: dark) { .leaflet-container .leaflet-tile { filter: brightness(.82) saturate(.9); } }
+
+/* Now with the ambient island behind it: the page ground goes transparent so the
+   scene reads in the gaps between cards. The cards keep their own opaque sand —
+   this is not frosted glass, and the paper tokens still carry every other page. */
+.now-island--scene { background: transparent; }
+/* The type keeps the paper it was contrast-tested on. A soft wash of --bg fades
+   out just past the story, so the header, freshness line and headline sit on
+   ground that clears 4.5:1, and the scene takes over in the card gaps below.
+   Without this the story is #1b1a17 ink on a mid-blue sky — about 2.4:1. */
+.now-island--scene::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 26rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(var(--bg) 0%, var(--bg) 42%, color-mix(in srgb, var(--bg) 70%, transparent) 68%, transparent 100%);
+}
+
+/* /quakes — the Now screen's card language on the paper tokens.
+   The dot map is a framed picture inside its card (rounded, hairline ring,
+   caption below a rule), and each way-out link is a chip instead of a row. */
+.qk-frame { margin: 0; }
+.qk-frame > svg {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.qk-frame > figcaption {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--line);
+}
+.qk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;          /* 44px tap target */
+  max-width: 100%;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-chip);
+  background: var(--surface-2);
+  color: var(--brand);          /* 4.6:1 on --surface-2 light, 7.6:1 dark */
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* ── /tsunami ─────────────────────────────────────────────────────────────
+   The paper twin of Now's .isl-card: same geometry (1.35rem corner, the same
+   inner padding), but on the page tokens — --card sand, --card-shadow, which
+   is a hairline ring in the dark scheme. Danger and warn appear only where
+   the message is: the warning card and a "you are in a zone" answer. */
+.ts-card {
+  background: var(--card);
+  border-radius: 1.35rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  box-shadow: var(--card-shadow);
+}
+/* EmptyState and OfficialWording bring their own top margin; the card pads already. */
+.ts-card > :first-child { margin-top: 0; }
+/* The one loud card on the page: danger ground, a danger ring so it reads as an alarm and not a tint. */
+.ts-alert {
+  background: var(--danger-bg);
+  box-shadow: inset 0 0 0 0.125rem color-mix(in srgb, var(--danger) 40%, transparent), var(--card-shadow);
+}
+/* The zone answer, inset in the card (.well): a quiet edge, or a warn edge when the spot is in a zone
+   or the check could not run. */
+.ts-answer { border-left: 0.1875rem solid var(--line); }
+.ts-answer--flag { border-left-color: var(--warn); }
+
+/* ── /traffic ─────────────────────────────────────────────────────────────
+   The Roads page borrows Now's card language instead of copying it: the page
+   content sits inside a .now-island wrapper, so .isl-card / .isl-kicker /
+   .isl-bubble / .isl-p / .isl-note all apply as written. --now-bg is the same
+   paper as --bg, so the wrapper paints nothing new. Only four things Now had
+   no use for live here. */
+
+/* An untinted card: Now colours its kicker per tone, a quiet card has none. */
+.now-island .tr-quiet .isl-kicker { color: var(--ink-2); }
+.now-island .tr-quiet .isl-bubble { background: var(--surface-2); color: var(--ink-2); }
+/* The trust line under a control, in the page's quiet ink rather than a warning colour. */
+.now-island .tr-note { color: var(--ink-2); border-top-color: var(--line); }
+/* A whole card that is one tap target (the report link). */
+.now-island .tr-go { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; }
+/* Twenty rows have to stay scannable, so the card wraps the group, not each row:
+   hairlines run out past the card's padding while the text stays on the card's grid. */
+.now-island .tr-rows { margin-left: -0.75rem; margin-right: -0.75rem; }
+.now-island .tr-rows > * { padding-left: 0.75rem; padding-right: 0.75rem; }
+.now-island .tr-rows > * + * { border-top: 1px solid var(--line); }
+/* The map's key, riding under the picture on the same frame. */
+.tr-cap {
+  padding: 0.7rem 1.15rem 0.85rem;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-small);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+/* ── /sources — Settings and about ──────────────────────────────────────────
+   Reuses the Now screen's card language (.isl-* scoped under .now-island); the
+   page wraps its stack in .now-island so those cards apply. Only the bits the
+   Now screen has no shape for live here. */
+/* Bubble tile beside the serif card heading, instead of above it in a kicker. */
+.sr-head { display: flex; align-items: center; gap: 0.6rem; }
+.sr-head .isl-h { margin: 0; }
+/* Untoned cards borrow the lagoon bubble the Now mini cards use. A toned card
+   (.now-island .isl-hot .isl-bubble) is more specific and keeps its own colour. */
+.sr-head .isl-bubble { background: var(--now-lagoon); color: var(--brand); }
+/* The one line on this page that earns the brick colour. */
+.sr-911 { font-weight: 600; color: var(--now-coral); }
+/* AlertsCard is shared with Now: it gets the card ground here, not an edit. */
+.sr-embed > section { margin-top: 0; }
+
+/* ── /volcano ─────────────────────────────────────────────────────────────
+   The route borrows the Now screen's card language (.now-island .isl-*), so
+   it needs only two things that family has no rule for:
+   1. a neutral bubble, for a card that carries no tone;
+   2. the observatory's notice. It is not a card: a matte sheet with a quote
+      rule down the left edge, so their words are visibly not ours, and the
+      feed's own section headings arrive as tags, not as our headings. */
+.now-island .vo-quiet .isl-bubble { background: var(--surface-2); color: var(--ink-2); }
+.vo-notice {
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 0.25rem 1rem 1rem 0.25rem;
+  border-left: 0.125rem solid color-mix(in srgb, var(--warn) 55%, transparent);
+  background: var(--surface-2);
+}
+.vo-notice > div { margin-top: 0; }  /* the sheet already spaces it */
+.vo-sec-h {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  background: var(--card);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* ══ /storms — Now's card language, drawn with the paper tokens ═══════════════
+   .isl-* only exists inside .now-island and its --now-* tints. These are the
+   same shapes — kicker + bubble tile, serif head, body, hairline note — built
+   from --card / --warn / --danger / --brand so they carry on a paper page and
+   in the dark scheme without adding a token. Tone colours are set in the JSX
+   (text-warn / text-danger) so the note keeps the level colour it always had. */
+.st-stack { display: flex; flex-direction: column; gap: 0.85rem; }
+.st-card {
+  background: var(--card);
+  border-radius: 1.35rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  box-shadow: var(--card-shadow);
+  color: inherit;
+}
+.st-card > :first-child { margin-top: 0; }  /* shared blocks bring their own top margin */
+.st-card--warn { background: var(--warn-bg); }
+.st-card--danger { background: var(--danger-bg); }
+.st-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.st-bubble {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.85rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.st-card--warn .st-kicker, .st-card--warn .st-bubble { color: var(--warn); }
+.st-card--warn .st-bubble { background: color-mix(in srgb, var(--warn) 20%, transparent); }
+.st-card--danger .st-kicker, .st-card--danger .st-bubble { color: var(--danger); }
+.st-card--danger .st-bubble { background: color-mix(in srgb, var(--danger) 20%, transparent); }
+.st-bubble--calm { background: color-mix(in srgb, var(--brand) 18%, transparent); color: var(--brand); }
+.st-hero { display: flex; align-items: flex-start; gap: 0.75rem; }
+.st-h {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+.st-hero .st-h { margin-top: 0; }
+.st-p { margin: 0.4rem 0 0; }
+.st-note {
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.st-figure { overflow: hidden; border-radius: 1rem; background: var(--surface-2); }
+.st-rule { margin: 1rem 0 0; border: 0; border-top: 1px solid var(--line); }
+
+/* ── /weather ─────────────────────────────────────────────────
+   Every block on the route is a card: the paper twin of Now's .isl-card, the
+   same geometry /storms and /tsunami use — 1.35rem corner, the same inner
+   padding, --card sand and --card-shadow (a hairline ring in the dark scheme).
+   It lives in the components layer on purpose, so a Tailwind background utility
+   on the same element still wins: that is how the alert pills keep their
+   danger / warn tint. Cards with no picture of their own (Surf, Air) put an icon
+   .tile beside the title, the way a Now card's kicker does. */
+@layer components {
+  .wx-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    border-radius: 1.35rem;
+    padding: 1.1rem 1.15rem 1.15rem;
+    box-shadow: var(--card-shadow);
+    color: inherit;
+  }
+}
+/* Shared blocks bring their own top margin; the card pads already. */
+.wx-card > :first-child { margin-top: 0; }
+/* A child that already carries a card ground (.list — the daily rows, the
+   heads-up rows) flattens to plain hairline rows: never a card inside a card. */
+.wx-card .list { border-radius: 0; background: transparent; box-shadow: none; }
+.wx-card .list > * { padding-left: 0; padding-right: 0; }
+
+/* ── /report — the composer ───────────────────────────────────────────────
+   The page wraps its stack in .now-island, so its cards are the Now screen's
+   own (.isl-card / .isl-h / .isl-note). Only what that family has no shape
+   for lives here: a field, a picker tile, a full-bleed hairline. */
+.now-island .rp-head { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
+/* No card on this page carries a tone, so the bubble borrows the quiet lagoon fill. */
+.now-island .rp-head .isl-bubble { background: var(--now-lagoon); color: var(--brand); }
+
+.rp-label { display: block; margin: 0.9rem 0 0.4rem; color: var(--ink); }
+.rp-field {
+  display: block;
+  width: 100%;
+  min-height: 3.5rem;            /* well past the 44px tap target */
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 0.9rem;
+  background: var(--surface-2);  /* an inset in the sand card, the way a well is */
+  color: var(--ink);
+  font: inherit;
+}
+.rp-field::placeholder { color: var(--ink-2); }
+.rp-field:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.rp-area { min-height: 7rem; }
+.rp-select { appearance: none; padding-right: 3rem; }
+.rp-selwrap { position: relative; display: block; }
+.rp-caret { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--ink-2); }
+/* The district the line already gave away: a quiet confirmation, never a warning. */
+.rp-guess { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; color: var(--ink-2); }
+
+.rp-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.85rem; }
+.rp-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 6rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 1.1rem;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+}
+/* The catch-all tile is last and takes a wide row of its own, not a lonely half. */
+.rp-tile--wide { grid-column: 1 / -1; flex-direction: row; min-height: 3.5rem; gap: 0.6rem; }
+.rp-tile--on { background: var(--brand); color: var(--brand-ink); }
+.rp-tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Waiting for a person is amber, not brick: nothing is wrong, it just takes a day. */
+.now-island .rp-hold { color: var(--warn); border-top-color: color-mix(in srgb, var(--warn) 25%, transparent); }
+/* A hairline the full width of the card, the way a source line is set off. */
+.rp-rule { margin: 0.9rem -1.15rem 0; border: 0; border-top: 1px solid var(--line); }
+/* A card holding one quiet line. .isl-card sets color:inherit, so the quiet ink is set here. */
+.now-island .rp-quiet { color: var(--ink-2); }
+.rp-chiprow { margin-top: 1.25rem; }
+.rp-bad { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 1rem; font-weight: 600; color: var(--danger); }

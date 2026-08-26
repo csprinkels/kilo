@@ -1,12 +1,12 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import Icon from "@/components/Icon";
-import PageShell, { Section } from "@/components/PageShell";
+import Icon, { type IconName } from "@/components/Icon";
+import PageShell from "@/components/PageShell";
 import AlertsCard from "@/components/AlertsCard";
-import { ISLANDS, type Island } from "@/lib/types";
+import { ISLANDS } from "@/lib/types";
 import { useStoredIsland } from "@/lib/data";
-import { APP_NAME, COUNTY_ALERTS, ISLAND_LABEL } from "@/lib/brand";
+import { APP_NAME, COUNTY_ALERTS, islandName } from "@/lib/brand";
 
 const SOURCES = [
   ["National Weather Service", "weather, surf, warnings"],
@@ -21,6 +21,15 @@ const SOURCES = [
   ["Honolulu 911 dispatch", "crashes on Oʻahu"],
   ["Hawaiʻi Statewide GIS Program and USGS", "map roads, coastlines, and elevation"],
   ["Neighbors", "their own reports, on the Reports page"],
+] as const;
+
+// The promise list, one sentence a line. Each line is word for word the sentence this page has always shown.
+const NEVER = [
+  "Show ads.",
+  "Make you create an account.",
+  "Sell or share where you are.",
+  "Let a computer write an alert.",
+  "Make a neighbor's post look official.",
 ] as const;
 
 const SIZES = [["", "Normal"], ["large", "Large"], ["largest", "Largest"]] as const;
@@ -48,7 +57,25 @@ const getPlatform = () => {
 };
 const usePlatform = () => useSyncExternalStore(() => () => {}, getPlatform, () => "other" as ReturnType<typeof getPlatform>);
 
-const islandName = (i: Island) => { const p = ISLAND_LABEL[i].split(" · "); return p.length > 1 ? `${p.slice(0, -1).join(", ")} and ${p.at(-1)}` : p[0]; };
+/** One settings card in the Now screen's language: a bubble tile beside the serif heading, then the sentence, then the controls. */
+function Card({ icon, tone, title, sentence, children }: {
+  icon: IconName;
+  tone?: "hot";
+  title: React.ReactNode;
+  sentence?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <section className={`isl-card${tone ? ` isl-${tone}` : ""}`}>
+      <div className="sr-head">
+        <span className="isl-bubble"><Icon name={icon} size={20} /></span>
+        <h2 className="isl-h">{title}</h2>
+      </div>
+      {sentence && <p className="isl-p max-w-[36rem]">{sentence}</p>}
+      {children}
+    </section>
+  );
+}
 
 export default function Settings() {
   const [stored, setIsland] = useStoredIsland();
@@ -61,57 +88,77 @@ export default function Settings() {
 
   return (
     <PageShell title="Settings and about" sentence={`Pick your island and text size, turn on warnings, and see where ${APP_NAME}'s information comes from.`}>
-      <Section title="Your island" sentence="Everything in Kilo is about this island.">
-        <div className="mt-s3 flex flex-col gap-s2">
-          {ISLANDS.map((i) => (
-            <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
-              {islandName(i)}
-            </button>
-          ))}
+      <div className="now-island">
+        <div className="isl-stack mt-s7">
+          <Card icon="mountains-fill" title="Your island" sentence="Everything in Kilo is about this island.">
+            <div className="mt-s4 flex flex-col gap-s2">
+              {ISLANDS.map((i) => (
+                <button key={i} onClick={() => setIsland(i)} aria-pressed={i === island} className={`btn btn-big justify-start px-s5 text-left ${i === island ? "chip-active" : ""}`}>
+                  {islandName(i, true)}
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          <Card icon="note-pencil" title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
+            <div className="mt-s4 flex gap-s2" role="group" aria-label="Text size">
+              {SIZES.map(([v, label]) => (
+                <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>
+              ))}
+            </div>
+          </Card>
+
+          {/* AlertsCard is shared with the Now screen; it gets the card ground here, not a rewrite. */}
+          <div className="isl-card sr-embed"><AlertsCard island={island} /></div>
+
+          <Card icon="siren-fill" title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
+            <a className="btn mt-s4" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <Icon name="caret-right" className="size-5" aria-hidden /></a>
+          </Card>
+
+          <Card icon="house-fill" title={`Add ${APP_NAME} to your Home Screen`} sentence={
+            platform === "standalone" ? `${APP_NAME} is on your Home Screen.`
+            : platform === "ios" ? <>Tap the Share button, then &ldquo;Add to Home Screen&rdquo;. It then opens full screen and works with no signal.</>
+            : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
+            : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
+          } />
+
+          <Card icon="megaphone-fill" title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
+            <ul className="mt-s4 divide-y divide-line">
+              {SOURCES.map(([name, what]) => (
+                <li key={name} className="py-s3 text-body first:pt-0 last:pb-0">
+                  <span className="block font-semibold text-ink">{name}</span>
+                  <span className="block text-small text-ink-2">{what}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-s4 max-w-[36rem] border-t border-line pt-s3 text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
+          </Card>
+
+          <Card icon="warning-fill" tone="hot" title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="sr-911">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
+
+          <Card icon="check-circle" title={`What ${APP_NAME} will never do`}>
+            <ul className="mt-s4 flex flex-col gap-s3">
+              {NEVER.map((line) => (
+                <li key={line} className="flex items-start gap-s3 text-body">
+                  <Icon name="x" size={18} className="mt-s1 text-ink-2" />
+                  <span className="max-w-[34rem]">{line}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
-      </Section>
 
-      <Section title="Text size" sentence="Makes every word in Kilo bigger. Your phone's own text setting still works too.">
-        <div className="mt-s3 flex gap-s2" role="group" aria-label="Text size">
-          {SIZES.map(([v, label]) => (
-            <button key={v} onClick={() => setSize(v)} aria-pressed={size === v} className={`btn flex-1 px-s2 ${size === v ? "chip-active" : ""}`}>{label}</button>
-          ))}
-        </div>
-      </Section>
+        <nav className="list mt-s5">
+          <Link href="/guidelines/" className="row font-semibold text-brand">
+            <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+          </Link>
+          <Link href="/privacy/" className="row font-semibold text-brand">
+            <span className="flex-1">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+          </Link>
+        </nav>
 
-      <AlertsCard island={island} />
-
-      <Section title="Your county's own alerts" sentence={`${countyName}: ${countyHow}. These come straight from the county, even when ${APP_NAME} is down.`}>
-        <a className="btn mt-s3" href={county.url} target="_blank" rel="noreferrer">Open the county&apos;s alerts page <Icon name="caret-right" className="size-5" aria-hidden /></a>
-      </Section>
-
-      <Section title={`Add ${APP_NAME} to your Home Screen`} sentence={
-        platform === "standalone" ? `${APP_NAME} is on your Home Screen.`
-        : platform === "ios" ? <>Tap the Share button, then &ldquo;Add to Home Screen&rdquo;. It then opens full screen and works with no signal.</>
-        : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
-        : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
-      } />
-
-      <Section title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
-        <ul className="list mt-s3">
-          {SOURCES.map(([name, what]) => (
-            <li key={name} className="py-s3 text-body"><span className="block font-semibold text-ink">{name}</span><span className="block text-small text-ink-2">{what}</span></li>
-          ))}
-        </ul>
-        <p className="mt-s3 max-w-[36rem] text-small text-ink-2">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
-      </Section>
-
-      <Section title={`What ${APP_NAME} is not`} sentence={<>Not an emergency service. Not part of any government. <strong className="font-semibold text-ink">In an emergency call 911.</strong> When Civil Defense says something different, do what Civil Defense says.</>} />
-
-      <Section title={`What ${APP_NAME} will never do`} sentence="Show ads. Make you create an account. Sell or share where you are. Let a computer write an alert. Make a neighbor's post look official." />
-
-      <Link href="/guidelines/" className="row mt-s6 border-t border-line font-semibold text-brand">
-        <span className="flex-1">Neighbor rules</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
-      </Link>
-      <Link href="/privacy/" className="row border-t border-line font-semibold text-brand">
-        <span className="flex-1">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
-      </Link>
-      <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
+        <p className="mt-s7 text-small text-ink-2">Made in Hilo. Free, no ads, no account.</p>
+      </div>
     </PageShell>
   );
 }

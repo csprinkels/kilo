@@ -3,10 +3,9 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import StormMap from "./StormMap";
 import OfficialWording from "./OfficialWording";
-import { Section } from "./PageShell";
 import type { Island } from "@/lib/types";
 import { ISLAND_POINTS, bearingDeg, categoryOf, distanceNm, ktToMph, nmToMi, type Storm } from "@/lib/storm";
-import { dirWord, stormLine } from "@/lib/plain";
+import { dirWord, stormLine, windsLine } from "@/lib/plain";
 import { fmtDayTime, fmtTime } from "@/lib/brand";
 
 const round5 = (n: number) => Math.round(n / 5) * 5;
@@ -38,19 +37,29 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
   const cat = categoryOf(storm.windKt, storm.cls);
   // +12/24/36/48/72 h, then the two outlook points; the 60 h point adds nothing a reader needs.
   const where = storm.forecast.filter((p) => Math.round(p.hour / 12) !== 5);
+  const tone = level >= 4 ? " st-card--danger" : level >= 3 ? " st-card--warn" : "";
 
   return (
     <>
-      <p className="mt-s4 max-w-[36rem] text-body text-ink">{line.text}</p>
-      {warn && <p className={`mt-s2 max-w-[36rem] text-body font-semibold ${warn.level >= 4 ? "text-danger" : "text-warn"}`}>A {warn.kind} is out for {place.label}.</p>}
+      <article className={`st-card${tone}`}>
+        <p className="st-kicker num"><span className="st-bubble"><Icon name="wind-fill" size={20} /></span>{windsLine(storm)}</p>
+        <p className="st-p max-w-[36rem] text-body text-ink">{line.text}</p>
+        {warn && <p className={`st-note ${warn.level >= 4 ? "text-danger" : "text-warn"}`}>A {warn.kind} is out for {place.label}.</p>}
+      </article>
 
-      <div className="picture mt-s4"><StormMap storm={storm} place={place} /></div>
-      <p className="mt-s3 max-w-[36rem] text-small text-ink-2">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+      <section className="st-card">
+        <div className="st-figure"><StormMap storm={storm} place={place} /></div>
+        <p className="mt-s3 max-w-[36rem] text-small text-ink-2">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+      </section>
 
-      <Section title="What to do" sentence={todo} />
+      <section className="st-card">
+        <h2 className="st-kicker"><span className="st-bubble"><Icon name="check-circle" size={20} /></span>What to do</h2>
+        <p className="st-p max-w-[36rem]">{todo}</p>
+      </section>
 
-      <Section title="Where it will be">
-        <ul className="list mt-s3">
+      <section className="st-card">
+        <h2 className="st-kicker"><span className="st-bubble"><Icon name="map-pin" size={20} /></span>Where it will be</h2>
+        <ul className="mt-s3 divide-y divide-line">
           {where.map((p) => {
             const mi = nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon));
             const closest = mi === Math.min(...where.map((q) => nmToMi(distanceNm(q.lat, q.lon, place.lat, place.lon))));
@@ -65,19 +74,21 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
             );
           })}
         </ul>
-      </Section>
+      </section>
 
-      <Imagery id={storm.id} />
-
-      <OfficialWording title={storm.headline ? `${storm.headline}.` : `${cat.label} ${storm.name}`}>
-        {storm.warnings.length > 0 && <ul className="mt-s2 list-disc pl-s4">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
-        <p className="mt-s2 num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
-        <p className="num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
-        <p className="mt-s2 flex flex-wrap gap-x-s4">
-          {storm.links.public && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
-          {storm.links.graphics && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
-        </p>
-      </OfficialWording>
+      {/* The agency's own words, and the other raw source on this page, in one card. */}
+      <section className="st-card">
+        <OfficialWording title={storm.headline ? `${storm.headline}.` : `${cat.label} ${storm.name}`}>
+          {storm.warnings.length > 0 && <ul className="mt-s2 list-disc pl-s4">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
+          <p className="mt-s2 num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
+          <p className="num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
+          <p className="mt-s2 flex flex-wrap gap-x-s4">
+            {storm.links.public && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
+            {storm.links.graphics && <a className="inline-flex min-h-11 items-center font-semibold text-brand" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
+          </p>
+        </OfficialWording>
+        <Imagery id={storm.id} />
+      </section>
     </>
   );
 }
@@ -88,14 +99,19 @@ function Imagery({ id }: { id: string }) {
   const floater = `https://cdn.star.nesdis.noaa.gov/FLOATER/data/${id.toUpperCase()}/GEOCOLOR/1000x1000.jpg`;
   const sector = "https://cdn.star.nesdis.noaa.gov/GOES18/ABI/SECTOR/hi/GEOCOLOR/1200x1200.jpg";
   if (stamp === null) {
-    return <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="btn btn-big mt-s5"><Icon name="camera" className="size-5" aria-hidden /> See the satellite picture (big download)</button>;
+    return (
+      <>
+        <hr className="st-rule" />
+        <button onClick={() => setStamp(Math.floor(Date.now() / 600_000))} className="btn btn-big mt-s4"><Icon name="camera" className="size-5" aria-hidden /> See the satellite picture (big download)</button>
+      </>
+    );
   }
   return (
-    <div className="mt-s5 grid gap-s4 sm:grid-cols-2">
+    <div className="mt-s4 grid gap-s4 sm:grid-cols-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <figure><div className="picture"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centerd on the storm" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">Close-up of the storm. From NOAA.</figcaption></figure>
+      <figure><div className="st-figure"><img src={`${floater}?t=${stamp}`} alt="Satellite picture centerd on the storm" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">Close-up of the storm. From NOAA.</figcaption></figure>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <figure><div className="picture"><img src={`${sector}?t=${stamp}`} alt="Satellite picture of the Hawaiian Islands" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">The Hawaiian Islands. From NOAA.</figcaption></figure>
+      <figure><div className="st-figure"><img src={`${sector}?t=${stamp}`} alt="Satellite picture of the Hawaiian Islands" className="block w-full" loading="lazy" /></div><figcaption className="mt-s2 text-small text-ink-2">The Hawaiian Islands. From NOAA.</figcaption></figure>
     </div>
   );
 }

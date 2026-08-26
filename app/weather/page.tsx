@@ -2,7 +2,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
-import PageShell, { Section } from "@/components/PageShell";
+import PageShell from "@/components/PageShell";
 import ConditionIcon from "@/components/ConditionIcon";
 import HourlyChart from "@/components/HourlyChart";
 import DailyRows, { rowsFromPeriods } from "@/components/DailyRows";
@@ -74,7 +74,7 @@ export default function WeatherPage() {
   return (
     <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
       {!d && (w || slow
-        ? <EmptyState kind="error" title="Can't load right now."><>Try again when you have signal. In an emergency call 911.<br /><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></></EmptyState>
+        ? <section className="wx-card mt-s4"><EmptyState kind="error" title="Can't load right now."><>Try again when you have signal. In an emergency call 911.<br /><button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button></></EmptyState></section>
         : <p className="mt-s4 text-body text-ink-2">Loading the weather…</p>)}
 
       {d && town && h && meta && (
@@ -82,7 +82,7 @@ export default function WeatherPage() {
           <RightNow town={town} meta={meta} now={now} />
 
           {alerts.map(({ i, p }) => (
-            <a key={i.key} href="#heads-up" className={`card mt-s4 flex items-center gap-s3 py-s3 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : "bg-surface-2"}`}>
+            <a key={i.key} href="#heads-up" className={`wx-card mt-s4 flex items-center gap-s3 py-s3 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : "bg-surface-2"}`}>
               <span className={`tile ${p.level >= 4 ? "bg-danger/15 text-danger" : p.level >= 3 ? "bg-warn/15 text-warn" : "text-ink-2"}`}><Icon name="warning-fill" size={20} /></span>
               <span className="min-w-0 flex-1 text-body font-semibold text-ink">{p.word ?? LEVEL_WORD[p.level]}: {p.headline}</span>
               <Icon name="caret-right" size={18} className="text-ink-2" />
@@ -92,32 +92,51 @@ export default function WeatherPage() {
           {(alerts.length > 0 || rainSoon || showRadar)
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
             : <button className="btn mt-s4" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>}
-          {storm && <p className="mt-s3 max-w-[36rem] text-body text-ink"><span className="font-semibold">{storm.text}</span> <Link href="/storms/" className="inline-flex min-h-11 items-center font-semibold text-brand">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link></p>}
+          {storm && (
+            <section className="wx-card mt-s4">
+              <p className="flex items-start gap-s3 text-body font-semibold text-ink">
+                <span className="tile"><Icon name="wind-fill" size={20} /></span>
+                <span className="min-w-0 flex-1 pt-1">{storm.text}</span>
+              </p>
+              <Link href="/storms/" className="btn mt-s3">See the storm <Icon name="caret-right" className="size-5" aria-hidden /></Link>
+            </section>
+          )}
 
-          <section className="mt-s7">
-            <h2 className="h-title text-[2.75rem] leading-none">Next 24 Hours</h2>
-            <p className="mt-s3 max-w-[36rem] text-[1.375rem] leading-relaxed text-ink-2 num">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
+          <section className="wx-card mt-s4">
+            <h2 className="h-title">Next 24 Hours</h2>
+            <p className="mt-s2 max-w-[36rem] text-body text-ink-2 num">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
             <HourlyChart h={h} />
           </section>
 
           {town.fc.length > 0 && (
-            <Section title={daysTitle(town.fc)} sentence={weekSentence(town.fc)}>
+            <section className="wx-card mt-s4">
+              <h2 className="h-title">{daysTitle(town.fc)}</h2>
+              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{weekSentence(town.fc)}</p>
               <DailyRows fc={town.fc} />
-            </Section>
+            </section>
           )}
 
-          {d.surf && Object.keys(d.surf.zones).length > 0 && <Section title="Surf" sentence={surfSentence(d.surf.zones, island)} />}
+          {d.surf && Object.keys(d.surf.zones).length > 0 && (
+            <section className="wx-card mt-s4">
+              <h2 className="h-title flex items-center gap-s3"><span className="tile"><Icon name="waves-fill" size={20} /></span>Surf</h2>
+              <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{surfSentence(d.surf.zones, island)}</p>
+            </section>
+          )}
 
           {d.air.length > 0 && (
-            <Section title="Air" sentence={airSentence(d.air, town.name, island)}>
-              {island === "hawaii" && <Link href="/volcano/" className="mt-s2 inline-flex min-h-11 items-center text-body font-semibold text-brand">Vog details <Icon name="caret-right" className="size-5" aria-hidden /></Link>}
-            </Section>
+            <section className="wx-card mt-s4">
+              <h2 className="h-title flex items-center gap-s3"><span className="tile"><Icon name="wind-fill" size={20} /></span>Air</h2>
+              <p className="mt-s3 max-w-[36rem] text-body text-ink-2">{airSentence(d.air, town.name, island)}</p>
+              {island === "hawaii" && <Link href="/volcano/" className="btn mt-s3">Vog details <Icon name="caret-right" className="size-5" aria-hidden /></Link>}
+            </section>
           )}
 
           {headsUp.length > 0 && (
-            <Section id="heads-up" title="Heads up" sentence="Nothing dangerous, but good to know.">
+            <section id="heads-up" className="wx-card mt-s4 scroll-mt-s4">
+              <h2 className="h-title">Heads up</h2>
+              <p className="mt-s2 max-w-[36rem] text-body text-ink-2">Nothing dangerous, but good to know.</p>
               <ul className="list mt-s3">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((h) => h.source)).size > 1} />)}</ul>
-            </Section>
+            </section>
           )}
         </>
       )}
@@ -148,7 +167,7 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
   const deg = fresh && town.obs?.wDir != null ? town.obs.wDir : h.wd[0] * 22.5;
   const sun = sunTimes(dayStartHST(now), meta.lat, meta.lon);
   return (
-    <section className="mt-s4" aria-label={`${town.name} right now`}>
+    <section className="wx-card mt-s4" aria-label={`${town.name} right now`}>
       <div className="flex flex-wrap items-start gap-3">
         <ConditionIcon code={code} night={!!h.n[0]} size={164} className="-my-3 -ml-4" />
         <div className="min-w-0 flex-1 basis-36 pt-s3">
@@ -161,7 +180,7 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
         </div>
       </div>
       {open && (
-        <div className="mt-s2 text-body text-ink-2 num">
+        <div className="mt-s3 border-t border-line pt-s3 text-body text-ink-2 num">
           {fl != null && <p>Feels like {fl}°</p>}
           {mph != null && <p>{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p>}
           {rh != null && <p>Humidity {rh}%</p>}
