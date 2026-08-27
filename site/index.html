@@ -3,22 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0e4d2">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#241d17">
 <title>Kilo — Hawaiʻi, at a glance</title>
 <meta name="description" content="Kilo shows what is happening on your island — weather, roads, storms, earthquakes, the volcano, tsunami and neighbor reports — in plain words. Free, no ads, no account. Coming to iPhone and Android.">
 <meta property="og:title" content="Kilo — Hawaiʻi, at a glance"><meta property="og:description" content="What is happening on your island, in plain words. Free, no ads, no account. Coming to iPhone and Android — join the waitlist."><meta property="og:image" content="https://kilohi.org/img/og.png"><meta property="og:url" content="https://kilohi.org/"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/img/icon.png" type="image/png"><link rel="apple-touch-icon" href="/img/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<!-- The app's two faces: Amatic SC for display, Nunito for everything you read. latin-ext carries ā ī ū ō and the ʻokina. -->
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#efe8dc;--card:#fff8ee;--s2:#e6dccb;--ink:#1b1a17;--ink2:#4a463f;--line:#e3d9c8;--brand:#0b6b72;--brand-ink:#fff}
-@media(prefers-color-scheme:dark){:root{--bg:#141210;--card:#1e1b17;--s2:#2a261f;--ink:#f1ede6;--ink2:#cdc7bb;--line:#342f28;--brand:#5ccad0;--brand-ink:#0a2a2c}}
-*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--ink);font:400 1.125rem/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:Merriweather,Georgia,serif;font-weight:700;line-height:1.15;margin:0;text-wrap:balance}
-h1{font-size:clamp(2.5rem,7vw,4.25rem);letter-spacing:-.01em}h2{font-size:clamp(1.75rem,4vw,2.5rem)}h3{font-family:Inter,system-ui,sans-serif;font-size:1.125rem;font-weight:600}
-p{margin:0}.wrap{max-width:72rem;margin:0 auto;padding:0 1.25rem}
-header{display:flex;align-items:center;justify-content:space-between;min-height:4rem;padding:.75rem 0}
-.wordmark{font-family:Merriweather,serif;font-weight:700;font-size:1.5rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:.5rem}.wordmark img{width:28px;height:28px;border-radius:7px}
-.open{color:var(--brand);font-weight:600;text-decoration:none;min-height:2.75rem;display:inline-flex;align-items:center}
+/* ── tokens: the same values as app/globals.css, light then dark ── */
+:root{
+  --bg:#f0e4d2; --card:#fdf8ef; --card-shadow:0 4px 24px rgb(80 60 40 / .12); --card-radius:20px;
+  --surface-2:#e6d8c2;
+  --ink:#4a3a2a; --ink-2:#5a4a3a; --mute:#6a5a4a;
+  --line:rgb(200 180 150 / .55); --hairline:rgb(200 180 150 / .45); --tint:rgb(160 140 120 / .12);
+  --brand:#557085; --brand-ink:#fffaf2; --brand-hover:#4a6376; --sea:#445e72;
+  --amber:#b89060; --warn:#7d5c2e; --warn-bg:rgb(184 144 96 / .14); --danger:#9a3d2c; --ok:#7ab8c0;
+  --font-body:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-display:"Amatic SC","Bradley Hand",cursive;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#241d17; --card:#2d251f; --card-shadow:0 0 0 1px rgb(255 255 255 / .07);
+  --surface-2:#3a3028;
+  --ink:#f4ece0; --ink-2:#e2d6c6; --mute:#b8a892;
+  --line:rgb(200 180 150 / .22); --hairline:rgb(200 180 150 / .18); --tint:rgb(200 180 150 / .10);
+  --brand:#8fb0c4; --brand-ink:#241d17; --brand-hover:#a6c2d4; --sea:#9dbcd0;
+  --amber:#c9a06a; --warn:#d9ae72; --warn-bg:rgb(201 160 106 / .16); --danger:#e8907c; --ok:#8fc4c8;
+}}
+
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.125rem/1.55 var(--font-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+p{margin:0}
+.wrap{max-width:68rem;margin:0 auto;padding:0 1.25rem}
+
+/* ── type: Amatic runs ~1.4x the size a serif wanted, and tight ── */
+.cs-display{font-family:var(--font-display);font-weight:700;line-height:.94;letter-spacing:.01em;color:var(--ink);margin:0;text-wrap:balance}
+h1.cs-display{font-size:clamp(3.75rem,9vw,6.25rem)}
+h2.cs-display{font-size:clamp(2.75rem,5.5vw,3.75rem)}
+.cs-title{margin:0;font-size:1.0625rem;font-weight:700;line-height:1.3;color:var(--ink)}
+.cs-body{margin:.5rem 0 0;font-size:1rem;line-height:1.5;color:var(--ink-2)}
+.cs-meta{margin:0;font-size:.875rem;line-height:1.45;color:var(--mute)}
+.cs-label{display:flex;align-items:center;gap:.45rem;margin:0 0 .6rem;font-size:.75rem;font-weight:700;line-height:1;letter-spacing:.075em;text-transform:uppercase;color:var(--mute)}
+.lede{font-size:1.25rem;line-height:1.5;color:var(--ink-2);margin:1rem 0 0;max-width:34rem}
+
+/* ── the pulsing status dot ── */
+.cs-dot{width:.375rem;height:.375rem;border-radius:9999px;background:var(--brand);flex:0 0 auto;animation:cs-pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes cs-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(prefers-reduced-motion:reduce){.cs-dot{animation:none}}
+
+/* ── the glass ── */
+.cs-card{width:100%;padding:1rem 1.125rem;background:var(--card);border:1px solid var(--hairline);border-radius:var(--card-radius);box-shadow:var(--card-shadow)}
+.cs-hero{padding:1.5rem 1.25rem;background:var(--card);border:1px solid var(--hairline);border-radius:24px;box-shadow:var(--card-shadow)}
+.cs-rule{height:1px;background:var(--hairline);margin:.75rem 0}
+
+/* ── controls: 44px targets, 10px radius, slate fill or hairline ring ── */
+.cs-cta{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:3rem;padding:0 1.25rem;border:0;border-radius:10px;background:var(--brand);color:var(--brand-ink);font:700 1rem/1 var(--font-body);cursor:pointer;text-decoration:none}
+.cs-cta:hover{background:var(--brand-hover)}
+.cs-cta[disabled]{opacity:.6;cursor:default}
+.cs-chip--link{display:inline-flex;align-items:center;gap:.4rem;min-height:2.75rem;padding:0 1rem;border:1px solid var(--line);border-radius:9999px;background:var(--card);color:var(--sea);font-size:.9375rem;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap}
+.cs-chip--link:hover{background:var(--tint)}
+.cs-ic{width:1.25rem;height:1.25rem;flex:0 0 auto}
+.cs-ictile{width:2.375rem;height:2.375rem;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:12px;background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--sea)}
+.cs-ictile .cs-ic{width:1.3125rem;height:1.3125rem}
+
+/* ── header ── */
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:4rem;padding:.75rem 0}
+.wordmark{display:inline-flex;align-items:center;gap:.5rem;color:var(--ink);text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:1.875rem;line-height:1;text-shadow:0 0 8px var(--bg),0 0 16px var(--bg)}
+.wordmark img{width:28px;height:28px}
+
+/* ── hero: the painting fills the top and fades into the paper ── */
 .hero-bleed{position:relative;overflow:hidden}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:72% 35%;z-index:0}
 .hero-fade{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 55%,var(--bg) 100%),linear-gradient(to right,color-mix(in srgb,var(--bg) 88%,transparent) 0,color-mix(in srgb,var(--bg) 70%,transparent) 34%,transparent 62%)}
@@ -26,51 +83,85 @@ header{display:flex;align-items:center;justify-content:space-between;min-height:
 .hero{display:grid;padding:3rem 0 5rem;min-height:min(88vh,52rem);align-items:center}
 .hero-copy{max-width:36rem}
 @media(max-width:56rem){
-  .hero-bleed .wrap{padding-top:0}
   .hero-bleed header{position:relative;z-index:3}
   .hero-img{height:min(72vw,28rem);object-position:78% 55%}
   .hero-fade{background:linear-gradient(to bottom,transparent 0,transparent calc(min(72vw,28rem) - 7rem),var(--bg) min(72vw,28rem))}
   .hero{min-height:0;padding:calc(min(72vw,28rem) - 6rem) 0 3rem}
 }
 @media(prefers-color-scheme:dark){.hero-img{filter:brightness(.82) saturate(.95)}}
-.eyebrow{font-size:.8125rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:1rem}
-.lede{font-size:1.375rem;color:var(--ink2);margin:1.25rem 0 2rem;max-width:34rem}
-.form{display:flex;flex-wrap:wrap;gap:.5rem;max-width:34rem}.form input[type=email]{flex:1 1 16rem;min-height:3.25rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:0 1.25rem;font:inherit}
-.form select{min-height:3.25rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:0 1rem;font:inherit}
-.btn{min-height:3.25rem;padding:0 1.5rem;border-radius:999px;border:0;background:var(--brand);color:var(--brand-ink);font:600 1.0625rem Inter,system-ui;cursor:pointer}.btn[disabled]{opacity:.6}
-.note{font-size:.9375rem;color:var(--ink2);margin-top:.75rem}.msg{margin-top:.75rem;font-weight:600}.msg.ok{color:var(--brand)}.msg.err{color:#b3261e}
+
+/* ── the waitlist form: inputs share the card's ring and the button's radius ── */
+.form{display:flex;flex-wrap:wrap;gap:.5rem;max-width:36rem;margin-top:1.75rem}
+.form input[type=email],.form select{min-height:3rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:0 1rem;font:400 1rem var(--font-body)}
+.form input[type=email]{flex:1 1 13rem}
+.form input::placeholder{color:var(--mute)}
+.note{font-size:.9375rem;color:var(--mute);margin-top:.75rem}
+.msg{margin-top:.75rem;font-weight:700;flex-basis:100%}.msg:empty{display:none}.msg.ok{color:var(--sea)}.msg.err{color:var(--danger)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.phones{display:flex;gap:1rem;justify-content:center;align-items:flex-end}.phone{width:min(44%,17rem);border-radius:2rem;overflow:hidden;background:var(--card);box-shadow:0 1px 2px rgb(27 26 23/.08),0 24px 60px -24px rgb(27 26 23/.35);border:1px solid var(--line)}.phone img{display:block;width:100%;height:auto}.phone.back{transform:translateY(2rem)}
-.phone .light{display:block}.phone .dark{display:none}@media(prefers-color-scheme:dark){.phone .light{display:none}.phone .dark{display:block}}
-section{padding:3.5rem 0}section+section{border-top:1px solid var(--line)}
-.grid{display:grid;gap:1rem;margin-top:2rem}@media(min-width:40rem){.grid{grid-template-columns:repeat(2,1fr)}}@media(min-width:64rem){.grid{grid-template-columns:repeat(3,1fr)}}
-.card{background:var(--card);border-radius:1rem;padding:1.25rem;display:flex;gap:.875rem;align-items:flex-start}.tile{width:2.5rem;height:2.5rem;border-radius:.75rem;background:var(--s2);display:grid;place-items:center;flex:none;color:var(--brand)}.tile svg{width:1.375rem;height:1.375rem}.card p{color:var(--ink2);margin-top:.25rem}
-.shots{display:grid;gap:1.5rem;margin-top:2rem}@media(min-width:56rem){.shots{grid-template-columns:repeat(3,1fr)}}.shot figcaption{margin-top:.75rem;color:var(--ink2)}
-.never{list-style:none;padding:0;margin:1.5rem 0 0;display:grid;gap:.5rem;max-width:34rem}.never li{display:flex;gap:.75rem;align-items:center;color:var(--ink2)}.never svg{width:1.25rem;height:1.25rem;color:var(--brand);flex:none}
-.cta{background:var(--card);border-radius:1.5rem;padding:2.5rem 1.5rem;text-align:center}.cta .form{margin:1.5rem auto 0;justify-content:center}
-footer{padding:2.5rem 0 4rem;color:var(--ink2);font-size:.9375rem}footer a{color:var(--brand);font-weight:600;text-decoration:none}
 .cf-turnstile{flex-basis:100%;margin-top:.25rem}
+
+/* ── sections follow the route grammar: heading → one sentence → one picture ── */
+section{padding:3.5rem 0}
+section+section{border-top:1px solid var(--hairline)}
+.pic{margin-top:1.75rem}
+
+/* topic tiles — the "Also today" grid from Now, one card holding the whole set */
+.cs-grid{display:grid;grid-template-columns:1fr;gap:.625rem}
+@media(min-width:36rem){.cs-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:56rem){.cs-grid{grid-template-columns:repeat(3,1fr)}}
+.cs-tile{padding:1rem;border-radius:16px;background:var(--tint);border:1px solid var(--hairline)}
+.cs-tile-name{margin:.6rem 0 0;font-size:1rem;font-weight:700;color:var(--ink)}
+.cs-tile-line{margin:.2rem 0 0;font-size:.9375rem;line-height:1.4;color:var(--ink-2)}
+
+/* phones — each one is a hero card holding one screen */
+.shots{display:grid;gap:1.5rem}
+@media(min-width:56rem){.shots{grid-template-columns:repeat(3,1fr)}}
+.phone{border-radius:24px;overflow:hidden;background:var(--card);border:1px solid var(--hairline);box-shadow:var(--card-shadow)}
+.phone img{display:block;width:100%;height:auto}
+.phone .dark{display:none}
+@media(prefers-color-scheme:dark){.phone .light{display:none}.phone .dark{display:block}}
+.shot figcaption{margin-top:.75rem;font-size:.9375rem;line-height:1.45;color:var(--mute)}
+figure{margin:0}
+
+/* the "never" list — rows in one card, then the one amber note */
+.never{list-style:none;padding:0;margin:0}
+.never li{display:flex;gap:.75rem;align-items:center;padding:.7rem 0;border-top:1px solid var(--hairline);font-size:1.0625rem;font-weight:700;color:var(--ink)}
+.never li:first-child{border-top:0;padding-top:.1rem}
+.never li:last-child{padding-bottom:.1rem}
+.never svg{width:1.25rem;height:1.25rem;color:var(--brand);flex:none}
+.cs-note{display:flex;align-items:flex-start;gap:.625rem;margin:1.25rem 0 0;padding:.7rem .8rem;border-left:3px solid var(--amber);border-radius:0 14px 14px 0;background:var(--warn-bg);font-size:.9375rem;line-height:1.45;color:var(--ink)}
+.cs-note svg{width:1.125rem;height:1.125rem;flex:0 0 auto;margin-top:.1rem;color:var(--warn)}
+
+/* the closing card */
+.cta{text-align:center}
+.cta .form{margin:1.5rem auto 0;justify-content:center}
+
+/* footer — the app's own footer pill */
+.cs-footer{margin:0 0 3rem;padding:.7rem .9rem;text-align:center;background:var(--card);border:1px solid var(--hairline);border-radius:16px;box-shadow:var(--card-shadow);font-size:.875rem;line-height:1.5;color:var(--mute)}
+.cs-footer a{color:var(--sea);font-weight:700;text-decoration:none}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="chk" viewBox="0 0 256 256"><polyline points="88 136 112 160 168 104" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></symbol></svg>
+
 <div class="hero-bleed">
   <img class="hero-img" src="/img/hero.png" alt="" width="1536" height="1024" fetchpriority="high">
   <div class="hero-fade" aria-hidden="true"></div>
   <div class="wrap">
   <header>
-    <a class="wordmark" href="/"><img src="/img/icon.png" alt="">Kilo</a>
-    <a class="open" href="https://app.kilohi.org/">Open the web app ›</a>
+    <a class="wordmark" href="/"><img src="/img/io-mark.png" alt="">Kilo</a>
+    <a class="cs-chip--link" href="https://app.kilohi.org/">Open the web app <svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" style="width:.9rem;height:.9rem" aria-hidden="true"><polyline points="96 48 176 128 96 208"/></svg></a>
   </header>
   <div class="hero">
   <div class="hero-copy">
-    <p class="eyebrow">Coming to iPhone and Android</p>
-    <h1>Hawaiʻi, at a glance.</h1>
+    <p class="cs-label"><span class="cs-dot"></span>Coming to iPhone and Android</p>
+    <h1 class="cs-display">Hawaiʻi, at a glance.</h1>
     <p class="lede">What is happening on your island right now — weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report — in plain words, on one screen. Free. No ads. No account.</p>
     <form class="form" id="join" novalidate>
       <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" aria-label="Email">
       <select name="island" aria-label="Your island"><option value="hawaii">Hawaiʻi Island</option><option value="maui">Maui</option><option value="oahu">Oʻahu</option><option value="kauai">Kauaʻi</option><option value="other">Somewhere else</option></select>
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="btn" type="submit">Join the waitlist</button>
+      <button class="cs-cta" type="submit">Join the waitlist</button>
       <div class="cf-turnstile" data-sitekey="0x4AAAAAAEX_NkEczVOXF-_0" data-callback="onTurnstile" data-appearance="interaction-only"></div>
       <p class="msg" id="msg" role="status"></p>
     </form>
@@ -79,48 +170,68 @@ footer{padding:2.5rem 0 4rem;color:var(--ink2);font-size:.9375rem}footer a{color
   </div>
   </div>
 </div>
+
 <div class="wrap">
 <main>
 
 <section>
-  <h2>What Kilo shows</h2>
-  <div class="grid">
-  <div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Weather</h3><p>Right now and the next 24 hours, drawn as a curve. Three forecast models, so you can see where they disagree.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><line x1="16" y1="112" x2="240" y2="112" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M224,176v24a8,8,0,0,1-8,8H192a8,8,0,0,1-8-8V176" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M72,176v24a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V176" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="64" y1="144" x2="80" y2="144" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="176" y1="144" x2="192" y2="144" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M224,112,194.11,44.75A8,8,0,0,0,186.8,40H69.2a8,8,0,0,0-7.31,4.75L32,112v64H224Z" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Roads</h3><p>Every closure and crash on a real map, with the exact stretch that is closed and the county’s way around it.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Storms</h3><p>Where a storm is, where it is going, and what that means for your island — in one sentence.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="24 128 56 128 96 40 160 208 200 128 232 128" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Earthquakes</h3><p>What shook, where, how hard, and whether there is any tsunami worry. Usually: none.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><circle cx="164" cy="52" r="20" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M8,200,81.1,75.94a8,8,0,0,1,13.8,0L168,200Z" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="50.35" y1="128" x2="125.65" y2="128" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M146.61,163.71l33.06-55.79a8,8,0,0,1,13.76,0L248,200H168" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>The volcano</h3><p>Kīlauea and Mauna Loa in plain words, and the vog at the monitor nearest you.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><path d="M40,185.61c72-59.69,104,56.47,176-3.22" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Tsunami</h3><p>Is the spot you are standing on inside an evacuation zone? Checked on your phone, even with no signal.</p></div></div><div class="card"><span class="tile"><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><path d="M192,120a59.91,59.91,0,0,1,48,24" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M16,144a59.91,59.91,0,0,1,48-24" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="144" r="40" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M72,216a65,65,0,0,1,112,0" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M161,80a32,32,0,1,1,31,40" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M64,120A32,32,0,1,1,95,80" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><div><h3>Neighbor reports</h3><p>A crash, a flooded road, a lost dog — neighbors tell neighbors, clearly marked as not official.</p></div></div>
+  <h2 class="cs-display">What Kilo shows</h2>
+  <p class="lede">One card per thing. Each one says what is happening and what to do about it.</p>
+  <div class="cs-card pic">
+    <p class="cs-label">On your island</p>
+    <div class="cs-grid">
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94"/></svg></span><p class="cs-tile-name">Weather</p><p class="cs-tile-line">Right now and the next 24 hours, drawn as a curve. Three forecast models, so you can see where they disagree.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><line x1="16" y1="112" x2="240" y2="112"/><path d="M224,176v24a8,8,0,0,1-8,8H192a8,8,0,0,1-8-8V176"/><path d="M72,176v24a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V176"/><line x1="64" y1="144" x2="80" y2="144"/><line x1="176" y1="144" x2="192" y2="144"/><path d="M224,112,194.11,44.75A8,8,0,0,0,186.8,40H69.2a8,8,0,0,0-7.31,4.75L32,112v64H224Z"/></svg></span><p class="cs-tile-name">Roads</p><p class="cs-tile-line">Every closure and crash on a real map, with the exact stretch that is closed and the county’s way around it.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32"/></svg></span><p class="cs-tile-name">Storms</p><p class="cs-tile-line">Where a storm is, where it is going, and what that means for your island — in one sentence.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><polyline points="24 128 56 128 96 40 160 208 200 128 232 128"/></svg></span><p class="cs-tile-name">Earthquakes</p><p class="cs-tile-line">What shook, where, how hard, and whether there is any tsunami worry. Usually: none.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><circle cx="164" cy="52" r="20"/><path d="M8,200,81.1,75.94a8,8,0,0,1,13.8,0L168,200Z"/><line x1="50.35" y1="128" x2="125.65" y2="128"/><path d="M146.61,163.71l33.06-55.79a8,8,0,0,1,13.76,0L248,200H168"/></svg></span><p class="cs-tile-name">The volcano</p><p class="cs-tile-line">Kīlauea and Mauna Loa in plain words, and the vog at the monitor nearest you.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><path d="M40,185.61c72-59.69,104,56.47,176-3.22"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22"/></svg></span><p class="cs-tile-name">Tsunami</p><p class="cs-tile-line">Is the spot you are standing on inside an evacuation zone? Checked on your phone, even with no signal.</p></div>
+      <div class="cs-tile"><span class="cs-ictile"><svg class="cs-ic" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><path d="M192,120a59.91,59.91,0,0,1,48,24"/><path d="M16,144a59.91,59.91,0,0,1,48-24"/><circle cx="128" cy="144" r="40"/><path d="M72,216a65,65,0,0,1,112,0"/><path d="M161,80a32,32,0,1,1,31,40"/><path d="M64,120A32,32,0,1,1,95,80"/></svg></span><p class="cs-tile-name">Neighbor reports</p><p class="cs-tile-line">A crash, a flooded road, a lost dog — neighbors tell neighbors, clearly marked as not official.</p></div>
+    </div>
   </div>
 </section>
 
 <section>
-  <h2>Built for everyone on the island</h2>
-  <p class="lede" style="margin-bottom:0">Big type, plain words, nothing to learn. It reads the official sources — the National Weather Service, Civil Defense, the state highways department, the USGS, the tsunami warning center — every few minutes and turns them into sentences a person can act on. It works on one bar of signal, and keeps working with none.</p>
-  <div class="shots">
-    <figure class="shot"><div class="phone" style="width:100%"><img class="light" src="/img/now-light.png" alt="The Now page: one story headline and a card per topic"><img class="dark" src="/img/now-dark.png" alt=""></div><figcaption>Now: what matters today, one card per thing.</figcaption></figure>
-    <figure class="shot"><div class="phone" style="width:100%"><img class="light" src="/img/roads-light.png" alt="The Roads page: a street map with every closure drawn on it"><img class="dark" src="/img/roads-dark.png" alt=""></div><figcaption>Roads: every closure on a real map, with the stretch that is closed.</figcaption></figure>
-    <figure class="shot"><div class="phone" style="width:100%"><img class="light" src="/img/weather-light.png" alt="The Weather page: the next 24 hours as a temperature curve"><img class="dark" src="/img/weather-dark.png" alt=""></div><figcaption>Weather: the next 24 hours as a curve, with three forecast models behind it.</figcaption></figure>
-
+  <h2 class="cs-display">Built for everyone on the island</h2>
+  <p class="lede">Big type, plain words, nothing to learn. It reads the official sources — the National Weather Service, Civil Defense, the state highways department, the USGS, the tsunami warning center — every few minutes and turns them into sentences a person can act on. It works on one bar of signal, and keeps working with none.</p>
+  <div class="shots pic">
+    <figure class="shot"><div class="phone"><img class="light" src="/img/now-light.png" alt="The Now page: one story headline and a card per topic" width="390" height="844" loading="lazy"><img class="dark" src="/img/now-dark.png" alt="" width="390" height="844" loading="lazy"></div><figcaption>Now: what matters today, one card per thing.</figcaption></figure>
+    <figure class="shot"><div class="phone"><img class="light" src="/img/roads-light.png" alt="The Roads page: the island with every closure drawn on it" width="390" height="844" loading="lazy"><img class="dark" src="/img/roads-dark.png" alt="" width="390" height="844" loading="lazy"></div><figcaption>Roads: every closure drawn on the island, even with no signal.</figcaption></figure>
+    <figure class="shot"><div class="phone"><img class="light" src="/img/weather-light.png" alt="The Weather page: the next 24 hours as a temperature curve" width="390" height="844" loading="lazy"><img class="dark" src="/img/weather-dark.png" alt="" width="390" height="844" loading="lazy"></div><figcaption>Weather: the next 24 hours as a curve, with three forecast models behind it.</figcaption></figure>
   </div>
 </section>
 
 <section>
-  <h2>What Kilo will never do</h2>
-  <ul class="never"><li><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="88 136 112 160 168 104" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>Show ads</li><li><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="88 136 112 160 168 104" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>Make you create an account</li><li><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="88 136 112 160 168 104" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>Sell or share where you are</li><li><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="88 136 112 160 168 104" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>Let a computer write an alert</li><li><svg viewBox="0 0 256 256" fill="currentColor" stroke="currentColor" aria-hidden="true"><polyline points="88 136 112 160 168 104" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" fill="none"  stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>Make a neighbor’s post look official</li></ul>
-  <p class="note" style="margin-top:1.25rem">This waitlist is the one time we ask for an email. It is used for a single launch message, then deleted.</p>
-  <p class="note" style="margin-top:.5rem">Kilo is not an emergency service. If someone is hurt or in danger, call 911.</p>
+  <h2 class="cs-display">What Kilo will never do</h2>
+  <div class="cs-card pic" style="max-width:34rem">
+    <ul class="never">
+      <li><svg aria-hidden="true"><use href="#chk"/></svg>Show ads</li>
+      <li><svg aria-hidden="true"><use href="#chk"/></svg>Make you create an account</li>
+      <li><svg aria-hidden="true"><use href="#chk"/></svg>Sell or share where you are</li>
+      <li><svg aria-hidden="true"><use href="#chk"/></svg>Let a computer write an alert</li>
+      <li><svg aria-hidden="true"><use href="#chk"/></svg>Make a neighbor’s post look official</li>
+    </ul>
+    <div class="cs-rule"></div>
+    <p class="cs-meta">This waitlist is the one time we ask for an email. It is used for a single launch message, then deleted.</p>
+    <p class="cs-note"><svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z"/><line x1="128" y1="144" x2="128" y2="104"/><circle cx="128" cy="180" r="12" fill="currentColor" stroke="none"/></svg><span>Kilo is not an emergency service. If someone is hurt or in danger, call 911.</span></p>
+  </div>
 </section>
 
 <section>
-  <div class="cta">
-    <h2>Be first to know when the apps are out</h2>
+  <div class="cs-hero cta">
+    <p class="cs-label" style="justify-content:center"><span class="cs-dot"></span>Waitlist</p>
+    <h2 class="cs-display">Be first to know when the apps are out</h2>
     <form class="form" id="join2" novalidate>
       <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" aria-label="Email">
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="btn" type="submit">Join the waitlist</button>
-      <p class="msg" id="msg2" role="status" style="flex-basis:100%"></p>
+      <button class="cs-cta" type="submit">Join the waitlist</button>
+      <p class="msg" id="msg2" role="status"></p>
     </form>
   </div>
 </section>
 </main>
 
-<footer>
+<footer class="cs-footer">
   Made in Hilo by <a href="https://csprinkels.com">Christian Sprinkel</a>. Free, no ads, no account. <a href="https://app.kilohi.org/privacy/">Privacy</a> · <a href="mailto:aloha@csprinkels.com">aloha@csprinkels.com</a>
 </footer>
 </div>
