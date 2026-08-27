@@ -18,14 +18,14 @@ import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
-import { LEVEL_WORD, plainAlert, quakeSentence, rankStorms, staleLine, stormName, type Plain, type StormLine } from "@/lib/plain";
-import { fmtClock, fmtTime, islandName } from "@/lib/brand";
+import { LEVEL_WORD, plainAlert, quakeSentence, rankStorms, staleLine, stormName, type Plain } from "@/lib/plain";
+import { nowStory, officialExtra, topicRows } from "@/lib/now";
+import { fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
   ...d, source: "digest", tier: "official", islands: [], lastConfirmedAt: at, hash: "",
 });
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** A notification deep link lands on a card: put it on screen. */
 function useFocusScroll(key: string | undefined, focus?: boolean) {
@@ -219,8 +219,6 @@ const MINI_ICON: Record<string, IconName> = {
   storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", neighbors: "users-three", roads: "traffic-cone",
 };
 
-type Row = { key: string; label: string; text: string; href: string; quiet: boolean };
-
 /** The loudest card on the page: a hero on the brick edge, the level word over the plain headline. */
 function ItemCard({ icon, kicker, title, children, item, focus }: {
   icon: IconName;
@@ -261,89 +259,6 @@ function ShelterCard({ item, plain, now, focus }: { item: Item; plain: Plain; no
       {extra && <p className="cs-body">{extra}</p>}
     </article>
   );
-}
-
-function nowStory({ storm, roads, shelterPlain, leadPlain, island }: {
-  storm?: StormLine;
-  roads: Row;
-  shelterPlain?: Plain;
-  leadPlain?: Plain;
-  island: string;
-}): { title: string; sub: string } {
-  const extra = [
-    !roads.quiet ? roads.text.replace(/\s+\d+ more\.$/, "") : "",
-    shelterPlain?.headline ?? "",
-  ].filter(Boolean).join(" ");
-  if (storm) {
-    const weekend = /Saturday|Sunday/i.test(storm.text);
-    return { title: weekend ? "A storm is coming this weekend." : `${storm.s.name} is headed this way.`, sub: extra || storm.text };
-  }
-  if (leadPlain) return { title: leadPlain.headline + (leadPlain.headline.endsWith(".") ? "" : "."), sub: extra || leadPlain.action };
-  if (shelterPlain) return { title: shelterPlain.headline + (shelterPlain.headline.endsWith(".") ? "" : "."), sub: extra && extra !== shelterPlain.headline ? extra : (shelterPlain.action || "") };
-  if (!roads.quiet) return { title: roads.text.replace(/\s+\d+ more\.$/, ""), sub: "The rest of the island looks ordinary." };
-  return { title: `Here's what's on ${island} today.`, sub: "Nothing urgent. Roads and weather are below." };
-}
-
-function officialExtra(item: Item, headline: string): string | undefined {
-  const body = item.body?.trim();
-  if (body && !headline.includes(body.slice(0, 40))) return body;
-  const title = item.title?.trim();
-  if (title && title !== headline && !headline.includes(title) && !title.includes(headline.slice(0, 24))) return title;
-  return undefined;
-}
-
-function topicRows(
-  items: Item[],
-  plain: Map<string, Plain>,
-  island: Exclude<Island, "state">,
-  now: number,
-  stormTexts: string[],
-  tsunamiAbove: boolean,
-  approachingStorm: boolean,
-  quakeText?: string,
-): Row[] {
-  const of = (f: (i: Item) => boolean) => items.filter((i) => i.tier !== "community" && f(i));
-  const roads = of((i) => i.type === "road_closure" && i.source !== "hdot");
-  const traffic = of((i) => i.type === "traffic");
-  const roadwork = of((i) => i.source === "hdot").length;
-  const community = items.filter((i) => i.tier === "community");
-  const quakes = of((i) => i.type === "quake");
-  const volcano = of((i) => i.type === "volcano");
-  const tsunami = of((i) => i.type === "tsunami");
-
-  let roadsText = "No crashes or closures reported.";
-  if (roads.length || traffic.length) {
-    const first = plain.get((roads[0] ?? traffic[0]).key)!.headline;
-    const more = roads.length + traffic.length - 1;
-    roadsText = `${first}.${more ? ` ${more} more.` : ""}`;
-  } else if (roadwork) roadsText = `No crashes or closures reported. ${plural(roadwork, "roadwork site")} today.`;
-
-  // Fallback when the quake file has not loaded: the island snapshot only keeps 3 days, so say less rather than wrong.
-  if (!quakeText) {
-    const biggest = quakes.reduce<Item | undefined>((a, b) => (!a || Number(b.fields?.mag) > Number(a.fields?.mag) ? b : a), undefined);
-    const mag = Number(biggest?.fields?.mag) || 0;
-    quakeText = biggest && mag >= 3 ? `A ${mag.toFixed(1)} near ${/\bof\s+([^,]+)/.exec(biggest.title)?.[1]?.trim() ?? "here"} ${fmtClock(biggest.issuedAt, now)}. No tsunami.` : "Nothing big in the last few days.";
-  }
-
-  const volcanoQuiet = volcano.length === 0;
-  const volcanoText = volcanoQuiet ? "Kīlauea is taking a rest." : volcano.map((v) => plain.get(v.key)!.headline).join(". ") + ".";
-  const tsunamiHot = tsunami.some((t) => plain.get(t.key)!.level >= 3);
-  const tsunamiText = tsunamiAbove ? "See the warning above." : tsunamiHot ? plain.get(tsunami[0].key)!.headline : "The ocean is fine.";
-  const neighborsText = community.length ? `${plural(community.length, "report")} today. Latest: ${plain.get(community[0].key)!.headline}.` : "Nobody posted today.";
-
-  const quakeQuiet = quakeText.startsWith("Nothing big") || (!/\b\d\.\d\b/.test(quakeText) && !/shook|felt/i.test(quakeText));
-
-  const rows: Row[] = [
-    { key: "roads", label: "Roads", text: roadsText, href: "/traffic/", quiet: !(roads.length || traffic.length) },
-    { key: "storms", label: "Storms", text: stormTexts.length ? stormTexts.join(" ") : "None near Hawaiʻi.", href: "/storms/", quiet: !approachingStorm },
-    { key: "quakes", label: "Earthquakes", text: quakeText, href: "/quakes/", quiet: quakeQuiet },
-    { key: "volcano", label: "Volcano", text: volcanoText, href: "/volcano/", quiet: volcanoQuiet },
-    { key: "tsunami", label: "Tsunami", text: tsunamiText, href: "/tsunami/", quiet: !tsunamiHot && !tsunamiAbove },
-  ];
-  if (island === "hawaii") {
-    rows.push({ key: "neighbors", label: "Reports", text: neighborsText, href: "/report/", quiet: community.length === 0 });
-  }
-  return rows;
 }
 
 /** Weather as an ordinary card — never the page hero, never a tinted wash. */

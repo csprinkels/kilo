@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "convex/_generated/**",
+    // Capacitor copies the built web bundle into both native projects.
+    "ios/**",
+    "android/**",
   ]),
 ]);
 

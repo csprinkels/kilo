@@ -8,6 +8,7 @@ import HourlyChart from "@/components/HourlyChart";
 import DailyRows, { rowsFromPeriods } from "@/components/DailyRows";
 import ItemRow from "@/components/ItemRow";
 import RadarMap from "@/components/RadarMap";
+import { TILES } from "@/lib/tiles";
 import EmptyState from "@/components/EmptyState";
 import type { Hourly, Period, TownWx, Weather } from "@/lib/pages";
 import type { Island } from "@/lib/types";
@@ -91,9 +92,9 @@ export default function WeatherPage() {
             </a>
           ))}
 
-          {(alerts.length > 0 || rainSoon || showRadar)
+          {TILES && ((alerts.length > 0 || rainSoon || showRadar)
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
-            : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>}
+            : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>)}
           {storm && (
             <section className="cs-card mt-s3">
               <div className="cs-heroline">

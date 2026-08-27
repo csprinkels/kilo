@@ -19,7 +19,7 @@ pnpm test                 # parser tests against fixtures/ (real Lala-week data)
 npx convex run ingest:run # trigger one ingest by hand
 ```
 
-`pnpm build` writes a static site to `out/` — that folder is what Cloudflare Pages serves and what Capacitor wraps in Phase 2.
+`pnpm build` writes a static site to `out/` — that folder is what Cloudflare Pages serves and what Capacitor wraps.
 
 ## Layout
 
@@ -60,7 +60,7 @@ Built for everyone in Hawaiʻi, including kūpuna and people on one bar during a
 | `/tsunami` | PTWC CAP level, one-tap evacuation-zone lookup — **offline**: `public/zones/{island}.json` (state GIS polygons, ~50 m, from `scripts/build-zones.mjs`, fetched once and kept by the service worker; live layer is the fallback), HI-EMA siren status | 5 min (sirens daily) |
 | `/report` Reports | neighbor reports: one-screen form, plain hold reasons, Still there / Gone; moderated in the Convex dashboard (`reports` table, flip `status`) | — |
 
-Optional env: `TURNSTILE_SECRET` + `NEXT_PUBLIC_TURNSTILE_SITEKEY` (Cloudflare Turnstile, free) turn on bot verification for reports; `DEVICE_SALT` hashes device ids.
+Optional env: `TURNSTILE_SECRET` + `NEXT_PUBLIC_TURNSTILE_SITEKEY` (Cloudflare Turnstile, free) turn on bot verification for reports; `DEVICE_SALT` hashes device ids. `NEXT_PUBLIC_CARTO_KEY` (free, carto.com/basemaps/apikey) turns on the street-map tiles under Roads and the rain radar under Weather — CARTO stopped serving keyless tiles in 2026; without a key Roads shows the drawn island (`lib/tiles.ts`) and the radar is hidden.
 
 ## Bad-signal delivery (why the app behaves the way it does on one bar)
 
@@ -76,7 +76,7 @@ Never put the decision behind a fetch. Signaling survives a congested cell (push
 1. **R2 bucket** (e.g. `hi-status`) → Settings → connect a custom domain (e.g. `data.yourdomain`). Create an R2 API token (Object Read & Write).
 2. **Convex env vars** (`npx convex env set …` or dashboard): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. The next cron run starts mirroring `v1/*.json`.
 3. **Cache Rule** on the data hostname: *Cache everything*, respect origin `Cache-Control`. Cloudflare does **not** cache JSON by default — without this every poll hits R2. Leave *Always Online* off (it disables `stale-if-error`). Turn on Tiered Cache.
-4. **Pages project** from this repo: build `pnpm build`, output `out`, env `NEXT_PUBLIC_DATA_URL=https://data.yourdomain`. Same apex/zone as the data host so there is no CORS.
+4. **Pages project** `kilo`, uploaded by `.github/workflows/deploy.yml` on every push to `main`; set the repo variable `NEXT_PUBLIC_DATA_URL=https://data.yourdomain` so the client reads from the mirror. Same apex/zone as the data host so there is no CORS.
 5. If the web app and data end up on different origins, add an R2 CORS policy allowing `GET` + `If-None-Match` from the site (and `capacitor://localhost`, `http://localhost` later for the native wrap).
 6. `npx convex deploy` for the production Convex deployment; point Pages at its values only if you keep the Convex HTTP fallback.
 
@@ -100,7 +100,7 @@ What differs inside the app: no service worker (the bundle is already offline; W
 - **app.kilohi.org** — the app itself (Cloudflare Pages project `kilo`, built from `out/`). Push links, Turnstile and the privacy URL (`app.kilohi.org/privacy/`) use this host.
 - **data.kilohi.org** — the R2 mirror of the JSON feeds (bucket `kilo-data`), once the R2 keys are set.
 
-Deploy the app: `NEXT_PUBLIC_CONVEX_SITE_URL=https://standing-ram-435.convex.site NEXT_PUBLIC_TURNSTILE_SITEKEY=… npx next build && npx wrangler pages deploy out --project-name kilo`. Deploy the site: `npx wrangler pages deploy site --project-name kilohi`.
+Deploy: push to `main`. `.github/workflows/deploy.yml` runs the tests, builds against the production Convex deployment and uploads `out/` to the `kilo` Pages project and `site/` to `kilohi` — neither project is Git-connected on Cloudflare's side, so this workflow is the only thing that turns a merge into a deployment. By hand, the same thing is `NEXT_PUBLIC_CONVEX_SITE_URL=https://standing-ram-435.convex.site NEXT_PUBLIC_CONVEX_URL=https://standing-ram-435.convex.cloud npx next build && npx wrangler pages deploy out --project-name kilo --branch main` (a plain `pnpm build` bakes in the *dev* Convex from `.env.local`), and `npx wrangler pages deploy site --project-name kilohi` for the site.
 
 ## Deployments
 
@@ -109,7 +109,7 @@ Two Convex deployments in one project. **Prod** `standing-ram-435` serves kilo-l
 ## Not yet (by design)
 
 - Big Island Video News RSS (ask permission first), county CivicPlus pages (403 to bots), HECO outage map (token-gated), Everbridge/Genasys (no feed).
-- Capacitor wrap: Phase 2. Reporters on the other islands and a help board: Phase 3.
-- Switched on but not yet configured: Turnstile (set `TURNSTILE_SECRET` in Convex and `NEXT_PUBLIC_TURNSTILE_SITEKEY` in Vercel), the R2/CDN mirror (four `R2_*` vars). Until then the report form has only the honeypot and timer, and data is served straight from Convex.
+- Reporters on the other islands and a help board: Phase 3.
+- Switched on but not yet configured: Turnstile (`TURNSTILE_SECRET` is set in prod Convex; the `NEXT_PUBLIC_TURNSTILE_SITEKEY` repo variable is not, so the form has only the honeypot and timer). The R2/CDN mirror: bucket `kilo-data` and `data.kilohi.org` exist and prod Convex has `R2_ACCOUNT_ID` + `R2_BUCKET`, but not the key pair, so `publishToR2` returns early and data is served straight from Convex. It starts mirroring the moment `R2_ACCESS_KEY_ID` + `R2_SECRET_ACCESS_KEY` (dashboard → R2 → Manage API tokens, Object Read & Write on `kilo-data`) are set with `npx convex env set --prod`; then set the `NEXT_PUBLIC_DATA_URL` repo variable and add the Cache Rule from step 3 above.
+- Street-map tiles: `NEXT_PUBLIC_CARTO_KEY` is not set anywhere yet, so Roads draws the island and the rain radar is hidden.
 - Operations: `/mod/?key=…` is the moderation page; the watchdog and held-report alerts push to whoever has tapped "Notify me" there.
-- The name. `APP_NAME` in `lib/brand.ts` and `public/manifest.webmanifest` are placeholders; icons are generated squares.

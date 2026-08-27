@@ -2,11 +2,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import "leaflet/dist/leaflet.css";
 import { fmtTime } from "@/lib/brand";
+import { TILES, TILE_ATTRIBUTION } from "@/lib/tiles";
 
 type Frame = { time: number; path: string; future: boolean };
 type Maps = { host: string; radar: { past: Frame[]; nowcast: Frame[] } };
 
-const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 // RainViewer (free, no key): 13 frames of the past two hours every ten minutes, plus up to three of the next half hour.
 // Colour scheme 2 is their "universal blue"; smoothing on, snow off. Tiles exist up to zoom 7 only, so Leaflet scales
 // 512px zoom-7 tiles up for the island view (that is also why it never shows a street-level picture: there is none).
@@ -57,7 +57,7 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
       const css = getComputedStyle(document.documentElement);
       map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.5, attributionControl: true });
       map.attributionControl.setPrefix(false);
-      L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © CARTO · <a href="https://www.rainviewer.com/">RainViewer</a>' }).addTo(map);
+      L.tileLayer(TILES!, { subdomains: "abcd", maxZoom: 18, attribution: `${TILE_ATTRIBUTION} · <a href="https://www.rainviewer.com/">RainViewer</a>` }).addTo(map); // /weather only mounts this when TILES is set
       layers.current = frames.map((f) => L.tileLayer(RADAR(host, f.path), { opacity: 0, tileSize: 512, zoomOffset: -1, maxNativeZoom: 8, maxZoom: 11, zIndex: 5 }).addTo(map!));
       layers.current[frames.length - (frames.filter((f) => f.future).length) - 1]?.setOpacity(0.72);
       L.circleMarker([lat, lon], { radius: 5, color: css.getPropertyValue("--map-mark-halo").trim(), weight: 2, fillColor: css.getPropertyValue("--brand").trim(), fillOpacity: 1, interactive: false }).addTo(map); // small, so the town's own name still reads

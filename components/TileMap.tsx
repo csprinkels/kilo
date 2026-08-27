@@ -3,6 +3,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import "leaflet/dist/leaflet.css";
 import RoadMap, { type Segment } from "./RoadMap";
 import type { LatLon, RoadLine } from "@/lib/roads";
+import { TILES, TILE_ATTRIBUTION } from "@/lib/tiles";
 
 type IslandId = "hawaii" | "maui" | "oahu" | "kauai";
 type Props = { island: IslandId; segments: Segment[]; focus?: LatLon[]; detour?: RoadLine[]; you?: LatLon; label: string; className?: string };
@@ -11,10 +12,8 @@ type Props = { island: IslandId; segments: Segment[]; focus?: LatLon[]; detour?:
 const FRAME: Record<IslandId, [number, number, number, number]> = {
   hawaii: [18.85, 20.33, -156.15, -154.73], maui: [20.45, 21.3, -157.4, -155.9], oahu: [21.2, 21.77, -158.35, -157.58], kauai: [21.8, 22.3, -159.88, -159.22],
 };
-// CARTO's free OpenStreetMap tiles; the service worker keeps every tile you have seen, so a road you looked at stays on the map with no signal.
+// The service worker keeps every tile you have seen, so a road you looked at stays on the map with no signal.
 // The same light street style in dark mode (dimmed in CSS): CARTO's dark tiles show nothing at island zoom.
-const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-
 const onlineStore = {
   subscribe: (cb: () => void) => { addEventListener("online", cb); addEventListener("offline", cb); return () => { removeEventListener("online", cb); removeEventListener("offline", cb); }; },
   get: () => navigator.onLine,
@@ -27,7 +26,7 @@ const onlineStore = {
 export default function TileMap(props: Props) {
   const online = useSyncExternalStore(onlineStore.subscribe, onlineStore.get, () => true);
   const { className: _c, ...drawn } = props; // eslint-disable-line @typescript-eslint/no-unused-vars
-  if (!online) return <RoadMap {...drawn} />;
+  if (!online || !TILES) return <RoadMap {...drawn} />;
   return <Tiles {...props} />;
 }
 
@@ -50,7 +49,7 @@ function Tiles({ island, segments, focus, detour, you, label, className }: Props
 
       map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.5 });
       map.attributionControl.setPrefix(false);
-      L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © CARTO' }).addTo(map);
+      L.tileLayer(TILES!, { subdomains: "abcd", maxZoom: 18, attribution: TILE_ATTRIBUTION }).addTo(map); // TileMap only renders Tiles when TILES is set
 
       for (const l of detour ?? []) L.polyline(l.p, { color: color("--brand"), weight: zoomed ? 7 : 5, opacity: 0.95 }).addTo(map);
       for (const g of segments) {
