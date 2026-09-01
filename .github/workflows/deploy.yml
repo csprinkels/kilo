@@ -28,6 +28,14 @@ jobs:
           NEXT_PUBLIC_CARTO_KEY: ${{ vars.NEXT_PUBLIC_CARTO_KEY }}
           NEXT_PUBLIC_DATA_URL: ${{ vars.NEXT_PUBLIC_DATA_URL }}
           NEXT_PUBLIC_TURNSTILE_SITEKEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITEKEY }}
+      # A base URL that resolves empty sends every poll to the app's own origin, where there is no
+      # /v1: the page still renders, it just never loads data. That shipped once (an unset repo
+      # variable arrives as ""), so read the real value back rather than trusting the env.
+      - name: The app knows where its data lives
+        run: node --input-type=module -e 'const {DATA_URL,API_URL}=await import("./lib/data.ts");for(const [n,v] of [["DATA_URL",DATA_URL],["API_URL",API_URL]])if(!/^https:\/\/./.test(v)){console.error(`::error::${n} built as ${JSON.stringify(v)} — every fetch would hit the app origin and 404.`);process.exit(1)}console.log("data hosts ok:",DATA_URL,API_URL)'
+        env:
+          NEXT_PUBLIC_CONVEX_SITE_URL: https://standing-ram-435.convex.site
+          NEXT_PUBLIC_DATA_URL: ${{ vars.NEXT_PUBLIC_DATA_URL }}
       - run: npx wrangler pages deploy out --project-name kilo --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
