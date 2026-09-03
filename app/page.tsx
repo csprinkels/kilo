@@ -10,6 +10,7 @@ import TopBar from "@/components/TopBar";
 import StormMap from "@/components/StormMap";
 import ConditionIcon from "@/components/ConditionIcon";
 import Onboarding from "@/components/Onboarding";
+import Ask from "@/components/Ask";
 import type { DigestItem, Island, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
@@ -19,7 +20,7 @@ import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { LEVEL_WORD, plainAlert, quakeSentence, rankStorms, staleLine, stormName, type Plain } from "@/lib/plain";
-import { nowStory, officialExtra, topicRows } from "@/lib/now";
+import { nowStory, officialExtra, topicRows, type Row } from "@/lib/now";
 import { fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
@@ -60,6 +61,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const offline = !!ess?.offline && !!snap?.offline;
   const loaded = !!(snap?.data || ess?.data);
   const [showAll, setShowAll] = useState(false);
+  const [showAllNotices, setShowAllNotices] = useState(false);
 
   const items = useMemo(() => {
     const base = snap?.data?.items ?? [];
@@ -78,7 +80,16 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const shelters = official.filter((i) => i.type === "shelter" && plain.get(i.key)!.level >= 2);
   const rest = warnings.filter((i) => i !== lead && i.type !== "shelter");
   const extraWarnings = showAll || (focusKey && rest.some((i) => i.key === focusKey)) ? rest : rest.slice(0, 2);
-  const headsUp = official.filter((i) => (i.type === "advisory" || i.type === "storm" || i.type === "outage") && plain.get(i.key)!.level === 2);
+  /* Two homes, split by what you do with the thing, because everything below level 3 used to have
+     neither. ACT_ON is a hazard that changes today: it gets a Heads up note and can raise the headline.
+     Everything else official — agency notices, the Governor's storm proclamation, police releases — was
+     parsed, given plain wording and then rendered on no screen in the app at all. It gets one card.
+     Severity leads the sort: with a funnel this wide, recency alone lets a press release outrank a watch. */
+  const ACT_ON: Item["type"][] = ["advisory", "storm", "outage", "tsunami", "hazard", "school"];
+  const bySeverity = (a: Item, b: Item) => b.sev - a.sev || b.issuedAt - a.issuedAt;
+  const headsUp = official.filter((i) => plain.get(i.key)!.level === 2 && ACT_ON.includes(i.type)).sort(bySeverity);
+  const notices = official.filter((i) => i.type === "notice" && plain.get(i.key)!.level >= 2).sort(bySeverity);
+  const shownNotices = showAllNotices ? notices : notices.slice(0, 3);
 
   const storms = stormsSnap?.data?.storms ?? [];
   const place = ISLAND_POINTS[island];
@@ -86,12 +97,26 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const coming = stormLines.filter((x) => x.approaching);
   const mainStorm = coming[0];
   const approaching = !!mainStorm;
-  const stormCovered = approaching && lead && (lead.type === "storm" || lead.type === "advisory");
+  /* The storm hero stands in for the lead warning only when it is at least as urgent. Keying this on
+     `approaching` alone deleted the island's worst warning from the page outright — no card, no row, no
+     hero — whenever any storm was in the basin, including level-1 ones the app itself calls too early to know. */
+  const leadPlain = lead ? plain.get(lead.key)! : undefined;
+  const stormCovered = !!(mainStorm && lead && leadPlain && (lead.type === "storm" || lead.type === "advisory") && mainStorm.level >= leadPlain.level);
 
-  const rows = topicRows(items, plain, island, now, (coming.length ? coming : stormLines).map((x) => x.short), !!(lead && lead.type === "tsunami"), approaching, quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
+  /* Every live storm is named, not just the one in the hero: the row used to drop every storm that was not
+     approaching the moment one was, so a second hurricane in the basin appeared nowhere on the page. */
+  const stormTexts = stormsSnap && !stormsSnap.data ? undefined : stormLines.map((x) => x.short);
+  const rows = topicRows(items, plain, island, now, stormTexts, !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
   const roads = rows.find((r) => r.key === "roads")!;
   const alsoToday = rows.filter((r) => r.quiet);
-  const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: lead && !stormCovered ? plain.get(lead.key) : undefined, island: islandName(island) });
+  /* Every loud row reaches the screen. Roads has its own card, and the storm hero already covers a lone
+     approaching storm; the rest used to be computed and then dropped on the floor. */
+  const loud = rows.filter((r) => !r.quiet && r.key !== "roads" && !(r.key === "storms" && approaching && storms.length === 1));
+  // No lead warning and no storm hero? The headline is still allowed to name the worst watch.
+  const nextPlain = !lead && !mainStorm && headsUp[0] ? plain.get(headsUp[0].key) : undefined;
+  /* ʻIo searches exactly what this page is rendering: same items, same wording, same storm lines. */
+  const askCtx = { items, plain, storms: stormsSnap?.data ? stormLines.map((x) => ({ name: x.s.name, short: x.short })) : undefined };
+  const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
 
   /* The one "there is more of this" control, shared by the two cards that can hold the rest. */
   const moreWarnings = rest.length > 2 && !showAll && (
@@ -126,7 +151,9 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             </section>
           )}
 
-          {lead && !(approaching && (lead.type === "storm" || lead.type === "advisory")) && (
+          {loaded && <Ask island={island} ctx={askCtx} now={now} />}
+
+          {lead && !stormCovered && (
             <ItemCard icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : lead.type === "outage" ? (lead.fields?.kind ? "drop" : "lightning-slash") : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} focus={lead.key === focusKey}>
               {plain.get(lead.key)!.action && <p className="cs-body">{plain.get(lead.key)!.action}</p>}
               {staleLine(lead, now) && <><div className="cs-rule" /><p className="cs-meta">{staleLine(lead, now)}</p></>}
@@ -151,7 +178,8 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             </Link>
           )}
 
-          {(!lead || (approaching && (lead.type === "storm" || lead.type === "advisory"))) && restRows && (
+          {/* Exactly the cases the lead card above did not render: otherwise both hold the same rows. */}
+          {(!lead || stormCovered) && restRows && (
             <section className="cs-card">
               <p className="cs-label">Also in effect</p>
               {restRows}
@@ -170,11 +198,13 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             </Link>
           )}
 
+          {loud.map((r) => <TopicCard key={r.key} row={r} />)}
+
           {mode === "low" || offline
             ? <p className="cs-card cs-body hm-flat">Weather loads when the signal is better.</p>
             : <WeatherNow island={island} />}
 
-          {headsUp.map((i) => {
+          {headsUp.filter((i) => plain.get(i.key) !== nextPlain).map((i) => {
             const p = plain.get(i.key)!;
             return (
               <p key={i.key} className="cs-note hm-flat">
@@ -183,6 +213,18 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
               </p>
             );
           })}
+
+          {shownNotices.length > 0 && (
+            <section className="cs-card" aria-label="Notices">
+              <p className="cs-label"><Icon name="megaphone" size={15} className="cs-ic" /> Notices</p>
+              <ul className="hm-rows">{shownNotices.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>
+              {notices.length > shownNotices.length && (
+                <div className="cs-chiprow">
+                  <button type="button" className="cs-chip cs-chip--link" onClick={() => setShowAllNotices(true)}>All notices ({notices.length}) <Icon name="caret-right" size={14} className="cs-ic" /></button>
+                </div>
+              )}
+            </section>
+          )}
 
           {loaded && alsoToday.length > 0 && (
             <section className="cs-card" aria-label="Also today">
@@ -218,6 +260,16 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 const MINI_ICON: Record<string, IconName> = {
   storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", neighbors: "users-three", roads: "traffic-cone",
 };
+
+/** A topic with something to say, as an ordinary card: the label, the sentence, and the way in. */
+function TopicCard({ row }: { row: Row }) {
+  return (
+    <Link href={row.href} className="cs-card">
+      <p className="cs-label"><Icon name={MINI_ICON[row.key] ?? "cloud-sun"} size={15} className="cs-ic" /> {row.label}</p>
+      <h2 className="cs-title">{row.text}</h2>
+    </Link>
+  );
+}
 
 /** The loudest card on the page: a hero on the brick edge, the level word over the plain headline. */
 function ItemCard({ icon, kicker, title, children, item, focus }: {

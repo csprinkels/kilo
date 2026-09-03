@@ -85,3 +85,26 @@ test("cone polygon and outlook: the advisory that put Kaʻū inside the 34-kt ra
   assert.equal(outlookFor(last, hi).tsWindsFrom, undefined);
   assert.equal(categoryOf(last.windKt).label, "Category 2 hurricane");
 });
+
+test("outlook: a storm heading west now but recurving toward us later is not 'moving away'", () => {
+  // Lowell, 3 Sep 2026: due west at 9 kt off the south, then north across the island latitudes by day 5.
+  // A 12-hour lookahead read that as moving away from Maui while the closest approach was still 113 hours out.
+  const recurving: Storm = {
+    id: "ep122026", name: "Lowell", cls: "HU", advNum: 29, issuedAt: Date.UTC(2026, 8, 3, 3, 0),
+    warnings: [], track: [], links: {}, lat: 13.5, lon: -157.2, windKt: 120, gustKt: 145, radii: {},
+    forecast: [
+      { hour: 9, at: Date.UTC(2026, 8, 3, 12, 0), lat: 13.5, lon: -158.3, windKt: 120, gustKt: 145, radii: {} },
+      { hour: 33, at: Date.UTC(2026, 8, 4, 12, 0), lat: 13.7, lon: -161.0, windKt: 120, gustKt: 145, radii: {} },
+      { hour: 69, at: Date.UTC(2026, 8, 6, 0, 0), lat: 15.1, lon: -163.2, windKt: 120, gustKt: 145, radii: {} },
+      { hour: 117, at: Date.UTC(2026, 8, 8, 0, 0), lat: 22.7, lon: -162.0, windKt: 100, gustKt: 120, radii: {}, outlook: true },
+    ],
+  };
+  const o = outlookFor(recurving, ISLAND_POINTS.maui);
+  assert.equal(o.movingAway, false, "the day-5 track turns back toward Maui");
+  assert.ok(o.closest.hour > 100, `closest approach is late in the forecast, not now (hour ${o.closest.hour})`);
+
+  // Hawaiʻi Island sits east of the whole track: it really is closest right now.
+  const away = outlookFor(recurving, ISLAND_POINTS.hawaii);
+  assert.equal(away.movingAway, true);
+  assert.equal(away.closest.hour, 0);
+});

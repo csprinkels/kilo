@@ -7,6 +7,7 @@ import { parseDws, parseHdot, parseHvo, parsePtwc, parseUsgs } from "../convex/p
 import { BANNED, LEVEL_WORD, SOURCE_NAME, fmtUntil, plainAlert, rankStorms } from "../lib/plain.ts";
 import { ISLAND_POINTS } from "../lib/storm.ts";
 import { ISLAND_LABEL, TYPE_LABEL } from "../lib/brand.ts";
+import { buildDigest } from "../lib/types.ts";
 import type { Item } from "../lib/types.ts";
 
 const fx = (f: string) => JSON.parse(readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8"));
@@ -169,4 +170,31 @@ test("the storm that comes near leads; one that stays 1,000 miles out is 'not ex
   assert.equal(lala.short, "Lala is not expected to come near.");
   assert.match(lala.text, /not expected to come near Hawaiʻi Island/);
   for (const l of lines) { assert.equal(banned(l.text), undefined, l.text); assert.equal(banned(l.short), undefined, l.short); }
+});
+
+test("a pushed warning survives the digest: fields that change the meaning are carried, and the title is the backstop", () => {
+  const now = Date.UTC(2026, 8, 3, 20, 0);
+  const kilauea: Item = {
+    key: "hvo:kilauea", source: "hvo", type: "volcano", tier: "official", sev: 4, islands: ["hawaii"], districts: ["Puna"],
+    title: "Kīlauea: WARNING / RED", body: "Eruption underway.", srcUrl: "https://volcanoes.usgs.gov/",
+    issuedAt: now, lastConfirmedAt: now, hash: "", fields: { alertLevel: "WARNING" },
+  };
+  assert.equal(plainAlert(kilauea, now, "hawaii").level, 4);
+
+  // Through the push path: buildDigest -> the item the offline page rebuilds from it.
+  const d = buildDigest("hawaii", [kilauea], now, kilauea.key);
+  assert.equal(d.top[0].fields?.alertLevel, "WARNING", "the field that decides the level must ride along");
+  const rebuilt: Item = { ...d.top[0], source: "digest", tier: "official", islands: [], lastConfirmedAt: now, hash: "" };
+  assert.equal(plainAlert(rebuilt, now, "hawaii").level, 4, "a pushed warning must not re-read as an all-clear");
+
+  // Backstop: even with the fields stripped entirely, the title still says WARNING.
+  const stripped: Item = { ...rebuilt, fields: undefined };
+  assert.equal(plainAlert(stripped, now, "hawaii").level, 4);
+  // And a genuine all-clear is still an all-clear.
+  assert.equal(plainAlert({ ...kilauea, title: "Kīlauea: NORMAL / GREEN", fields: {} }, now, "hawaii").level, 0);
+
+  // Same shape for water: a boil notice must not arrive as a generic power outage.
+  const boil: Item = { ...kilauea, key: "hidws:1", type: "outage", title: "Boil Water Notice — Kaʻū", body: "Boil before drinking.", fields: {} };
+  assert.equal(plainAlert(boil, now, "hawaii").level, 3);
+  assert.match(plainAlert(boil, now, "hawaii").headline, /^Boil your water/);
 });
