@@ -11,7 +11,8 @@ export const HAWAII_DISTRICTS: Record<string, string[]> = {
   "Puna": ["Pāhoa", "Kea‘au", "Kurtistown", "Mountain View", "Volcano", "Kapoho", "Kalapana", "Hawaiian Paradise Park", "HPP", "Orchidland", "Ainaloa", "Leilani", "Nānāwale", "Hawaiian Beaches", "Glenwood", "Fern Forest", "Eden Roc", "Hawaiian Acres", "Pohoiki", "Isaac Hale"],
 };
 
-const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[ʻ‘’'`]/g, "").toLowerCase();
+/** Diacritic- and ʻokina-insensitive folding: "Ka'ū" and "Kau" are the same word to a search box. */
+export const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[ʻ‘’'`]/g, "").toLowerCase();
 const INDEX: [string, string][] = Object.entries(HAWAII_DISTRICTS).flatMap(([d, towns]) => [[fold(d), d] as [string, string], ...towns.map((t): [string, string] => [fold(t), d])])
   .sort((a, b) => b[0].length - a[0].length); // longest names first ("Kailua-Kona" before "Kona")
 
