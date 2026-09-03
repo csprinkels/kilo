@@ -249,7 +249,9 @@ function quake(item: Item): Plain {
 
 function volcano(item: Item): Plain {
   const name = item.title.split(":")[0].trim();
-  const lvl = (item.fields?.alertLevel ?? "").toUpperCase();
+  // Fall back to the title: a pushed item may arrive without fields, and reading a WARNING as "quiet" is the
+  // worst error this function can make.
+  const lvl = (item.fields?.alertLevel ?? /\b(WARNING|WATCH|ADVISORY)\b/i.exec(item.title)?.[1] ?? "").toUpperCase();
   const src = sourceName(item.source);
   if (lvl === "WARNING") return { headline: `${name}: dangerous eruption`, action: "Follow Civil Defense instructions now.", level: 4, source: src, official: item.title };
   if (lvl === "WATCH") return { headline: `${name} is active`, action: "Check the Volcano page for where and what it means.", level: 1, source: src, official: item.title };
@@ -270,7 +272,7 @@ function outage(item: Item, now: number): Plain {
   const src = sourceName(item.source), until = fmtUntil(item.expiresAt, now), where = placeOf(item);
   if (item.tier === "community")
     return { headline: `Power or water out near ${item.title.split("—").pop()?.trim() || where}`, action: "Not checked by anyone official.", level: Math.min(item.sev, 2) as Level, source: src, official: item.title };
-  switch (item.fields?.kind) {
+  switch (item.fields?.kind ?? (/\bboil\b/i.test(`${item.title} ${item.body}`) ? "boil" : undefined)) {
     case "boil": return { headline: `Boil your water ${where}`, action: "Boil water one minute before you drink or cook with it. Bottled water is fine.", level: 3, until, source: src, official: item.title };
     case "off": return { headline: `Water is out ${where}`, action: "Fill containers from another source. Service should come back soon.", level: 2, until, source: src, official: item.title };
     case "prep": return { headline: `Water could go out ${where}`, action: "Fill containers now, before any outage.", level: 2, until, source: src, official: item.title };

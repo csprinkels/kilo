@@ -69,7 +69,20 @@ export type Essentials = {
 };
 
 /** Push payload: the island DIGEST (APNs keeps only one stored notification per app while a phone is unreachable). */
-export type DigestItem = Pick<Item, "key" | "sev" | "type" | "title" | "srcUrl" | "issuedAt" | "districts"> & { body: string };
+export type DigestItem = Pick<Item, "key" | "sev" | "type" | "title" | "srcUrl" | "issuedAt" | "districts">
+  & { body: string; fields?: Record<string, string> };
+
+/**
+ * The only fields plainAlert BRANCHES on. Without them a pushed volcano WARNING re-reads as
+ * "Kīlauea is quiet" at level 0 — no card, and the notification's deep link lands on nothing.
+ * Two short keys, so this stays inside the push budget.
+ */
+const DECIDING_FIELDS = ["alertLevel", "kind"] as const;
+const deciding = (f: Item["fields"]): Record<string, string> | undefined => {
+  const out: Record<string, string> = {};
+  for (const k of DECIDING_FIELDS) if (f?.[k]) out[k] = f[k];
+  return Object.keys(out).length ? out : undefined;
+};
 export type Digest = { v: 1; island: Island; gen: number; trigger: string; top: DigestItem[] };
 
 export const ESSENTIALS_BUDGET = 1500;   // bytes, raw JSON
@@ -97,6 +110,7 @@ export function buildDigest(island: Island, items: Item[], gen: number, trigger:
   const pick = (i: Item, bodyLen: number, withUrl: boolean): DigestItem => ({
     key: i.key, sev: i.sev, type: i.type, title: clip(i.title, 90), body: clip(i.body, bodyLen),
     srcUrl: withUrl ? i.srcUrl : "", issuedAt: i.issuedAt, districts: i.districts.slice(0, 1),
+    fields: deciding(i.fields),
   });
   return { v: 1, island, gen, trigger, top: [...(lead ? [pick(lead, 600, true)] : []), ...rest.map((i) => pick(i, 120, false))] };
 }

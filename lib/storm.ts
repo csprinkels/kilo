@@ -168,8 +168,9 @@ export function outlookFor(storm: Storm, place: { lat: number; lon: number }): O
     if (d <= r34) { tsFrom ??= p.at; tsUntil = p.at; }
     if (d <= r64) huFrom ??= p.at;
   }
-  const now = distanceNm(storm.lat, storm.lon, place.lat, place.lon);
-  const later = path[Math.min(12, path.length - 1)];
-  const movingAway = distanceNm(later.lat, later.lon, place.lat, place.lon) > now + 10;
+  // Moving away only when the whole official forecast never brings it closer than it is right now.
+  // A 12-hour gradient called a recurving storm "moving away" while the day-5 track turned back toward us:
+  // Lowell read as moving away from Maui with its closest approach still 113 hours out.
+  const movingAway = path.length > 1 && closest.hour === 0;
   return { closest, tsWindsFrom: tsFrom, tsWindsUntil: tsUntil, hurricaneWindsFrom: huFrom, movingAway };
 }
