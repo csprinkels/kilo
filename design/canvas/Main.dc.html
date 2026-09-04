@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap');
+    body { margin: 0; font-family: Nunito, system-ui, sans-serif; }
+    a { color: #445e72; } a:hover { color: #374c5c; }
+    .ic svg { width: 100%; height: 100%; fill: none; stroke: currentColor; }
+    /* Amatic carries the little headers only. It has no ā ī ū or ʻokina, so nothing that can
+       contain a Hawaiian place name is ever set in it. */
+    .lab { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font-family: 'Amatic SC', cursive;
+           font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: .055em; text-transform: uppercase; }
+    .tile { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .tile .ic { width: 15px; height: 15px; display: block; }
+    .card { box-sizing: border-box; padding: 16px 18px; background: #ffffff;
+            border: 1px solid rgb(190 178 158 / .40); border-radius: 20px; box-shadow: 0 4px 24px rgb(80 60 40 / .10); }
+    .head { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .tname { margin: 8px 0 0; font-family: 'Amatic SC', cursive; font-size: 17px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+    .tline { margin: 2px 0 0; font-size: 12.5px; line-height: 1.35; color: #5a4a3a; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 1440px; background: #f4f1eb; box-sizing: border-box; padding: 0 20px 28px;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding-top: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <img src="io-mark.png" alt="" style="width: 28px; height: 28px; display: block;">
+      <span style="font-family: 'Amatic SC', cursive; font-size: 27px; font-weight: 700; color: #4a3a2a; line-height: 1;">Kilo</span>
+    </div>
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgb(200 180 150 / .55); font-size: 13.5px; font-weight: 700; color: #4a3a2a;">Hawai&#699;i Island</span>
+  </div>
+  <p style="margin: 6px 0 0; text-align: center; font-size: 13px; color: #6a5a4a;">Latest update: Sep 3, 12:50 PM</p>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+
+    <!-- the one emphasised block: icon and label on one line, headline at full width -->
+    <div style="box-sizing: border-box; padding: 18px; background: #f5e8d0; border-radius: 24px; box-shadow: 0 6px 22px rgb(120 88 40 / .18);">
+      <p class="lab" style="color: #7d5c2e;">
+        <span class="ic" style="width: 17px; height: 17px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+        Heads up
+      </p>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800; line-height: 1.18; letter-spacing: -.01em; color: #4a3a2a;">Strong wind on Hawai&#699;i Island until tomorrow 6 AM.</h1>
+      <p style="margin: 9px 0 0; font-size: 15.5px; line-height: 1.5; color: #5a4a3a;">Tie down anything loose. Drive carefully in tall vehicles.</p>
+    </div>
+
+    <!-- ROADS — zoned: body, then a recessed footer holding the count and the way in -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 16px 18px;">
+        <p class="lab" style="color: #6e5817;"><span class="tile" style="background: #f1e9c5; color: #6e5817;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M48,216,110.13,37.37A8,8,0,0,1,117.69,32h20.62a8,8,0,0,1,7.56,5.37L208,216" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="232" y1="216" x2="24" y2="216" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="166.26" y1="96" x2="89.74" y2="96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Roads</p>
+        <h2 class="head">Wood Valley Road closed both ways in Kau.</h2>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 18px; background: #faf8f4; border-top: 1px solid rgb(190 178 158 / .40);">
+        <span style="font-size: 13.5px; line-height: 1.4; color: #6a5a4a;">15 more closures &#183; map and detours</span>
+        <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="lab" style="color: #3d2673;"><span class="tile" style="background: #d5ccea; color: #3d2673;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Storms</p>
+      <h2 class="head">Lowell is moving away. Karina is not expected to come near.</h2>
+    </div>
+
+    <div class="card">
+      <p class="lab" style="color: #7d441c;"><span class="tile" style="background: #f0d8c7; color: #7d441c;"><span class="ic"><svg viewBox="0 0 256 256"><polyline points="24 128 56 128 96 40 160 208 200 128 232 128" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Earthquakes</p>
+      <h2 class="head">A 3.2 near P&#257;hala was barely felt at 12:39 PM. No tsunami expected.</h2>
+    </div>
+
+    <div class="card">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="52" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="36" x2="128" y2="16" stroke-linecap="round" stroke-width="16"/><line x1="36" y1="128" x2="16" y2="128" stroke-linecap="round" stroke-width="16"/><line x1="240" y1="128" x2="220" y2="128" stroke-linecap="round" stroke-width="16"/></svg></span></span>Weather in Hilo</p>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+        <div style="min-width: 0;">
+          <p style="margin: 0; font-size: 44px; font-weight: 400; line-height: 1; letter-spacing: -.02em; color: #4a3a2a;">77&#176;</p>
+          <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: #4a3a2a;">Overcast. High 80&#176;, low 71&#176;.</p>
+        </div>
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: #f2f5f8;"></div>
+      </div>
+      <p style="margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: #6a5a4a;">Chance of showers throughout the day. Sunset at 6:35 PM.</p>
+    </div>
+
+    <!-- heads up: one card, a row per hazard -->
+    <div class="card" style="padding: 14px 16px;">
+      <p class="lab" style="margin: 0 0 4px; color: #7d5c2e;"><span class="tile" style="background: #f3e2c2; color: #7d5c2e;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="144" x2="128" y2="104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Heads up</p>
+      <div style="padding: 10px 0 0;">
+        <p style="margin: 0; font-size: 15.5px; font-weight: 700; line-height: 1.35; color: #4a3a2a;">Naalehu Elementary School is closed.</p>
+        <p style="margin: 2px 0 0; font-size: 13.5px; line-height: 1.4; color: #6a5a4a;">Keep kids home.</p>
+      </div>
+      <div style="padding: 10px 0 0; margin-top: 10px; border-top: 1px solid rgb(190 178 158 / .40);">
+        <p style="margin: 0; font-size: 15.5px; font-weight: 700; line-height: 1.35; color: #4a3a2a;">Big waves until tomorrow 6 AM.</p>
+        <p style="margin: 2px 0 0; font-size: 13.5px; line-height: 1.4; color: #6a5a4a;">Stay off the rocks and out of the water there.</p>
+      </div>
+    </div>
+
+    <!-- the one card with no hue: reading, not doing -->
+    <div class="card">
+      <p class="lab" style="color: #6a5a4a;"><span class="tile" style="background: rgb(160 140 120 / .14); color: #6a5a4a;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M160,80V200.67a8,8,0,0,0,3.56,6.65l11,7.33a8,8,0,0,0,12.2-4.72L200,160" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,200a8,8,0,0,0,13.15,6.12C105.55,162.16,160,160,160,160h40a40,40,0,0,0,0-80H160S105.55,77.84,53.15,33.89A8,8,0,0,0,40,40Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Notices</p>
+      <div style="padding: 0 0 9px;">
+        <span style="display: block; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: #4a3a2a;">Gov. Green Issues Proclamation Relating to September 2026 Tropical Cyclones</span>
+        <span style="display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: #6a5a4a;">The state emergency agency &#183; 7:12 AM</span>
+      </div>
+      <div style="padding: 9px 0 0; border-top: 1px dashed rgb(200 180 150 / .8);">
+        <span style="display: block; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: #4a3a2a;">Police Investigating Traffic Incident in Volcano</span>
+        <span style="display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: #6a5a4a;">Hawai&#699;i Police &#183; Wed 8:33 AM</span>
+      </div>
+    </div>
+
+    <!-- quiet topics keep their hue at tile scale: a topic looks the same wherever it appears -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div style="box-sizing: border-box; padding: 12px; border-radius: 16px; background: #ffffff; border: 1px solid rgb(190 178 158 / .40);">
+        <span class="tile" style="width: 32px; height: 32px; border-radius: 10px; background: #f1cbc5; color: #7d291c;"><span class="ic" style="width: 18px; height: 18px;"><svg viewBox="0 0 256 256"><circle cx="164" cy="52" r="20" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M8,200,81.1,75.94a8,8,0,0,1,13.8,0L168,200Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+        <p class="tname" style="color: #7d291c;">Volcano</p>
+        <p class="tline">K&#299;lauea is taking a rest.</p>
+      </div>
+      <div style="box-sizing: border-box; padding: 12px; border-radius: 16px; background: #ffffff; border: 1px solid rgb(190 178 158 / .40);">
+        <span class="tile" style="width: 32px; height: 32px; border-radius: 10px; background: #cce8eb; color: #256e74;"><span class="ic" style="width: 18px; height: 18px;"><svg viewBox="0 0 256 256"><path d="M40,185.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+        <p class="tname" style="color: #256e74;">Tsunami</p>
+        <p class="tline">The ocean is fine.</p>
+      </div>
+      <div style="box-sizing: border-box; padding: 12px; border-radius: 16px; background: #ffffff; border: 1px solid rgb(190 178 158 / .40);">
+        <span class="tile" style="width: 32px; height: 32px; border-radius: 10px; background: #cdeada; color: #28714a;"><span class="ic" style="width: 18px; height: 18px;"><svg viewBox="0 0 256 256"><circle cx="128" cy="144" r="40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M192,120a59.91,59.91,0,0,1,48,24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M16,144a59.91,59.91,0,0,1,48-24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+        <p class="tname" style="color: #28714a;">Reports</p>
+        <p class="tline">Nobody posted today.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

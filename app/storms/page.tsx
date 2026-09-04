@@ -61,7 +61,7 @@ export default function StormsPage() {
       <div className="st-stack mt-s5">
         <StormTracker key={shown.id} storm={shown} island={island} />
         {others.length > 0 && (
-          <section className="cs-card st-flush">
+          <section className="cs-card t-storms st-flush">
             {others.map((s) => (
               <button key={s.id} type="button" className="cs-row cs-row--mid st-row" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
                 <span className="cs-rowmain">

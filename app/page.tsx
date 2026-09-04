@@ -145,7 +145,8 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
         <div className="hm-col">
           {loaded && (
-            <section className="cs-card cs-hero">
+            /* The page's one emphasised block: amber ground only when the day has something to act on. */
+            <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`}>
               <h1 className="cs-display cs-display--hero">{story.title}</h1>
               {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
             </section>
@@ -190,7 +191,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           {shelters.map((i) => <ShelterCard key={i.key} item={i} plain={plain.get(i.key)!} now={now} focus={i.key === focusKey} />)}
 
           {!roads.quiet && (
-            <Link href="/traffic/" className="cs-card">
+            <Link href="/traffic/" className="cs-card t-roads">
               <p className="cs-label"><Icon name="traffic-cone" size={15} className="cs-ic" /> Roads</p>
               <h2 className="cs-title">{roads.text.replace(/\s+\d+ more\.$/, "")}</h2>
               <p className="cs-body">Tap for the map and detours.</p>
@@ -231,7 +232,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
               <p className="cs-label">Also today</p>
               <div className="cs-grid">
                 {alsoToday.map((r) => (
-                  <Link key={r.key} href={r.href} className="cs-tile">
+                  <Link key={r.key} href={r.href} className={`cs-tile ${TOPIC_CLASS[r.key] ?? ""}`}>
                     <span className="cs-ictile"><Icon name={MINI_ICON[r.key] ?? "cloud-sun"} size={21} className="cs-ic" /></span>
                     <p className="cs-tile-name">{r.label}</p>
                     <p className="cs-tile-line">{r.text}</p>
@@ -257,6 +258,12 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   );
 }
 
+/** Reports is the one row whose key and topic name differ. */
+const TOPIC_CLASS: Record<string, string> = {
+  roads: "t-roads", storms: "t-storms", quakes: "t-quakes",
+  volcano: "t-volcano", tsunami: "t-tsunami", neighbors: "t-reports",
+};
+
 const MINI_ICON: Record<string, IconName> = {
   storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", neighbors: "users-three", roads: "traffic-cone",
 };
@@ -264,7 +271,8 @@ const MINI_ICON: Record<string, IconName> = {
 /** A topic with something to say, as an ordinary card: the label, the sentence, and the way in. */
 function TopicCard({ row }: { row: Row }) {
   return (
-    <Link href={row.href} className="cs-card">
+    // the row key IS the topic key: one class carries the hue to the label and the icon tile
+    <Link href={row.href} className={`cs-card ${TOPIC_CLASS[row.key] ?? ""}`}>
       <p className="cs-label"><Icon name={MINI_ICON[row.key] ?? "cloud-sun"} size={15} className="cs-ic" /> {row.label}</p>
       <h2 className="cs-title">{row.text}</h2>
     </Link>
@@ -332,7 +340,7 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const nextSun = sun ? (sun.rise > w.fetchedAt ? { k: "Sunrise", at: sun.rise } : sun.set > w.fetchedAt ? { k: "Sunset", at: sun.set } : undefined) : undefined;
   const tempLabel = temp != null ? `${temp}°` : "—";
   return (
-    <Link href="/weather/" className="cs-card" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
+    <Link href="/weather/" className="cs-card t-weather" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
       <p className="cs-label">Weather in {town.name}</p>
       <div className="cs-wx-row">
         <div className="min-w-0">

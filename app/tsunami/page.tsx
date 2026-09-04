@@ -125,7 +125,7 @@ export default function TsunamiPage() {
           </section>
         )}
 
-        <section className="cs-card">
+        <section className="cs-card t-tsunami">
           <div className="cs-heroline">
             <span className="cs-ictile"><Icon name="map-pin" size={21} /></span>
             <h2 className="cs-display cs-display--card">Am I in an evacuation zone?</h2>
@@ -145,7 +145,7 @@ export default function TsunamiPage() {
           <a className="cs-link ts-link" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" size={16} /></a>
         </section>
 
-        <section className="cs-card">
+        <section className="cs-card t-tsunami">
           <div className="cs-heroline">
             <span className="cs-ictile"><Icon name="lightbulb-filament-fill" size={21} /></span>
             <h2 className="cs-display cs-display--card">What to do</h2>

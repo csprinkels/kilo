@@ -53,7 +53,7 @@ function QuakesBody({ retry }: { retry: () => void }) {
       {d && (
         <>
           {/* qk-map — the month as a picture: the framed map, its caption, the way out to the full one. */}
-          <section className="cs-card mt-s5">
+          <section className="cs-card t-quakes mt-s5">
             <DotMap className="cs-figure qk-frame" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
             <div className="cs-chiprow">
               <a className="cs-chip cs-chip--link qk-out" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map <Icon name="caret-right" size={14} /></a>
@@ -61,7 +61,7 @@ function QuakesBody({ retry }: { retry: () => void }) {
           </section>
 
           {/* qk-felt — one card, one list: the quakes people actually noticed. */}
-          <section className="cs-card mt-s4">
+          <section className="cs-card t-quakes mt-s4">
             <h2 className="cs-label"><Icon name="pulse" size={15} /> Ones people felt</h2>
             {felt.length > 0 ? (
               <ul className="qk-list">

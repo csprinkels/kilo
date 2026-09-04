@@ -45,3 +45,9 @@ next-env.d.ts
 
 # wrangler local state
 .wrangler/
+
+# Design canvas: the artboards are the source and are tracked; the seeded page is
+# generated from them (it carries a ~2.7 MB editor payload) and the inspiration
+# folder is third-party screenshots.
+design/canvas/kilo-*.html
+design/inspo/

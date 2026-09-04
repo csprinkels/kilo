@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap');
+    body { margin: 0; font-family: Nunito, system-ui, sans-serif; }
+    a { color: #445e72; } a:hover { color: #374c5c; }
+    .ic svg { width: 100%; height: 100%; fill: none; stroke: currentColor; }
+    /* Amatic carries the little headers only. It has no ā ī ū or ʻokina, so nothing that can
+       contain a Hawaiian place name is ever set in it. */
+    .lab { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font-family: 'Amatic SC', cursive;
+           font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: .055em; text-transform: uppercase; }
+    .tile { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .tile .ic { width: 15px; height: 15px; display: block; }
+    .card { box-sizing: border-box; padding: 16px 18px; background: #ffffff;
+            border: 1px solid rgb(190 178 158 / .40); border-radius: 20px; box-shadow: 0 4px 24px rgb(80 60 40 / .10); }
+    /* the felt list: a bullet sized like the map dot, the plain line, the number at the end */
+    .qrow { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 9px 0; }
+    .qrow + .qrow { border-top: 1px solid rgb(190 178 158 / .38); }
+    .qmark { width: 22px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
+    .qbul  { border-radius: 99px; background: #7d441c; display: block; }
+    .qname { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .qsub  { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #6a5a4a; }
+    .qmag  { flex: 0 0 auto; font-size: 17px; font-weight: 700; line-height: 1; color: #4a3a2a; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 1500px; background: #f4f1eb; box-sizing: border-box; padding: 0 20px 28px;">
+
+  <!-- PAGE CHROME 1 — this is not a tab, so the wordmark is replaced by the way back -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-top: 8px;">
+    <span style="display: inline-flex; align-items: center; gap: 2px; min-height: 44px; margin-left: -4px; padding: 0 4px; font-size: 13.5px; font-weight: 700; color: #445e72;">
+      <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="160 208 80 128 160 48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      Now
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgb(200 180 150 / .55); font-size: 13.5px; font-weight: 700; color: #4a3a2a;">Hawai&#699;i Island</span>
+  </div>
+
+  <!-- PAGE CHROME 2 — freshness -->
+  <p style="margin: 6px 0 0; text-align: center; font-size: 13px; color: #6a5a4a;">Latest update: Sep 3, 12:50 PM</p>
+
+  <!-- PAGE CHROME 3 — the title and the one sentence under it -->
+  <h1 style="margin: 16px 0 0; font-size: 26px; font-weight: 800; line-height: 1.18; letter-spacing: -.01em; color: #4a3a2a;">Earthquakes</h1>
+  <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: #5a4a3a;">A 3.2 near P&#257;hala was barely felt at 12:39 PM. No tsunami expected.</p>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+
+    <!-- qk-map — the month as a picture, then the way out to the full map -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 16px 18px 10px;">
+        <p class="lab" style="margin: 0; color: #7d441c;"><span class="tile" style="background: #f0d8c7; color: #7d441c;"><span class="ic"><svg viewBox="0 0 256 256"><circle cx="128" cy="104" r="32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M208,104c0,72-80,128-80,128S48,176,48,104a80,80,0,0,1,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>This month</p>
+      </div>
+      <div style="border-top: 1px solid rgb(190 178 158 / .40); border-bottom: 1px solid rgb(190 178 158 / .40);">
+        <svg viewBox="0 0 350 210" style="display: block; width: 100%; height: auto;">
+          <rect width="350" height="210" fill="#eaf1f2"/>
+          <g transform="translate(80,10) scale(1.9)">
+            <path d="M80.0,36.3L79.7,34.4L79.9,30.6L78.8,29.1L72.0,22.8L63.7,17.7L49.9,11.7L42.5,9.7L39.5,9.6L31.6,5.2L30.7,4.1L27.9,2.2L24.0,0.8L19.7,0.0L17.0,0.5L14.8,1.4L13.1,3.4L11.9,5.9L11.9,10.5L13.8,16.3L17.3,20.8L13.3,24.7L11.6,28.3L7.9,29.6L4.8,32.8L2.9,33.7L1.8,34.8L1.0,36.0L0.0,40.8L2.3,45.3L3.0,47.8L5.9,49.5L6.6,50.4L7.9,56.4L8.9,58.7L10.4,60.1L11.5,64.1L13.0,67.1L12.8,70.3L12.0,72.9L10.7,83.0L12.2,87.0L14.2,90.2L18.0,92.4L21.4,93.0L24.8,95.3L27.9,96.4L29.1,98.8L30.4,99.7L32.5,100.0L34.6,99.6L37.0,98.3L41.3,94.6L42.8,91.5L44.3,90.0L45.9,85.8L48.0,84.2L51.5,82.9L53.5,80.8L58.4,79.0L62.6,75.7L69.3,76.2L74.4,74.7L76.4,73.6L76.1,73.6L76.4,73.3L82.2,71.4L86.6,69.2L90.4,66.0L96.2,62.2L98.7,59.3L100.0,56.4L99.9,53.9L98.5,52.3L95.3,50.0L90.5,47.8L88.8,45.3L87.4,44.4L87.7,43.2L87.2,41.6L84.9,37.9L82.6,36.5L80.0,36.3Z" fill="#f0e9dc" stroke="rgb(148 120 86 / .8)" stroke-width="1.5"/>
+            <!-- bigger dot = bigger quake · lighter dot = older quake -->
+            <circle cx="30.2" cy="25.8" r="1.4" fill="#4a3a2a" fill-opacity=".40" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="28.4" cy="44.6" r="1.2" fill="#4a3a2a" fill-opacity=".30" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="20.1" cy="54.7" r="2.6" fill="#4a3a2a" fill-opacity=".55" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="46.2" cy="63.4" r="1.3" fill="#4a3a2a" fill-opacity=".35" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="48.1" cy="60.2" r="1.5" fill="#4a3a2a" fill-opacity=".50" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="67.8" cy="60.4" r="1.5" fill="#4a3a2a" fill-opacity=".35" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="53.1" cy="82.4" r="1.7" fill="#4a3a2a" fill-opacity=".30" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="57.2" cy="81.1" r="1.3" fill="#4a3a2a" fill-opacity=".45" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="54.0" cy="78.3" r="1.5" fill="#4a3a2a" fill-opacity=".60" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="55.1" cy="80.2" r="2.2" fill="#4a3a2a" fill-opacity=".80" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="44.1" cy="85.2" r="1.4" fill="#4a3a2a" fill-opacity=".35" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="42.2" cy="90.1" r="1.8" fill="#4a3a2a" fill-opacity=".50" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="50.2" cy="90.4" r="2.0" fill="#4a3a2a" fill-opacity=".65" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="45.3" cy="87.1" r="1.6" fill="#4a3a2a" fill-opacity=".70" stroke="#f0e9dc" stroke-width=".5"/>
+            <circle cx="43.0" cy="88.2" r="3.5" fill="#4a3a2a" fill-opacity=".95" stroke="#f0e9dc" stroke-width=".5"/>
+          </g>
+        </svg>
+        <p style="margin: 0; padding: 11px 18px; font-size: 13px; line-height: 1.45; color: #6a5a4a; background: #ffffff;">Bigger dot, bigger quake. Lighter dot, older quake.</p>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 11px 18px; background: #faf8f4;">
+        <span style="font-size: 13.5px; line-height: 1.4; color: #6a5a4a;">All quakes on the USGS map</span>
+        <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+    <!-- qk-felt — one card, one list: the quakes people actually noticed -->
+    <div class="card">
+      <p class="lab" style="color: #7d441c;"><span class="tile" style="background: #f0d8c7; color: #7d441c;"><span class="ic"><svg viewBox="0 0 256 256"><polyline points="24 128 56 128 96 40 160 208 200 128 232 128" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Ones people felt</p>
+
+      <div class="qrow">
+        <span class="qmark"><span class="qbul" style="width: 9px; height: 9px;"></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <p class="qname">Weak shaking near P&#257;hala</p>
+          <p class="qsub">12:39 PM &#183; 9 people felt it</p>
+        </span>
+        <span class="qmag">3.2</span>
+      </div>
+
+      <div class="qrow">
+        <span class="qmark"><span class="qbul" style="width: 8px; height: 8px;"></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <p class="qname">Weak shaking near N&#257;&#699;&#257;lehu</p>
+          <p class="qsub">Sunday 9:16 PM &#183; 3 people felt it</p>
+        </span>
+        <span class="qmag">3.0</span>
+      </div>
+
+      <div class="qrow">
+        <span class="qmark"><span class="qbul" style="width: 10px; height: 10px;"></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <p class="qname">Light shaking near Volcano</p>
+          <p class="qsub">Aug 26, 4:02 AM &#183; 41 people felt it</p>
+        </span>
+        <span class="qmag">3.4</span>
+      </div>
+
+      <div class="qrow">
+        <span class="qmark"><span class="qbul" style="width: 15px; height: 15px;"></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <p class="qname">Moderate shaking near Kalaoa</p>
+          <p class="qsub">Aug 24, 3:41 PM &#183; 186 people felt it</p>
+        </span>
+        <span class="qmag">4.1</span>
+      </div>
+
+      <div class="qrow">
+        <span class="qmark"><span class="qbul" style="width: 12px; height: 12px;"></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <p class="qname">Light shaking near P&#257;hala</p>
+          <p class="qsub">Aug 19, 6:08 AM &#183; 22 people felt it</p>
+        </span>
+        <span class="qmag">3.6</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgb(190 178 158 / .38);">
+        <span style="font-size: 14.5px; font-weight: 700; color: #445e72;">Tell the USGS you felt it</span>
+        <span class="ic" style="width: 15px; height: 15px; flex: 0 0 auto; color: #445e72; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+    <!-- qk-safety — the standing rule. No hue: this is severity, and it is true every day -->
+    <div class="card" style="display: flex; align-items: flex-start; gap: 12px;">
+      <span class="tile" style="background: rgb(154 61 44 / .15); color: #9a3d2c;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M40,185.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+      <span style="flex: 1; min-width: 0;">
+        <span style="display: block; font-size: 15px; font-weight: 700; line-height: 1.4; color: #4a3a2a;">If the ground shakes hard near the coast, go uphill right away.</span>
+        <span style="display: block; margin-top: 3px; font-size: 15px; line-height: 1.5; color: #5a4a3a;">Do not wait for a siren.</span>
+      </span>
+    </div>
+
+  </div>
+
+  <!-- PAGE CHROME 5 — who said it, and when we last looked -->
+  <p style="margin: 20px 0 0; font-size: 13px; line-height: 1.45; color: #6a5a4a;">From the USGS. Checked 12:50 PM.</p>
+
+  <!-- PAGE CHROME 6 — settings lives in the footer, not the bar -->
+  <div style="display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgb(190 178 158 / .40); font-size: 13.5px; font-weight: 700; color: #6a5a4a;">
+    <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M41.43,178.09A99.14,99.14,0,0,1,31.36,153.8l16.78-21a81.59,81.59,0,0,1,0-9.64l-16.77-21a99.43,99.43,0,0,1,10.05-24.3l26.71-3a81,81,0,0,1,6.81-6.81l3-26.7A99.14,99.14,0,0,1,102.2,31.36l21,16.78a81.59,81.59,0,0,1,9.64,0l21-16.77a99.43,99.43,0,0,1,24.3,10.05l3,26.71a81,81,0,0,1,6.81,6.81l26.7,3a99.14,99.14,0,0,1,10.07,24.29l-16.78,21a81.59,81.59,0,0,1,0,9.64l16.77,21a99.43,99.43,0,0,1-10,24.3l-26.71,3a81,81,0,0,1-6.81,6.81l-3,26.7a99.14,99.14,0,0,1-24.29,10.07l-21-16.78a81.59,81.59,0,0,1-9.64,0l-21,16.77a99.43,99.43,0,0,1-24.3-10l-3-26.71a81,81,0,0,1-6.81-6.81Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    <span style="flex: 1;">Settings and about</span>
+    <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
