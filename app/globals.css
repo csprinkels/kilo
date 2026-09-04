@@ -980,6 +980,12 @@ body {
 /* ── 3 · framed picture + caption — was .st-pic .qk-frame .tr-map .ts-map
         .vo-cam .wx-radar-frame, at four radii and three border alphas ── */
 .cs-figure{
+  /* Leaflet numbers its own panes up to 400 and its controls to 1000, and MapLibre does the same
+     on a smaller scale. With no stacking context here those numbers are measured against the PAGE,
+     so a map painted straight over the sticky filter chips. Positioning the frame keeps every
+     z-index a map invents inside the frame, where it means what its author meant. */
+  position:relative;
+  z-index:0;
   margin:12px 0 0;
   border:1px solid var(--hairline);
   border-radius:14px;
