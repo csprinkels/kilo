@@ -17,7 +17,8 @@ export default function SectionNav() {
   return (
     <>
       {/* wide screens: the same four, as pills under the top bar */}
-      <div className="mt-s3 hidden md:block">
+      {/* centred to agree with the freshness line under it; the wordmark above stays left */}
+      <div className="mt-s3 hidden justify-center md:flex">
         <nav aria-label="Sections" className="nav-wide">
           {TABS.map((t) => (
             <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined}><Icon name={isOn(path, t) ? `${t.icon}-fill` : t.icon} size={19} /> {t.label}</Link>
