@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import Icon, { type IconName } from "@/components/Icon";
-import ItemRow from "@/components/ItemRow";
+import Icon from "@/components/Icon";
 import AlertsCard from "@/components/AlertsCard";
 import Freshness from "@/components/Freshness";
 import SectionNav from "@/components/SectionNav";
@@ -19,8 +18,10 @@ import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
-import { LEVEL_WORD, plainAlert, quakeSentence, rankStorms, staleLine, stormName, type Plain } from "@/lib/plain";
-import { nowStory, officialExtra, topicRows, type Row } from "@/lib/now";
+import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
+import { nowStory, topicRows } from "@/lib/now";
+import { buildFeed, foldRuns, pinned, type FeedRow as FeedRowT } from "@/lib/feed";
+import MiniMap from "@/components/MiniMap";
 import { fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
@@ -60,8 +61,6 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
   const offline = !!ess?.offline && !!snap?.offline;
   const loaded = !!(snap?.data || ess?.data);
-  const [showAll, setShowAll] = useState(false);
-  const [showAllNotices, setShowAllNotices] = useState(false);
 
   const items = useMemo(() => {
     const base = snap?.data?.items ?? [];
@@ -78,8 +77,6 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const warnings = official.filter((i) => plain.get(i.key)!.level >= 3).sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level || b.issuedAt - a.issuedAt);
   const lead = warnings.find((i) => i.type !== "shelter");
   const shelters = official.filter((i) => i.type === "shelter" && plain.get(i.key)!.level >= 2);
-  const rest = warnings.filter((i) => i !== lead && i.type !== "shelter");
-  const extraWarnings = showAll || (focusKey && rest.some((i) => i.key === focusKey)) ? rest : rest.slice(0, 2);
   /* Two homes, split by what you do with the thing, because everything below level 3 used to have
      neither. ACT_ON is a hazard that changes today: it gets a Heads up note and can raise the headline.
      Everything else official — agency notices, the Governor's storm proclamation, police releases — was
@@ -88,8 +85,6 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const ACT_ON: Item["type"][] = ["advisory", "storm", "outage", "tsunami", "hazard", "school"];
   const bySeverity = (a: Item, b: Item) => b.sev - a.sev || b.issuedAt - a.issuedAt;
   const headsUp = official.filter((i) => plain.get(i.key)!.level === 2 && ACT_ON.includes(i.type)).sort(bySeverity);
-  const notices = official.filter((i) => i.type === "notice" && plain.get(i.key)!.level >= 2).sort(bySeverity);
-  const shownNotices = showAllNotices ? notices : notices.slice(0, 3);
 
   const storms = stormsSnap?.data?.storms ?? [];
   const place = ISLAND_POINTS[island];
@@ -97,6 +92,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const coming = stormLines.filter((x) => x.approaching);
   const mainStorm = coming[0];
   const approaching = !!mainStorm;
+  const mainStormItem = mainStorm ? official.find((i) => i.type === "storm") : undefined;
   /* The storm hero stands in for the lead warning only when it is at least as urgent. Keying this on
      `approaching` alone deleted the island's worst warning from the page outright — no card, no row, no
      hero — whenever any storm was in the basin, including level-1 ones the app itself calls too early to know. */
@@ -108,33 +104,18 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const stormTexts = stormsSnap && !stormsSnap.data ? undefined : stormLines.map((x) => x.short);
   const rows = topicRows(items, plain, island, now, stormTexts, !!(lead && lead.type === "tsunami"), quakesFile?.data ? quakeSentence(quakesFile.data, now) : undefined);
   const roads = rows.find((r) => r.key === "roads")!;
-  const alsoToday = rows.filter((r) => r.quiet);
-  /* Every loud row reaches the screen. Roads has its own card, and the storm hero already covers a lone
-     approaching storm; the rest used to be computed and then dropped on the floor. */
-  const loud = rows.filter((r) => !r.quiet && r.key !== "roads" && !(r.key === "storms" && approaching && storms.length === 1));
   // No lead warning and no storm hero? The headline is still allowed to name the worst watch.
   const nextPlain = !lead && !mainStorm && headsUp[0] ? plain.get(headsUp[0].key) : undefined;
   /* ʻIo searches exactly what this page is rendering: same items, same wording, same storm lines. */
   const askCtx = { items, plain, storms: stormsSnap?.data ? stormLines.map((x) => ({ name: x.s.name, short: x.short })) : undefined };
+  /* The feed: everything that is not pinned, banded by how much it should change what you do.
+     A topic summary is not a row — Lowell and Karina are two rows, not one "Storms" card. */
+  const pinAll = pinned(items, plain);
+  const headlineItem = lead ?? (nextPlain ? headsUp[0] : undefined);
+  const pinRows = pinAll.filter((i) => i !== headlineItem && i !== mainStormItem);
+  const bands = buildFeed({ items, plain, now, storms: stormLines, island });
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
 
-  /* The one "there is more of this" control, shared by the two cards that can hold the rest. */
-  const moreWarnings = rest.length > 2 && !showAll && (
-    <div className="cs-chiprow">
-      <button type="button" className="cs-chip cs-chip--link" onClick={() => setShowAll(true)}>All warnings ({rest.length}) <Icon name="caret-right" size={14} className="cs-ic" /></button>
-    </div>
-  );
-  const restRows = (headlinesOnly.length > 0 || extraWarnings.length > 0) && (
-    <ul className="hm-rows">
-      {headlinesOnly.map((a) => (
-        <li key={a.h} className="py-s3">
-          <span className="cs-rowname">{a.title}</span>
-          <span className="cs-rowsub">Details load when the signal is better.</span>
-        </li>
-      ))}
-      {extraWarnings.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}
-    </ul>
-  );
 
   return (
     <main className="hm relative z-[1] min-h-dvh w-full">
@@ -149,28 +130,32 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`}>
               <h1 className="cs-display cs-display--hero">{story.title}</h1>
               {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
+              {pinRows.length > 0 && (
+                <div className="fd-pin-rows">
+                  {pinRows.map((i) => {
+                    const p = plain.get(i.key)!;
+                    return (
+                      <div key={i.key} id={`item-${hashOf(i.key)}`} className="fd-pin-row">
+                        <p className="fd-pin-head">{p.headline}{p.headline.endsWith(".") ? "" : "."}</p>
+                        {p.action && <p className="fd-pin-sub">{p.action}</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           )}
 
           {loaded && <Ask island={island} ctx={askCtx} now={now} />}
-
-          {lead && !stormCovered && (
-            <ItemCard icon={lead.type === "tsunami" ? "waves" : lead.type === "shelter" ? "tent" : lead.type === "outage" ? (lead.fields?.kind ? "drop" : "lightning-slash") : "wind"} kicker={plain.get(lead.key)!.word ?? LEVEL_WORD[plain.get(lead.key)!.level] ?? "Get ready"} title={plain.get(lead.key)!.headline} item={lead} focus={lead.key === focusKey}>
-              {plain.get(lead.key)!.action && <p className="cs-body">{plain.get(lead.key)!.action}</p>}
-              {staleLine(lead, now) && <><div className="cs-rule" /><p className="cs-meta">{staleLine(lead, now)}</p></>}
-              {restRows}
-              {moreWarnings}
-            </ItemCard>
-          )}
 
           {approaching && mainStorm && (
             <Link href="/storms/" className="cs-card cs-hero cs-hero--amber" aria-label={mainStorm.text}>
               <div className="cs-heroline">
                 <span className="cs-ictile cs-ictile--amber"><Icon name="wind" size={21} className="cs-ic" /></span>
                 <div className="hm-heromain">
-                  <p className="cs-label">{/Saturday|Sunday/i.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
+                  <p className="cs-label">{/\b(Sat|Sun)\b/.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
                   {/* non-breaking hyphen: never "Two-" / "C" */}
-                  <h2 className="cs-display cs-display--hero">{stormName(mainStorm.s).replace(/-/g, "‑")}</h2>
+                  <h2 className="cs-display cs-display--hero">{stormName(mainStorm.s).replace(/-/g, "\u2011")}</h2>
                 </div>
               </div>
               <p className="cs-body cs-body--hero">{mainStorm.text}</p>
@@ -179,68 +164,41 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             </Link>
           )}
 
-          {/* Exactly the cases the lead card above did not render: otherwise both hold the same rows. */}
-          {(!lead || stormCovered) && restRows && (
-            <section className="cs-card">
-              <p className="cs-label">Also in effect</p>
-              {restRows}
-              {moreWarnings}
-            </section>
-          )}
-
-          {shelters.map((i) => <ShelterCard key={i.key} item={i} plain={plain.get(i.key)!} now={now} focus={i.key === focusKey} />)}
-
-          {!roads.quiet && (
-            <Link href="/traffic/" className="cs-card t-roads">
-              <p className="cs-label"><Icon name="traffic-cone" size={15} className="cs-ic" /> Roads</p>
-              <h2 className="cs-title">{roads.text.replace(/\s+\d+ more\.$/, "")}</h2>
-              <p className="cs-body">Tap for the map and detours.</p>
-              {/\d+ more/.test(roads.text) && <div className="cs-chiprow"><span className="cs-chip cs-chip--link">{roads.text.match(/(\d+ more)\.?$/)?.[1]}</span></div>}
-            </Link>
-          )}
-
-          {loud.map((r) => <TopicCard key={r.key} row={r} />)}
-
           {mode === "low" || offline
             ? <p className="cs-card cs-body hm-flat">Weather loads when the signal is better.</p>
             : <WeatherNow island={island} />}
 
-          {headsUp.filter((i) => plain.get(i.key) !== nextPlain).map((i) => {
-            const p = plain.get(i.key)!;
-            return (
-              <p key={i.key} className="cs-note hm-flat">
-                <Icon name="warning" size={18} />
-                <span><span className="font-semibold">Heads up:</span> {p.headline}. <span className="text-ink-2">{p.action}</span></span>
-              </p>
-            );
-          })}
-
-          {shownNotices.length > 0 && (
-            <section className="cs-card" aria-label="Notices">
-              <p className="cs-label"><Icon name="megaphone" size={15} className="cs-ic" /> Notices</p>
-              <ul className="hm-rows">{shownNotices.map((i) => <ItemRow key={i.key} item={i} now={now} focus={i.key === focusKey} />)}</ul>
-              {notices.length > shownNotices.length && (
-                <div className="cs-chiprow">
-                  <button type="button" className="cs-chip cs-chip--link" onClick={() => setShowAllNotices(true)}>All notices ({notices.length}) <Icon name="caret-right" size={14} className="cs-ic" /></button>
+          {/* Weak signal: the 1.5 KB essentials arrived but the 30 KB snapshot has not. Show the
+              headlines we do have rather than an empty page — this is the path the app exists for. */}
+          {headlinesOnly.length > 0 && (
+            <section className="cs-card" aria-label="Just in">
+              <p className="cs-label fd-band">Just in</p>
+              {headlinesOnly.map((a) => (
+                <div key={a.h} className="fd-row">
+                  <span className="fd-main">
+                    <span className="fd-head">{a.title}</span>
+                    <span className="fd-sub">Details load when the signal is better.</span>
+                  </span>
                 </div>
-              )}
+              ))}
             </section>
           )}
 
-          {loaded && alsoToday.length > 0 && (
-            <section className="cs-card" aria-label="Also today">
-              <p className="cs-label">Also today</p>
-              <div className="cs-grid">
-                {alsoToday.map((r) => (
-                  <Link key={r.key} href={r.href} className={`cs-tile ${TOPIC_CLASS[r.key] ?? ""}`}>
-                    <span className="cs-ictile"><Icon name={MINI_ICON[r.key] ?? "cloud-sun"} size={21} className="cs-ic" /></span>
-                    <p className="cs-tile-name">{r.label}</p>
-                    <p className="cs-tile-line">{r.text}</p>
+          {bands.map((b) => {
+            const { rows, folded } = foldRuns(b.rows);
+            return (
+              <section key={b.key} className="cs-card" aria-label={b.label}>
+                <p className="cs-label fd-band">{b.label}</p>
+                {rows.map((r) => <FeedRow key={r.key} row={r} island={island} focus={r.key === focusKey} />)}
+                {Object.entries(folded).map(([topic, n]) => (
+                  <Link key={topic} href={HREF[topic] ?? "/"} className={`fd-more t-${topic}`}>
+                    <span>{n} more {MORE_WORD[topic] ?? "of these"}</span>
+                    <Icon name="caret-right" size={15} className="cs-ic" />
                   </Link>
                 ))}
-              </div>
-            </section>
-          )}
+              </section>
+            );
+          })}
 
           {!loaded && !offline && <p className="cs-body hm-flat">Loading what is happening around {islandName(island)}…</p>}
 
@@ -258,66 +216,32 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   );
 }
 
-/** Reports is the one row whose key and topic name differ. */
-const TOPIC_CLASS: Record<string, string> = {
-  roads: "t-roads", storms: "t-storms", quakes: "t-quakes",
-  volcano: "t-volcano", tsunami: "t-tsunami", neighbors: "t-reports",
+/** Where a folded run sends you, and what to call the things it folded. */
+const HREF: Record<string, string> = {
+  roads: "/traffic/", storms: "/storms/", quakes: "/quakes/",
+  volcano: "/volcano/", tsunami: "/tsunami/", weather: "/weather/", reports: "/report/",
+};
+const MORE_WORD: Record<string, string> = {
+  roads: "road closures", storms: "storms", quakes: "earthquakes",
+  volcano: "volcano notices", tsunami: "ocean notices", weather: "weather notices", reports: "notices",
 };
 
-const MINI_ICON: Record<string, IconName> = {
-  storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", neighbors: "users-three", roads: "traffic-cone",
-};
-
-/** A topic with something to say, as an ordinary card: the label, the sentence, and the way in. */
-function TopicCard({ row }: { row: Row }) {
+/**
+ * One row of the feed: the sentence, then who said it and when, and a picture of where —
+ * but only when the thing has a real position. A notice has no map, and inventing one
+ * would say the app knows something it does not.
+ */
+function FeedRow({ row, island, focus }: { row: FeedRowT; island: Exclude<Island, "state">; focus?: boolean }) {
+  useFocusScroll(row.key, focus);
   return (
-    // the row key IS the topic key: one class carries the hue to the label and the icon tile
-    <Link href={row.href} className={`cs-card ${TOPIC_CLASS[row.key] ?? ""}`}>
-      <p className="cs-label"><Icon name={MINI_ICON[row.key] ?? "cloud-sun"} size={15} className="cs-ic" /> {row.label}</p>
-      <h2 className="cs-title">{row.text}</h2>
+    <Link href={row.href} id={`item-${hashOf(row.key)}`} className={`fd-row t-${row.topic}`}>
+      <span className="fd-main">
+        <span className="fd-head">{row.headline}</span>
+        {row.sub && <span className="fd-sub">{row.sub}</span>}
+        <span className="fd-meta"><span className="fd-dot" />{[row.source, row.when].filter(Boolean).join(" \u00b7 ")}</span>
+      </span>
+      {row.mark && <span className="fd-thumb"><MiniMap island={island} mark={row.mark} /></span>}
     </Link>
-  );
-}
-
-/** The loudest card on the page: a hero on the brick edge, the level word over the plain headline. */
-function ItemCard({ icon, kicker, title, children, item, focus }: {
-  icon: IconName;
-  kicker: string;
-  title: string;
-  children?: React.ReactNode;
-  item?: Item;
-  focus?: boolean;
-}) {
-  const extra = item ? officialExtra(item, title) : undefined;
-  useFocusScroll(item?.key, focus);
-  return (
-    <article id={item ? `item-${hashOf(item.key)}` : undefined} className="cs-card cs-hero hm-alarm" aria-label={title}>
-      <div className="cs-heroline">
-        <span className="cs-ictile cs-ictile--brick"><Icon name={icon} size={21} className="cs-ic" /></span>
-        <div className="hm-heromain">
-          <p className="cs-label hm-label--alarm">{kicker}</p>
-          <h2 className="cs-display cs-display--card">{title}</h2>
-        </div>
-      </div>
-      {children}
-      {extra && <p className="cs-body">{extra}</p>}
-    </article>
-  );
-}
-
-/** An open shelter: the calm card, because the thing to do is already in the sentence. */
-function ShelterCard({ item, plain, now, focus }: { item: Item; plain: Plain; now: number; focus?: boolean }) {
-  const stale = staleLine(item, now);
-  const extra = officialExtra(item, plain.headline);
-  useFocusScroll(item.key, focus);
-  return (
-    <article id={`item-${hashOf(item.key)}`} className="cs-card" aria-label={plain.headline}>
-      <p className="cs-label"><Icon name="tent" size={15} className="cs-ic" /> {plain.word ?? "Shelter open"}</p>
-      <h2 className="cs-title">{plain.headline}</h2>
-      {plain.action && <p className="cs-body">{plain.action}</p>}
-      {stale && <><div className="cs-rule" /><p className="cs-meta">{stale}</p></>}
-      {extra && <p className="cs-body">{extra}</p>}
-    </article>
   );
 }
 
