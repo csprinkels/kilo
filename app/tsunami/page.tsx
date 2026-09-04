@@ -7,10 +7,11 @@ import OfficialWording from "@/components/OfficialWording";
 import type { Tsunami, TsunamiLevel } from "@/lib/pages";
 import { useJson, useStoredIsland } from "@/lib/data";
 import { useStatic } from "@/components/RoadMap";
+import ZoneMap from "@/components/ZoneMap";
 import { zoneAt, type ZoneCollection } from "@/lib/geo";
 import { distanceNm, nmToMi } from "@/lib/storm";
 import { SOURCE_NAME, fmtUntil } from "@/lib/plain";
-import { APP_NAME, fmtClock } from "@/lib/brand";
+import { APP_NAME, fmtClock, islandName } from "@/lib/brand";
 
 // The title is the level in plain words; an information statement is shown exactly like "none".
 const TITLE: Record<TsunamiLevel, string> = {
@@ -58,6 +59,7 @@ export default function TsunamiPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [pos, setPos] = useState<{ lat: number; lon: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const level = d?.status.level ?? "none";
   const warning = level === "warning";
   const until = fmtUntil(d?.status.expires, now);
@@ -141,6 +143,28 @@ export default function TsunamiPage() {
           {sirenLine && (
             <p className="ts-siren"><Icon name="warning" size={17} /><span>{sirenLine}</span></p>
           )}
+
+          {/* The written answer above is exact and needs no signal. This is the part it cannot do:
+              show where the line falls two doors over. Zones and coastline are already on the phone,
+              so it draws offline; only the streets need a network. */}
+          {zones && (
+            <>
+              <div className="cs-rule" />
+              {showMap ? (
+                <ZoneMap island={zoneIsland} zones={zones} you={pos} label={`Evacuation zones on ${islandName(zoneIsland)}`} />
+              ) : (
+                <button type="button" className="cs-row ts-mapbtn" onClick={() => setShowMap(true)}>
+                  <span className="cs-ictile"><Icon name="map-pin" size={21} className="cs-ic" /></span>
+                  <span className="cs-rowmain">
+                    <span className="cs-rowname">See the zones on a map</span>
+                    <span className="cs-rowsub">Push in to find your street. Works with no signal.</span>
+                  </span>
+                  <Icon name="caret-right" size={16} className="cs-ic" />
+                </button>
+              )}
+            </>
+          )}
+
           <div className="cs-rule" />
           <a className="cs-link ts-link" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" size={16} /></a>
         </section>
