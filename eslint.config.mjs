@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     // Capacitor copies the built web bundle into both native projects.
     "ios/**",
     "android/**",
+    // Vendored verbatim from node_modules; tests/maplibre.test.ts pins it to the installed version.
+    "public/maplibre/*.mjs",
   ]),
 ]);
 
