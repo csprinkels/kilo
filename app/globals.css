@@ -64,6 +64,18 @@
   --map-road: #ffffff;
   --map-highway: #ffe680;
   --map-highway-case: #e8c547;
+  /*
+   * Data maps — the rain radar and the storm tracker — use a NEUTRAL ground, so the only colour
+   * on them is the data: the cone, the track, the rain. Kilo's other maps are about the land
+   * itself (which road, which shore), so they keep the teal water and sand island above.
+   * Values read off a map whose job is the same as ours.
+   */
+  --dmap-ground: #ededef;      /* ocean and everything with no data on it */
+  --dmap-land: #fcfcfd;        /* land: light enough to read as land, quiet enough not to compete */
+  --dmap-coast: #b6b6be;       /* one thin neutral line, never a colour — this is what makes an island visible */
+  --dmap-label: #1f2023;
+  --dmap-track: #6a6a72;       /* where a storm has already been: past, not forecast */
+
   --map-mark-halo: #ffffff;
   --map-town: #3c4043;
   --map-label-halo: #ffffff;
@@ -122,6 +134,12 @@
     --map-shore: #24404a;
     --map-land: #3b3128;
     --map-coast: rgb(200 180 150 / .55);
+    /* dark: the same idea inverted — a neutral ground the data sits on top of */
+    --dmap-ground: #1c1c1f;
+    --dmap-land: #26262a;
+    --dmap-coast: #45454c;
+    --dmap-label: #f2f2f4;
+    --dmap-track: #8a8a94;
     --map-relief: #4a3e32;
     --map-road-case: #2a2e30;
     --map-road: #d8d4c8;
@@ -271,8 +289,9 @@ body {
   gap: 0.75rem;
   padding: 0.5rem 0.9rem 0.6rem;
   font-size: 0.85rem;
-  color: var(--map-town);
-  background: var(--map-water);
+  color: var(--dmap-label);
+  background: var(--dmap-ground);
+  border-top: 1px solid var(--dmap-coast);
 }
 .storm-map-swatches { display: flex; align-items: center; gap: 0.28rem; }
 .storm-map-swatches i {

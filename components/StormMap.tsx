@@ -85,23 +85,23 @@ export default function StormMap({ storm, place, className }: Props) {
   return (
     <div className={`relative ${className ?? ""}`}>
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map of ${storm.name}: the path it is on, and how strong the wind is along the way`}>
-        <rect width={W} height={H} fill="var(--map-water)" />
+        <rect width={W} height={H} fill="var(--dmap-ground)" />
         {[0.28, 0.5, 0.72].map((t) => (
-          <line key={t} x1={0} y1={H * t} x2={W} y2={H * t} stroke="var(--map-water-line)" strokeWidth={1.25} />
+          <line key={t} x1={0} y1={H * t} x2={W} y2={H * t} stroke="var(--dmap-coast)" strokeOpacity={0.35} strokeWidth={1} />
         ))}
 
         {coast?.coordinates.map((poly, i) => (
-          <path key={`halo-${i}`} d={path(poly[0])} fill="var(--map-land)" stroke="var(--map-shore)" strokeOpacity={0.7} strokeWidth={8} strokeLinejoin="round" />
+          <path key={`halo-${i}`} d={path(poly[0])} fill="var(--dmap-land)" stroke="var(--dmap-land)" strokeOpacity={0.9} strokeWidth={6} strokeLinejoin="round" />
         ))}
         {coast?.coordinates.map((poly, i) => (
-          <path key={`land-${i}`} d={path(poly[0])} fill="var(--map-land)" stroke="var(--map-coast)" strokeWidth={1.4} strokeLinejoin="round" />
+          <path key={`land-${i}`} d={path(poly[0])} fill="var(--dmap-land)" stroke="var(--dmap-coast)" strokeWidth={1.1} strokeLinejoin="round" />
         ))}
 
         {cone.length > 2 && (
           <path d={path(cone)} fill="var(--storm-hu)" fillOpacity={0.12} stroke="var(--storm-hu)" strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="7 6" />
         )}
 
-        {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--map-coast)" strokeWidth={1.5} strokeDasharray="2 5" strokeLinecap="round" />}
+        {past.length > 0 && <path d={line([...past, points[0]])} fill="none" stroke="var(--dmap-track)" strokeWidth={1.5} strokeDasharray="2 5" strokeLinecap="round" />}
 
         {firm.length > 1 && <path d={line(firm)} fill="none" stroke="var(--map-mark-halo)" strokeWidth={5} strokeLinejoin="round" strokeLinecap="round" />}
         {firm.slice(1).map((p, i) => (
@@ -114,13 +114,13 @@ export default function StormMap({ storm, place, className }: Props) {
 
         {past.map((t) => {
           const [x, y] = f(t.lon, t.lat);
-          return <circle key={t.adv} cx={x} cy={y} r={3} fill="var(--map-coast)" />;
+          return <circle key={t.adv} cx={x} cy={y} r={3} fill="var(--dmap-track)" />;
         })}
 
         {points.map((p, i) => {
           const [x, y] = f(p.lon, p.lat);
           const r = 5 + Math.min(p.windKt, 140) / 16;
-          const fill = p.outlook ? "var(--map-water)" : windColor(p.windKt);
+          const fill = p.outlook ? "var(--dmap-ground)" : windColor(p.windKt);
           return (
             <g key={i}>
               {/* SMIL ignores prefers-reduced-motion; the CSS keyframe is caught by the global reset. */}
@@ -129,6 +129,16 @@ export default function StormMap({ storm, place, className }: Props) {
             </g>
           );
         })}
+
+        {/* The scale belongs on the map. scalePx is in SVG units; below the map it was being
+            used as a percentage of a text span, which is what made it collide with its label. */}
+        <g transform={`translate(18 ${H - 16})`} aria-hidden>
+          <line x1={0} y1={0} x2={scalePx} y2={0} stroke="var(--dmap-label)" strokeWidth={2.5} strokeLinecap="butt" />
+          <line x1={1} y1={-5} x2={1} y2={5} stroke="var(--dmap-label)" strokeWidth={2.5} />
+          <line x1={scalePx - 1} y1={-5} x2={scalePx - 1} y2={5} stroke="var(--dmap-label)" strokeWidth={2.5} />
+          <text x={scalePx / 2} y={-9} textAnchor="middle" className="cs-svgt" style={{ fill: "var(--dmap-label)" }}
+            stroke="var(--map-label-halo)" strokeWidth={3} paintOrder="stroke">200 miles</text>
+        </g>
       </svg>
 
       {labels.map((l) => (
@@ -143,7 +153,6 @@ export default function StormMap({ storm, place, className }: Props) {
           <i aria-hidden style={{ background: "var(--storm-mh)" }} />
           <span className="ml-s2">weaker → stronger</span>
         </span>
-        <span className="inline-flex items-center gap-s2"><span className="inline-block h-0.5 bg-ink" style={{ width: `${Math.max(18, (scalePx / W) * 100)}%` }} aria-hidden /> 200 miles</span>
       </p>
     </div>
   );
