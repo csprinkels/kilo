@@ -76,7 +76,8 @@ export function dropSuperseded(items: Item[]): Item[] {
 /** How many of one kind the feed shows before folding the rest behind a count. */
 export const RUN_LIMIT = 3;
 
-const markOf = (i: Item): Mark | undefined =>
+/** The picture a row or an answer gets, when the thing carries a real position. */
+export const markOf = (i: Item): Mark | undefined =>
   i.path?.length ? { kind: "path", path: i.path }
   : i.lat != null && i.lon != null ? { kind: "dot", lat: i.lat, lon: i.lon }
   : undefined;

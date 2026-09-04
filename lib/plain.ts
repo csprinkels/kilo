@@ -5,6 +5,7 @@ import type { Island, Item } from "./types.ts";
 import { ISLAND_LABEL, fmtDateTime, fmtDayTime, fmtTime } from "./brand.ts";
 import type { Quake, Quakes } from "./pages.ts";
 import { bearingDeg, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "./storm.ts";
+import { fold } from "./places.ts";
 
 export type Level = 0 | 1 | 2 | 3 | 4;
 export const LEVEL_WORD: Record<number, string> = { 4: "Act now", 3: "Get ready", 2: "Heads up" };
@@ -220,6 +221,23 @@ function school(item: Item, now: number): Plain {
   return { headline: `${name} is closed${until ? " " + until : ""}`, action: "Keep kids home.", level: 2, until, source: sourceName(item.source), official: item.title };
 }
 
+/**
+ * The county's free-text "location" as a tail on the headline: ", from the Highway 11 intersection".
+ * Dropped when it is empty, a placeholder, longer than a headline can carry, or already said by the
+ * words in front of it — a row that repeats itself is no clearer than one that says nothing.
+ */
+function whereOn(location: string | undefined, already: string): string {
+  const raw = (location ?? "").trim().replace(/\s+/g, " ").replace(/[.;]+$/, "")
+    .replace(/^(?:road\s+)?clos(?:ed|ure)\s+/i, "");   // the sentence already said it is closed
+  if (!raw || raw.length > 60 || /^(none|no|n\/a|na|tbd|unknown|see below)$/i.test(raw)) return "";
+  const seen = fold(already);
+  if (fold(raw).split(" ").every((w: string) => w.length < 3 || seen.includes(w))) return "";
+  // Left exactly as the county wrote it. Lower-casing the first letter reads better after "Closed
+  // from …" and turns "Naalehu to Pahala" into a common noun; the strip above already handles the
+  // only case that needed it.
+  return `, ${raw}`;
+}
+
 function road(item: Item, now: number): Plain {
   const src = item.source.split(":")[0];
   const until = fmtUntil(item.expiresAt, now);
@@ -253,12 +271,16 @@ function road(item: Item, now: number): Plain {
     return { headline: `${highway(roadName)}${place}: ${useful ? why : "check before you go"}`, action: "", level: Math.min(item.sev, 2) as Level, until, source: src2, official: item.title };
   }
   const how = /both/.test(st) ? "closed both ways" : /one lane|partial/.test(st) ? "down to one lane" : /open/.test(st) && !/clos/.test(st) ? "open again" : "closed";
+  // Three closures on Kaʻalaiki Road at three different points read as three identical rows, because
+  // the one field that tells them apart — the county's own "location" — never reached the sentence.
+  // Nothing here can be deduped: they are real, separate closures. They just have to say where.
+  const spot = whereOn(item.fields?.location, `${roadName} ${place}`);
   // Collapse the county's doubled words ("one lane one lane of traffic…") before we repeat them.
   const altRaw = item.fields?.alternate?.trim().replace(/\s+/g, " ").replace(/\b(\w+(?: \w+)?) \1\b/gi, "$1");
   const alt = altRaw && !/^(none|no|n\/a|na|tbd|unknown|not reported.*)\.?$/i.test(altRaw) ? altRaw : undefined; // "None" is not a road
   const detour = !alt ? "No way around listed yet." : alt.split(" ").length <= 4 ? `Use ${highway(alt)} instead.` : `Detour: ${cap(alt.toLowerCase())}.`;
   return {
-    headline: `${highway(roadName)} ${how}${place}`,
+    headline: `${highway(roadName)} ${how}${place}${spot}`,
     action: how === "open again" ? "" : detour,
     level: how === "open again" ? 1 : (item.sev >= 3 ? 3 : 2),
     until, source: src2, official: item.title,

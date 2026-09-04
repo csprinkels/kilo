@@ -4,6 +4,7 @@ import Icon from "@/components/Icon";
 import PageShell from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import OfficialWording from "@/components/OfficialWording";
+import { usePageFilter } from "@/components/PageFilter";
 import type { Tsunami, TsunamiLevel } from "@/lib/pages";
 import { useJson, useStoredIsland } from "@/lib/data";
 import { useStatic } from "@/components/RoadMap";
@@ -63,6 +64,16 @@ export default function TsunamiPage() {
   const level = d?.status.level ?? "none";
   const warning = level === "warning";
   const until = fmtUntil(d?.status.expires, now);
+  // Watch and up, the agency's own words are the only place the event and headline appear.
+  const alerting = level === "watch" || level === "advisory" || warning;
+  const wording = !!(d?.status.event || d?.status.headline);
+  const { bar, show } = usePageFilter([
+    { id: "zone", label: "My zone" },
+    { id: "steps", label: "What to do" },
+    // On a calm day the section is one line saying there is nothing to read; a chip for that filters
+    // the page down to nothing worth the tap.
+    ...(wording ? [{ id: "official", label: "Official wording" }] : []),
+  ], { clearOn: level });
 
   // The island's evacuation polygons (38–127 KB), fetched once while there is signal; the service worker keeps them, so the
   // check works with no signal later. Zones of the other islands load only if the reader turns out to be there.
@@ -127,6 +138,13 @@ export default function TsunamiPage() {
           </section>
         )}
 
+        {bar}
+
+        {/* A dead siren next to the spot they just checked is a warning, not a section, so the
+            filter stops applying while one is named here. */}
+        {/* Pinned whenever it is the question of the moment: a dead siren to report, or a live
+            alert, when "am I in the zone" is the whole reason someone opened this page. */}
+        {show("zone", !!sirenLine || alerting) && (
         <section className="cs-card t-tsunami">
           <div className="cs-heroline">
             <span className="cs-ictile"><Icon name="map-pin" size={21} /></span>
@@ -168,7 +186,10 @@ export default function TsunamiPage() {
           <div className="cs-rule" />
           <a className="cs-link ts-link" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" size={16} /></a>
         </section>
+        )}
 
+        {/* At watch or worse these stop being reference and become the instructions. */}
+        {show("steps", alerting) && (
         <section className="cs-card t-tsunami">
           <div className="cs-heroline">
             <span className="cs-ictile"><Icon name="lightbulb-filament-fill" size={21} /></span>
@@ -185,8 +206,9 @@ export default function TsunamiPage() {
           <div className="cs-rule" />
           <p className="cs-meta">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
         </section>
+        )}
 
-        {d && (
+        {d && show("official", alerting) && (
           <section className="cs-card ts-flush ts-official">
             <OfficialWording title={d.status.event || "No tsunami message in effect"} body={[d.status.headline, d.status.issued ? `Issued ${fmtClock(d.status.issued, now)}` : ""].filter(Boolean).join("\n")}>
               <a className="cs-link ts-link mt-s2" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="caret-right" size={16} /></a>

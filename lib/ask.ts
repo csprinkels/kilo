@@ -6,6 +6,9 @@
 // Every sentence a user reads here is either plain.ts's wording for a real item, or one of the fixed
 // lines below. Nothing is generated.
 import type { Item, ItemType } from "./types.ts";
+import type { Storm } from "./storm.ts";
+import type { Tide } from "./pages.ts";
+import { fmtTime } from "./brand.ts";
 import type { Plain } from "./plain.ts";
 import { fold } from "./places.ts";
 import { districtsFor } from "./places.ts";
@@ -43,6 +46,11 @@ export const TOPICS: Topic[] = [
   { key: "outage", label: "Power and water", href: "/", types: ["outage"],
     nouns: ["power", "outage", "outages", "electricity", "water"],
     words: ["electric", "lights", "boil", "utility", "off", "out"] },
+  { key: "tides", label: "Tides", href: "/weather/", types: [],
+    nouns: ["tide", "tides", "tidal"],
+    // "high" and "low" are deliberately absent: "high surf" is weather's question, not this one,
+    // and "tide" already carries every phrasing people actually use.
+    words: ["ebb", "ebbing", "slack", "king", "lowtide", "hightide"] },
   { key: "reports", label: "Reports", href: "/report/", types: [],
     nouns: ["neighbor", "neighbors", "report", "reports"],
     words: ["posted", "anyone", "somebody", "someone", "saying"] },
@@ -58,6 +66,9 @@ const SHARED = new Set(TOPICS.flatMap((t) => t.words).filter((w, _, all) => all.
 /** "Highway 19", "route 11" -> [19, 11]. Bare numbers are ignored: "11" alone is not a road. */
 const routeNums = (q: string) => [...q.matchAll(/\b(?:highway|hwy|route|rte|sr)\.?\s*(\d{1,3})\b/gi)].map((m) => Number(m[1]));
 
+/** A storm line, and the storm itself when the caller has it — a map needs the track, not a sentence. */
+export type AskStorm = { name: string; short: string; s?: Storm };
+
 export type Answer = {
   /** One sentence. Either plain.ts's wording for a real item, or a fixed line from this file. */
   say: string;
@@ -66,6 +77,8 @@ export type Answer = {
   href?: string;
   /** True when we are confident nothing is happening, rather than confident we found nothing. */
   allClear: boolean;
+  /** The storms this answer is about, so the caller can draw the track it just described. */
+  storms?: AskStorm[];
 };
 
 export type AskCtx = {
@@ -79,8 +92,29 @@ export type AskCtx = {
    * "no storms near Hawaiʻi" with two of them in the basin. `undefined` means the file has not
    * loaded, which is never an all-clear.
    */
-  storms?: { name: string; short: string }[];
+  storms?: AskStorm[];
+  /**
+   * The island's tide table. Like storms, tides are not `items`, so without this "when is high tide"
+   * would score nothing and fall through to the shrug. `undefined` means it has not loaded, which
+   * is never an all-clear — there is always a next tide.
+   */
+  tide?: Tide;
+  /** For picking the next turn out of the tide table. Defaults to the real clock. */
+  now?: number;
 };
+
+/**
+ * The next two turns of the tide, in a fixed frame. Only the numbers and times come from the data;
+ * a tide always has a next high and a next low, so there is no all-clear to get wrong here.
+ */
+function tideSay(t: Tide, now: number): string {
+  const next = t.hl.filter((p) => p.t >= now).slice(0, 2);
+  if (!next.length) return "The saved tide table has run out. Open Weather when you have signal.";
+  const word = (hi: boolean) => (hi ? "High" : "Low");
+  const [a, b] = next;
+  const one = `${word(a.hi)} tide is ${a.v.toFixed(1)} ft at ${fmtTime(a.t)} at ${t.name}.`;
+  return b ? `${one} Then ${word(b.hi).toLowerCase()} ${b.v.toFixed(1)} ft at ${fmtTime(b.t)}.` : one;
+}
 
 /** Which topic a question is about. A word unique to one topic outweighs one several topics share. */
 function topicFor(qt: string[], stormNames: string[]): Topic | undefined {
@@ -137,8 +171,14 @@ export function ask(q: string, ctx: AskCtx): Answer {
     if (!ctx.storms) return { say: "The storm list has not loaded yet.", items: [], topic, href: topic.href, allClear: false };
     const named = ctx.storms.filter((s) => qt.includes(fold(s.name)));
     const show = named.length ? named : ctx.storms;
-    if (show.length) return { say: show.map((s) => s.short).join(" "), items: [], topic, href: topic.href, allClear: false };
+    if (show.length) return { say: show.map((s) => s.short).join(" "), items: [], topic, href: topic.href, allClear: false, storms: show };
     return { say: NOTHING.storms, items: [], topic, href: topic.href, allClear: true };
+  }
+
+  // Tides answer from the tide table, never from the snapshot — the same reason storms do.
+  if (topic?.key === "tides") {
+    const say = ctx.tide ? tideSay(ctx.tide, ctx.now ?? Date.now()) : "The tide table has not loaded yet.";
+    return { say, items: [], topic, href: topic.href, allClear: false };
   }
 
   const districts = districtsFor(q);
@@ -188,4 +228,5 @@ const NOTHING: Record<string, string> = {
   school: "No school closures reported.",
   outage: "No power or water problems reported.",
   reports: "Nobody has posted a report today.",
+  tides: "The tide table has not loaded yet.",
 };
