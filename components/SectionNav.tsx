@@ -17,11 +17,13 @@ export default function SectionNav() {
   return (
     <>
       {/* wide screens: the same four, as pills under the top bar */}
-      <nav aria-label="Sections" className="mt-s3 hidden gap-s2 md:flex">
-        {TABS.map((t) => (
-          <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined} className={`btn ${isOn(path, t) ? "chip-active" : ""}`}><Icon name={isOn(path, t) ? `${t.icon}-fill` : t.icon} size={20} /> {t.label}</Link>
-        ))}
-      </nav>
+      <div className="mt-s3 hidden md:block">
+        <nav aria-label="Sections" className="nav-wide">
+          {TABS.map((t) => (
+            <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined}><Icon name={isOn(path, t) ? `${t.icon}-fill` : t.icon} size={19} /> {t.label}</Link>
+          ))}
+        </nav>
+      </div>
       {/* phones: a floating frosted pill above the home indicator; the lit tab sits on its own pill inside it */}
       <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
         {/* Four even quarters; the label sizes itself to the bar's width so the longest label always clears the edge. */}
