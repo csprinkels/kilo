@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import "leaflet/dist/leaflet.css";
 import { fmtTime } from "@/lib/brand";
-import { TILES_LIGHT, TILE_ATTRIBUTION } from "@/lib/tiles";
+import { TILES, TILE_ATTRIBUTION } from "@/lib/tiles";
 
 type Frame = { time: number; path: string; future: boolean };
 type Maps = { host: string; radar: { past: Frame[]; nowcast: Frame[] } };
@@ -57,7 +57,7 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
       const css = getComputedStyle(document.documentElement);
       map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.5, attributionControl: true });
       map.attributionControl.setPrefix(false);
-      L.tileLayer(TILES_LIGHT!, { subdomains: "abcd", maxZoom: 18, attribution: `${TILE_ATTRIBUTION} · <a href="https://www.rainviewer.com/">RainViewer</a>` }).addTo(map); // /weather only mounts this when TILES is set
+      L.tileLayer(TILES!, { subdomains: "abcd", maxZoom: 18, attribution: `${TILE_ATTRIBUTION} · <a href="https://www.rainviewer.com/">RainViewer</a>` }).addTo(map); // /weather only mounts this when TILES is set
       layers.current = frames.map((f) => L.tileLayer(RADAR(host, f.path), { opacity: 0, tileSize: 512, zoomOffset: -1, maxNativeZoom: 8, maxZoom: 11, zIndex: 5 }).addTo(map!));
       layers.current[frames.length - (frames.filter((f) => f.future).length) - 1]?.setOpacity(0.72);
       L.circleMarker([lat, lon], { radius: 5, color: css.getPropertyValue("--map-mark-halo").trim(), weight: 2, fillColor: css.getPropertyValue("--brand").trim(), fillOpacity: 1, interactive: false }).addTo(map); // small, so the town's own name still reads

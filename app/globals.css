@@ -64,17 +64,6 @@
   --map-road: #ffffff;
   --map-highway: #ffe680;
   --map-highway-case: #e8c547;
-  /*
-   * Data maps — the rain radar and the storm tracker — use a NEUTRAL ground, so the only colour
-   * on them is the data: the cone, the track, the rain. Kilo's other maps are about the land
-   * itself (which road, which shore), so they keep the teal water and sand island above.
-   * Values read off a map whose job is the same as ours.
-   */
-  --dmap-ground: #ededef;      /* ocean and everything with no data on it */
-  --dmap-land: #ffffff;        /* land: the reference's islands carry a data fill to help them read; ours do not, so land goes all the way to white */
-  --dmap-coast: #9a9aa6;       /* the line does most of the work at 2.4:1 — an island has to be findable at a glance */
-  --dmap-label: #1f2023;
-  --dmap-track: #6a6a72;       /* where a storm has already been: past, not forecast */
 
   --map-mark-halo: #ffffff;
   --map-town: #3c4043;
@@ -134,12 +123,6 @@
     --map-shore: #24404a;
     --map-land: #3b3128;
     --map-coast: rgb(200 180 150 / .55);
-    /* dark: the same idea inverted — a neutral ground the data sits on top of */
-    --dmap-ground: #1c1c1f;
-    --dmap-land: #2c2c31;
-    --dmap-coast: #5b5b66;
-    --dmap-label: #f2f2f4;
-    --dmap-track: #8a8a94;
     --map-relief: #4a3e32;
     --map-road-case: #2a2e30;
     --map-road: #d8d4c8;
@@ -303,9 +286,8 @@ body {
   gap: 0.75rem;
   padding: 0.5rem 0.9rem 0.6rem;
   font-size: 0.85rem;
-  color: var(--dmap-label);
-  background: var(--dmap-ground);
-  border-top: 1px solid var(--dmap-coast);
+  color: var(--map-town);
+  background: var(--map-water);
 }
 .storm-map-swatches { display: flex; align-items: center; gap: 0.28rem; }
 .storm-map-swatches i {
@@ -1920,3 +1902,28 @@ body {
 .fd-ask input::placeholder{ color:var(--mute); }
 .fd-ask input:focus{ outline:none; }
 .fd-ask-mark{ width:32px; height:32px; flex:0 0 auto; display:block; }
+
+/* ── The evacuation-zone map — the one screen in Kilo that gets a real map renderer,
+      because "is MY house inside the line" is a question no written sentence answers. ── */
+.ts-mapbtn{
+  width:100%; align-items:center; text-align:left;
+  background:none; border-top:1px solid var(--hairline); cursor:pointer;
+}
+.ts-mapbtn:hover .cs-rowname{ color:var(--sea); }
+.zm-frame{ position:relative; padding:0; background:var(--map-water); }
+/* Tall enough to hold a neighbourhood at street zoom without being a page of its own. */
+.zm-map{ width:100%; height:340px; line-height:normal; }
+/* Where the reader checked. A ring, not a pin: the point is the spot, not a dropped marker. */
+.zm-you{
+  width:16px; height:16px; border-radius:50%;
+  background:var(--brand); border:3px solid var(--map-mark-halo);
+  box-shadow:0 0 0 1px rgb(0 0 0 / .25);
+}
+.zm-offline{
+  margin:0; padding:8px 12px; font-size:12.5px; line-height:1.4;
+  color:var(--ink-2); background:var(--surface-2); border-top:1px solid var(--hairline);
+}
+.zm-none{ margin:12px 0 0; }
+/* MapLibre's own chrome, brought into the app's type and colour. */
+.zm-frame .maplibregl-ctrl-attrib{ font-size:11px; }
+.zm-frame .maplibregl-ctrl-group{ border-radius:9px; }
