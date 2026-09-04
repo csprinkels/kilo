@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "node --test 'tests/**/*.test.ts'",
     "maps": "node scripts/build-map-art.mjs",
-    "brand": "node scripts/build-brand.mjs"
+    "brand": "node scripts/build-brand.mjs",
+    "native": "node scripts/native.mjs",
+    "native:ios": "node scripts/native.mjs ios",
+    "native:android": "node scripts/native.mjs android"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
