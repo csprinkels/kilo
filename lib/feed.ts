@@ -53,6 +53,26 @@ const ACT_ON: ItemType[] = ["advisory", "storm", "outage", "tsunami", "hazard", 
 export const isPinned = (i: Item, p: Plain | undefined): boolean =>
   !!p && (p.level >= 3 || (p.level === 2 && ACT_ON.includes(i.type)));
 
+/**
+ * The agencies reissue an alert rather than editing it, so the same warning for the same places
+ * arrives again under a new id and the page shows it twice. Three High Surf Advisories, two of
+ * them the same zones 43 minutes apart, is what this looks like to a reader: identical rows they
+ * cannot tell apart. Same event, same places — keep the newest and drop what it replaced.
+ */
+export function dropSuperseded(items: Item[]): Item[] {
+  const newest = new Map<string, Item>();
+  const passthrough: Item[] = [];
+  for (const i of items) {
+    const event = i.fields?.event, where = i.fields?.areaDesc;
+    if (!event || !where) { passthrough.push(i); continue; }   // nothing to compare on
+    const id = `${i.type}|${event}|${where}`;
+    const held = newest.get(id);
+    if (!held || i.issuedAt > held.issuedAt) newest.set(id, i);
+  }
+  const keep = new Set([...newest.values()].map((i) => i.key));
+  return items.filter((i) => keep.has(i.key) || passthrough.includes(i));
+}
+
 /** How many of one kind the feed shows before folding the rest behind a count. */
 export const RUN_LIMIT = 3;
 

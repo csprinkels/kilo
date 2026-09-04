@@ -8,6 +8,7 @@ import { BANNED, LEVEL_WORD, SOURCE_NAME, fmtUntil, plainAlert, rankStorms } fro
 import { ISLAND_POINTS } from "../lib/storm.ts";
 import { ISLAND_LABEL, TYPE_LABEL } from "../lib/brand.ts";
 import { buildDigest } from "../lib/types.ts";
+import { dropSuperseded } from "../lib/feed.ts";
 import type { Item } from "../lib/types.ts";
 
 const fx = (f: string) => JSON.parse(readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8"));
@@ -197,4 +198,42 @@ test("a pushed warning survives the digest: fields that change the meaning are c
   const boil: Item = { ...kilauea, key: "hidws:1", type: "outage", title: "Boil Water Notice — Kaʻū", body: "Boil before drinking.", fields: {} };
   assert.equal(plainAlert(boil, now, "hawaii").level, 3);
   assert.match(plainAlert(boil, now, "hawaii").headline, /^Boil your water/);
+});
+
+test("a statewide alert names the parts of YOUR island, so two of them never read alike", () => {
+  const now = Date.UTC(2026, 8, 4, 22, 0);
+  const surf = (areaDesc: string): Item => ({
+    key: `nws:${areaDesc.slice(0, 8)}`, source: "nws", type: "advisory", tier: "official", sev: 2,
+    islands: ["hawaii"], districts: [], title: `High Surf Advisory: ${areaDesc}`, body: "", srcUrl: "",
+    issuedAt: now, lastConfirmedAt: now, hash: "", fields: { areaDesc, event: "High Surf Advisory" },
+  });
+  // One CAP message covers a dozen zones across every island. Only ours belong in the sentence.
+  const east = plainAlert(surf("Olomana; Kauai East; Koolau Windward; Big Island East; Big Island North"), now, "hawaii");
+  const south = plainAlert(surf("Niihau; Waianae Coast; Kona; Big Island South; Big Island Southeast"), now, "hawaii");
+  assert.equal(east.headline, "Big waves on the east and north shores");
+  assert.equal(south.headline, "Big waves on the Kona, south and southeast shores");
+  assert.notEqual(east.headline, south.headline, "two shores must never read identically");
+
+  // Same list read from another island names that island's zones instead.
+  assert.match(plainAlert(surf("Kauai East; Big Island East"), now, "kauai").headline, /east shore/);
+  // Too many zones to be a sentence: fall back to the island.
+  assert.match(plainAlert(surf("Big Island East; Big Island North; Big Island South; Kona"), now, "hawaii").headline, /on Hawaiʻi Island/);
+});
+
+test("an alert reissued under a new id replaces the one it supersedes", () => {
+  const now = Date.UTC(2026, 8, 4, 22, 0);
+  const a = (key: string, issuedAt: number, areaDesc: string): Item => ({
+    key, source: "nws", type: "advisory", tier: "official", sev: 2, islands: ["hawaii"], districts: [],
+    title: "High Surf Advisory", body: "", srcUrl: "", issuedAt, lastConfirmedAt: now, hash: "",
+    fields: { areaDesc, event: "High Surf Advisory" },
+  });
+  const older = a("nws:old", now - 43 * 60_000, "Big Island East; Big Island North");
+  const newer = a("nws:new", now, "Big Island East; Big Island North");
+  const other = a("nws:other", now, "Big Island South; Kona");
+  const kept = dropSuperseded([older, newer, other]).map((i) => i.key);
+  assert.deepEqual(kept, ["nws:new", "nws:other"], "same event and places: newest wins");
+
+  // Anything without both an event and a place is left alone rather than guessed at.
+  const bare: Item = { ...older, key: "x", fields: {} };
+  assert.equal(dropSuperseded([bare, { ...bare, key: "y" }]).length, 2);
 });
