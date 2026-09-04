@@ -6,6 +6,7 @@ import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
 import PageShell from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
 import TileMap from "@/components/TileMap";
+import { usePageFilter } from "@/components/PageFilter";
 import { useRoads, type Segment } from "@/components/RoadMap";
 import type { Island, Item } from "@/lib/types";
 import { hashOf, smsText } from "@/lib/types";
@@ -84,6 +85,15 @@ export default function RoadsPage() {
   const roadwork = items.filter(isRoadwork);
   const loaded = !!snap?.data;
   const offline = !!snap?.offline && !!ess?.offline;
+  // Only the sections this island has today: a chip that filters to an empty page is worse than no chip.
+  // Neither list of what is wrong on the road gets a chip. "Closed or blocked" says "or when a neighbor
+  // reports one", and a neighbor's report is drawn nowhere else — not in that list, not on the map, not
+  // in the hero sentence — so filtering it away would leave the page contradicting itself.
+  const { bar, show, only } = usePageFilter([
+    { id: "map", label: "Map" },
+    ...(roadwork.length ? [{ id: "roadwork", label: "Roadwork" }] : []),
+    { id: "live", label: "Live traffic" },
+  ]);
 
   const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon, approx: i.fields?.approx === "area" }] : []; });
   const drawn = { closed: segments.filter((g) => g.kind === "closed").length, lane: segments.filter((g) => g.kind === "lane").length, spot: segments.filter((g) => g.kind === "spot" && g.lat != null && g.lon != null).length };
@@ -142,17 +152,20 @@ export default function RoadsPage() {
         {!loaded && !offline && <p className="text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
         {loaded && (
           <>
+            {bar}
             {/* The island map is the card's picture; its key rides under it, each word wearing its own swatch. */}
-            <section className="cs-card t-roads">
-              <div className="cs-figure tr-top">
-                <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
-              </div>
-              {keys.length > 0 && (
-                <div className="cs-keys">
-                  {keys.map((k) => <span key={k.text} className="cs-key"><i className={`cs-key-sw ${k.sw}`} aria-hidden /> {k.text}</span>)}
+            {show("map") && (
+              <section className="cs-card t-roads">
+                <div className="cs-figure tr-top">
+                  <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
                 </div>
-              )}
-            </section>
+                {keys.length > 0 && (
+                  <div className="cs-keys">
+                    {keys.map((k) => <span key={k.text} className="cs-key"><i className={`cs-key-sw ${k.sw}`} aria-hidden /> {k.text}</span>)}
+                  </div>
+                )}
+              </section>
+            )}
 
             {official.length > 0 && (
               <section className="cs-card">
@@ -195,8 +208,10 @@ export default function RoadsPage() {
               </section>
             )}
 
-            {roadwork.length > 0 && (
-              showWork ? (
+            {/* HDOT files some closures as roadwork, and plain.ts words those "Road closed on …".
+                When one of them is a closure this stops being a section and has to stay on screen. */}
+            {show("roadwork", roadwork.some(isClosed)) && roadwork.length > 0 && (
+              showWork || only === "roadwork" ? (
                 <section className="cs-card t-roads">
                   <p className="cs-label"><Icon name="traffic-cone-fill" size={18} aria-hidden /> Roadwork</p>
                   <p className="cs-body tr-top">Planned work. Expect a wait, not a closed road.</p>
@@ -207,7 +222,7 @@ export default function RoadsPage() {
               )
             )}
 
-            {showMap ? (
+            {show("live") && (showMap || only === "live" ? (
               <section className="cs-card">
                 <div className="cs-figure tr-top">
                   <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
@@ -215,7 +230,7 @@ export default function RoadsPage() {
               </section>
             ) : (
               <button className="cs-ghost cs-wide tr-wide" onClick={() => setShowMap(true)}><Icon name="car" size={18} aria-hidden /> Open the live traffic map (needs a good signal)</button>
-            )}
+            ))}
 
             {island === "hawaii" && (
               <Link href="/report/?type=road_blocked" className="cs-card t-reports tr-tell">

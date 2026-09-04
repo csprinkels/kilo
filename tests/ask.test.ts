@@ -79,3 +79,46 @@ test("ask: nonsense gets no answer rather than a wrong one", () => {
   assert.equal(a.allClear, false);
   assert.equal(ask("", ctx([], [])).say, "");
 });
+
+const TIDE = {
+  station: "1617760", name: "Hilo Bay",
+  t0: Date.UTC(2026, 8, 3, 19, 0),   // 9am HST
+  h: [2.2, 2.3, 2.2, 2.0],
+  hl: [
+    { t: Date.UTC(2026, 8, 3, 20, 18), v: 2.348, hi: true },   // 10:18am HST
+    { t: Date.UTC(2026, 8, 4, 13, 11), v: 0.276, hi: false },  // 3:11am HST next day
+  ],
+};
+
+test("ask: the tide table answers, and does not get mistaken for surf", () => {
+  const surf = item({ key: "s1", type: "advisory", title: "High Surf Advisory", body: "Surf 12 to 16 feet on east shores." });
+  const plain: [string, Plain][] = [["s1", P("Big surf on the east shore", 2)]];
+  const c = ctx([surf], plain, { tide: TIDE, now });
+
+  for (const q of ["when is high tide", "tides", "what time is low tide", "tide today"]) {
+    const a = ask(q, c);
+    assert.equal(a.topic?.key, "tides", `"${q}" should be a tide question`);
+    assert.match(a.say, /tide is 2\.3 ft at 10:18 AM|tide is 2\.3 ft at 10:18 AM/, `"${q}" -> ${a.say}`);
+    assert.match(a.say, /Hilo Bay/);
+    assert.match(a.say, /Then low 0\.3 ft/, "the turn after it comes too");
+    assert.equal(a.href, "/weather/");
+  }
+
+  // "high surf" is still weather's question, not the tide table's — the surf item must win.
+  const s = ask("how big is the surf", c);
+  assert.equal(s.topic?.key, "weather");
+  assert.equal(s.items[0]?.key, "s1");
+});
+
+test("ask: a tide table that has not loaded says so, and never claims an all-clear", () => {
+  const a = ask("when is high tide", ctx([], [], { now }));
+  assert.equal(a.topic?.key, "tides");
+  assert.equal(a.allClear, false, "there is always a next tide — silence here is not an all-clear");
+  assert.match(a.say, /not loaded/);
+});
+
+test("ask: a tide table whose turns are all in the past says so rather than naming a stale time", () => {
+  const a = ask("high tide", ctx([], [], { tide: TIDE, now: Date.UTC(2026, 8, 6, 0, 0) }));
+  assert.match(a.say, /run out/);
+  assert.doesNotMatch(a.say, /10:18/, "a turn two days gone must not be offered as the next one");
+});

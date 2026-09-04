@@ -9,11 +9,13 @@ import TideChart from "@/components/TideChart";
 import DailyRows, { rowsFromPeriods } from "@/components/DailyRows";
 import ItemRow from "@/components/ItemRow";
 import RadarMap from "@/components/RadarMap";
+import { usePageFilter } from "@/components/PageFilter";
 import { TILES } from "@/lib/tiles";
 import EmptyState from "@/components/EmptyState";
 import type { Hourly, Period, TownWx, Weather } from "@/lib/pages";
 import type { Island } from "@/lib/types";
 import { useFeed, useJson, useStoredIsland } from "@/lib/data";
+import { dropSuperseded } from "@/lib/feed";
 import { TOWNS } from "@/lib/towns";
 import { clock, condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { LEVEL_WORD, dirWord, plainAlert, stormLine } from "@/lib/plain";
@@ -27,6 +29,8 @@ const dayStartHST = (ms: number) => Math.floor((ms - 10 * HOUR) / DAY) * DAY + 1
 const townListeners = new Set<() => void>();
 const subscribeTown = (cb: () => void) => { townListeners.add(cb); return () => { townListeners.delete(cb); }; };
 const getTown = () => localStorage.getItem("town");
+// The rain radar is live-only, so the page has to know what RadarMap knows: no signal, no map.
+const subscribeOnline = (cb: () => void) => { addEventListener("online", cb); addEventListener("offline", cb); return () => { removeEventListener("online", cb); removeEventListener("offline", cb); }; };
 function useStoredTown(): [string | null, (id: string) => void] {
   const id = useSyncExternalStore(subscribeTown, getTown, () => null);
   return [id, (t) => { localStorage.setItem("town", t); townListeners.forEach((cb) => cb()); }];
@@ -42,9 +46,17 @@ export default function WeatherPage() {
   const { snap } = useFeed(island);
   const [townId, setTownId] = useStoredTown();
   const [slow, setSlow] = useState(false);
+  const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   useEffect(() => { const t = setTimeout(() => setSlow(true), 30_000); return () => clearTimeout(t); }, []);
 
   const d = w?.data;
+  /**
+   * A tide table is only useful while it still reaches forward. Stored 60 hours at a time and read
+   * from cache, it can be entirely in the past after a long stretch with no signal — and TideChart
+   * would then draw a two-point stub with no high or low on it, which is the one thing the chip
+   * promises. Two hours of runway is the floor for a curve worth looking at.
+   */
+  const tideLive = d?.tide && d.tide.t0 + (d.tide.h.length - 1) * 3_600_000 >= (w?.fetchedAt ?? 0) + 2 * 3_600_000 ? d.tide : undefined;
   const now = w?.fetchedAt ?? 0;
   const town = d?.towns.find((t) => t.id === townId) ?? d?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
@@ -64,7 +76,10 @@ export default function WeatherPage() {
   );
 
   // Official weather items worth a "heads up" (level 2) and an approaching storm, if any.
-  const weatherItems = (snap?.data?.items ?? []).filter((i) => i.tier !== "community" && (i.type === "advisory" || i.type === "storm"));
+  // The agencies reissue rather than edit, so the same advisory for the same shores arrives again
+  // under a new id — three High Surf pills, two of them word-for-word identical. The feed already
+  // drops the superseded copies; this page was reading the raw list.
+  const weatherItems = dropSuperseded(snap?.data?.items ?? []).filter((i) => i.tier !== "community" && (i.type === "advisory" || i.type === "storm"));
   const headsUp = weatherItems.filter((i) => plainAlert(i, now, island).level === 2);
   // Watches and warnings in effect: the pill under the hero, like Acme's "Flood Watch". Level 2 and up; worst first.
   const alerts = weatherItems.map((i) => ({ i, p: plainAlert(i, now, island) })).filter((x) => x.p.level >= 2).sort((a, b) => b.p.level - a.p.level);
@@ -72,6 +87,26 @@ export default function WeatherPage() {
   const rainSoon = !!h && (h.p.slice(0, 6).some((pp) => pp >= 40) || h.c.slice(0, 3).some((c) => c >= 5 && c <= 7));
   const [showRadar, setShowRadar] = useState(false);
   const storm = (stormsSnap?.data?.storms ?? []).map((s) => stormLine(s, ISLAND_POINTS[island])).find((l) => l.approaching && l.level >= 3);
+  // The surf card is one sentence, and that sentence comes out empty on feeds whose zone names it
+  // cannot read. Build it once: what the chip offers and what the card holds are then the same thing.
+  const surfLine = d?.surf ? surfSentence(d.surf.zones, island) : "";
+  const airLevel = d && d.air.length > 0 && town ? rank(airFor(d.air, town.name).cat) : 0;
+
+  // This is the longest page in the app, so it gets chips. Each one is spelled out only when its
+  // section has CONTENT today — not merely when its payload loaded — so a chip can never filter down
+  // to an empty screen. The hero, the alert pills, the storm line and "Heads up" stay outside show():
+  // a filter hides sections, never warnings. Air is both, depending on the day, so it is kept on
+  // screen at category 2 and up, where its sentence turns into an instruction to stay inside.
+  const { bar, show, only } = usePageFilter([
+    ...(TILES && online ? [{ id: "radar", label: "Radar" }] : []),
+    ...(h && h.t.length > 0 ? [{ id: "hourly", label: "Hourly" }] : []),
+    ...(town && town.fc.length > 0 ? [{ id: "forecast", label: "Forecast" }] : []),
+    ...(surfLine ? [{ id: "surf", label: "Surf" }] : []),
+    // Non-empty is not the test: a table stored before a long offline stretch can be entirely in
+    // the past, and TideChart would then draw a two-point stub with no turns on it at all.
+    ...(tideLive ? [{ id: "tides", label: "Tides" }] : []),
+    ...(d && d.air.length > 0 ? [{ id: "air", label: "Air" }] : []),
+  ], { clearOn: `${alerts[0]?.p.level ?? 0}-${storm?.level ?? 0}-${airLevel}` });
 
   return (
     <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
@@ -93,7 +128,9 @@ export default function WeatherPage() {
             </a>
           ))}
 
-          {TILES && ((alerts.length > 0 || rainSoon || showRadar)
+          {bar}
+
+          {show("radar") && TILES && online && ((alerts.length > 0 || rainSoon || showRadar || only === "radar")
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
             : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>)}
           {storm && (
@@ -108,13 +145,15 @@ export default function WeatherPage() {
             </section>
           )}
 
-          <section className="cs-card t-weather mt-s3">
-            <h2 className="cs-display cs-display--hero">Next {Math.round(h.t.length / 12) * 12} Hours</h2>
-            <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
-            <HourlyChart h={h} />
-          </section>
+          {show("hourly") && h.t.length > 0 && (
+            <section className="cs-card t-weather mt-s3">
+              <h2 className="cs-display cs-display--hero">Next {Math.round(h.t.length / 12) * 12} Hours</h2>
+              <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
+              <HourlyChart h={h} />
+            </section>
+          )}
 
-          {town.fc.length > 0 && (
+          {show("forecast") && town.fc.length > 0 && (
             <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">{daysTitle(town.fc)}</h2>
               <p className="cs-body max-w-[36rem]">{weekSentence(town.fc)}</p>
@@ -122,21 +161,21 @@ export default function WeatherPage() {
             </section>
           )}
 
-          {d.surf && Object.keys(d.surf.zones).length > 0 && (
+          {show("surf") && surfLine && (
             <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">Surf</h2>
-              <p className="cs-body max-w-[36rem]">{surfSentence(d.surf.zones, island)}</p>
+              <p className="cs-body max-w-[36rem]">{surfLine}</p>
             </section>
           )}
 
-          {d.tide && d.tide.h.length > 0 && (
+          {show("tides") && tideLive && (
             <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">Tides</h2>
-              <TideChart tide={d.tide} />
+              <TideChart tide={tideLive} />
             </section>
           )}
 
-          {d.air.length > 0 && (
+          {show("air", airLevel >= 2) && d.air.length > 0 && (
             <section className={`cs-card ${island === "hawaii" ? "t-volcano" : "t-weather"} mt-s3`}>
               <h2 className="cs-display cs-display--hero">Air</h2>
               <p className="cs-body max-w-[36rem]">{airSentence(d.air, town.name, island)}</p>
@@ -267,12 +306,15 @@ function surfSentence(zones: Record<string, Record<string, [string, string]>>, i
   return `Waves ${parts.join(", ")}.${trend}`;
 }
 
+/** The monitor the Air card speaks for: the town's own, else the island's worst. Never call it empty. */
+const airFor = (air: Weather["air"], townName: string) =>
+  air.find((a) => a.name === townName || townName.startsWith(a.name)) ?? air.reduce((a, b) => (rank(b.cat) > rank(a.cat) ? b : a));
+
 /** Air in EPA words for the town's monitor (or the island when there is none nearby). */
 function airSentence(air: Weather["air"], townName: string, island: Island): string {
-  const here = air.find((a) => a.name === townName || townName.startsWith(a.name));
-  const worst = air.reduce((a, b) => (rank(b.cat) > rank(a.cat) ? b : a));
-  const m = here ?? worst;
-  const place = here ? `in ${m.name}` : rank(worst.cat) === 0 ? `across ${ISLAND_LABEL[island].split(" · ")[0]}` : `in ${m.name}`;
+  const m = airFor(air, townName);
+  const here = m.name === townName || townName.startsWith(m.name);
+  const place = here || rank(m.cat) > 0 ? `in ${m.name}` : `across ${ISLAND_LABEL[island].split(" · ")[0]}`;
   const what = island === "hawaii" ? "Vog" : "Air";
   switch (rank(m.cat)) {
     case 0: return `Air is good ${place}.`;

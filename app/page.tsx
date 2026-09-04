@@ -16,6 +16,7 @@ import type { StormsSnapshot } from "@/lib/storm";
 import { ISLAND_POINTS } from "@/lib/storm";
 import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
+import { usePageFilter } from "@/components/PageFilter";
 import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
@@ -118,6 +119,19 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const bands = buildFeed({ items, plain, now, storms: stormLines, island });
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
 
+  /*
+   * Now is the longest page in the app, and on a busy day the thing you opened it for is somewhere
+   * below thirty rows. The chips cut the feed to one topic. A fixed order, filtered to what is
+   * actually here — chips that reshuffled themselves every refresh would be worse than scrolling.
+   *
+   * The pinned hero, ʻIo, an approaching storm and the alerts card are all rendered outside this:
+   * a filter hides topics, never the warning that made you open the app.
+   */
+  const present = new Set(bands.flatMap((b) => b.rows.map((r) => r.topic)));
+  const weatherCard = !(mode === "low" || offline);
+  if (weatherCard) present.add("weather");
+  const { bar: chips, show } = usePageFilter(CHIP_ORDER.filter((t) => present.has(t)).map((t) => ({ id: t, label: CHIP_LABEL[t] })), { label: "Filter the feed", clearOn: story.title });
+
 
   return (
     <main className="hm relative z-[1] min-h-dvh w-full">
@@ -149,6 +163,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           )}
 
           {loaded && <Ask island={island} ctx={askCtx} now={now} />}
+          {loaded && chips}
 
           {approaching && mainStorm && (
             <Link href="/storms/" className="cs-card cs-hero cs-hero--amber" aria-label={mainStorm.text}>
@@ -166,9 +181,9 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             </Link>
           )}
 
-          {mode === "low" || offline
+          {!weatherCard
             ? <p className="cs-card cs-body hm-flat">Weather loads when the signal is better.</p>
-            : <WeatherNow island={island} />}
+            : show("weather") && <WeatherNow island={island} />}
 
           {/* Weak signal: the 1.5 KB essentials arrived but the 30 KB snapshot has not. Show the
               headlines we do have rather than an empty page — this is the path the app exists for. */}
@@ -187,7 +202,8 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           )}
 
           {bands.map((b) => {
-            const { rows, folded } = foldRuns(b.rows);
+            const { rows, folded } = foldRuns(b.rows.filter((r) => show(r.topic)));
+            if (!rows.length) return null;
             return (
               <section key={b.key} className="cs-card" aria-label={b.label}>
                 <p className="cs-label fd-band">{b.label}</p>
@@ -222,6 +238,12 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 const HREF: Record<string, string> = {
   roads: "/traffic/", storms: "/storms/", quakes: "/quakes/",
   volcano: "/volcano/", tsunami: "/tsunami/", weather: "/weather/", reports: "/report/",
+};
+/** Chip order is fixed so the row never reshuffles; only the ones with something behind them show. */
+const CHIP_ORDER = ["weather", "roads", "storms", "quakes", "volcano", "tsunami", "reports"];
+const CHIP_LABEL: Record<string, string> = {
+  weather: "Weather", roads: "Roads", storms: "Storms", quakes: "Quakes",
+  volcano: "Volcano", tsunami: "Ocean", reports: "Reports",
 };
 const MORE_WORD: Record<string, string> = {
   roads: "road closures", storms: "storms", quakes: "earthquakes",

@@ -4,10 +4,12 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
 import { useRoads } from "@/components/RoadMap";
+import { useJson } from "@/lib/data";
+import type { Weather } from "@/lib/pages";
 import { ask, type AskCtx } from "@/lib/ask";
 import type { Island } from "@/lib/types";
 
-type Ctx = Omit<AskCtx, "roads">;
+type Ctx = Omit<AskCtx, "roads" | "tide">;
 type IslandId = Exclude<Island, "state">;
 
 /**
@@ -33,10 +35,14 @@ export default function Ask({ island, ctx, now }: { island: IslandId; ctx: Ctx; 
   );
 }
 
-/** Split out so the island road pack is only fetched once a question exists. */
+/**
+ * Split out so the island road pack and the weather file are only fetched once a question exists.
+ * Weather is already on this page (the card below), so this is a cache read, not a second download.
+ */
 function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: string; now: number }) {
   const pack = useRoads(island);
-  const a = ask(q, { ...ctx, roads: pack?.lines });
+  const wx = useJson<Weather>(`v1/${island}/weather.json`);
+  const a = ask(q, { ...ctx, roads: pack?.lines, tide: wx?.data?.tide, now });
 
   if (!a.say) {
     return (

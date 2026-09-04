@@ -1939,3 +1939,22 @@ body {
 }
 .td-turn b{ display:block; font-size:15px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
 .td-turn span{ display:block; font-size:13px; color:var(--mute); font-variant-numeric:tabular-nums; }
+
+/* ── Page filter chips — cut a long page down to the one section you came for ── */
+.pf-bar{
+  display:flex; gap:6px; margin:12px 0 0; padding:8px 18px; margin-inline:-18px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  /* Warnings come first on every page, and on a bad day they fill the screen — so the row that
+     cuts the page down would itself be below the fold. It sticks instead: scroll past the alerts
+     once and the chips stay with you. The tint is the page's own ground, so nothing shows through. */
+  position:sticky; top:0; z-index:10; background:var(--bg);
+}
+.pf-chip{
+  flex:0 0 auto; min-height:2.25rem; padding:0 13px;
+  border:1px solid var(--line); border-radius:9999px; background:var(--card);
+  font-family:inherit; font-size:14.5px; font-weight:700; line-height:1; white-space:nowrap;
+  color:var(--ink-2); cursor:pointer;
+}
+.pf-chip:hover{ border-color:var(--mute); }
+/* The lit chip is the page's one filled control, so what you are looking at is never in doubt. */
+.pf-chip[aria-pressed="true"]{ background:var(--brand); border-color:var(--brand); color:var(--brand-ink); }
