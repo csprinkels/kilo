@@ -20,7 +20,7 @@ import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
 import { nowStory, topicRows } from "@/lib/now";
-import { buildFeed, foldRuns, pinned, type FeedRow as FeedRowT } from "@/lib/feed";
+import { buildFeed, dropSuperseded, foldRuns, pinned, type FeedRow as FeedRowT } from "@/lib/feed";
 import MiniMap from "@/components/MiniMap";
 import { fmtTime, islandName } from "@/lib/brand";
 
@@ -63,7 +63,9 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const loaded = !!(snap?.data || ess?.data);
 
   const items = useMemo(() => {
-    const base = snap?.data?.items ?? [];
+    // The agencies reissue rather than edit, so the same warning arrives twice under a new id.
+    // Drop what has been replaced before anything downstream — the pin, the feed and ʻIo all read this.
+    const base = dropSuperseded(snap?.data?.items ?? []);
     if (digest && digest.island === island && digest.gen > (snap?.data?.gen ?? 0)) {
       const have = new Set(base.map((i) => i.key));
       return [...digest.top.filter((d) => !have.has(d.key)).map((d) => fromDigest(d, digest.gen)), ...base].sort((a, b) => b.sev - a.sev || b.issuedAt - a.issuedAt);

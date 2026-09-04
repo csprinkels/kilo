@@ -46,11 +46,53 @@ export function shakingWord(mag: number): string {
 }
 export const shakingVerb = (mag: number) => (mag < 3.5 ? "was barely felt" : mag < 4.5 ? "shook lightly" : mag < 5.5 ? "shook" : "shook hard");
 
-/** Where, in words people say: "in Puna" (district or a short NWS area name) or "on Oʻahu" (whole island). */
+/** The NWS forecast zones on each island, as they are spelled in a CAP areaDesc. */
+const ZONES: Record<Exclude<Island, "state">, RegExp> = {
+  hawaii: /^(Big Island |Kona$|Kohala$|South Big Island$)/i,
+  maui: /^(Maui |Windward Haleakala$|Leeward Haleakala$|Haleakala Summit$|Kipahulu$|Molokai |Lanai |Kahoolawe$)/i,
+  oahu: /^(Oahu |Waianae Coast$|Koolau |Olomana$|East Honolulu$|Honolulu Metro$|Ewa Plain$|Central Oahu$|Waianae Mountains$)/i,
+  kauai: /^(Kauai |Niihau$)/i,
+};
+const DIRECTION = /^(north|south|east|west|northeast|northwest|southeast|southwest|windward|leeward|central|interior|summit)/i;
+const listWords = (xs: string[]) => (xs.length < 2 ? xs[0] ?? "" : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
+
+/**
+ * Which parts of THIS island an alert covers, from the semicolon list the agency ships.
+ * A statewide surf alert names a dozen zones across every island; naming only the ones that
+ * are here is the difference between three rows that read identically and three that do not.
+ */
+export function zonesOf(item: Item, island?: Island): string[] {
+  const isl = (island && island !== "state" ? island : item.islands.find((i) => i !== "state")) as Exclude<Island, "state"> | undefined;
+  if (!isl || !ZONES[isl]) return [];
+  const seen = new Set<string>();
+  for (const raw of (item.fields?.areaDesc ?? "").split(";")) {
+    const z = raw.trim();
+    if (!z || !ZONES[isl].test(z)) continue;
+    // "Big Island East" -> "east"; "Kona" stays "Kona"; a bare island name says nothing.
+    const short = z.replace(/^(Big Island|Maui|Oahu|Kauai|Molokai|Lanai)\s+/i, "").trim();
+    if (!short || /^(Big Island|Maui|Oahu|Kauai|Molokai|Lanai|Niihau|Kahoolawe)$/i.test(short)) continue;
+    seen.add(DIRECTION.test(short) ? short.toLowerCase() : short);
+  }
+  return [...seen];
+}
+
+/** Where, in words people say: "in Puna", "on the east and north shores", or "on Oʻahu". */
 export function placeOf(item: Item, island?: Island): string {
   if (item.districts[0]) return `in ${item.districts[0]}`;
   const area = item.fields?.areaDesc?.trim();
   if (area && !/[;,]/.test(area) && area.length <= 30 && !/^(Oahu|Maui|Kauai|Hawaii|Niihau|Molokai|Lanai)$/i.test(area)) return `${/summit|mountain|slope|shore|coast|side|windward|leeward/i.test(area) ? "on" : "in"} ${area.replace(/^Big Island /, "")}`;
+
+  // A multi-zone alert: name the parts of this island it covers. Three or fewer, or the list
+  // stops being a sentence and starts being a table.
+  const zones = zonesOf(item, island);
+  if (zones.length && zones.length <= 3) {
+    // Surf is felt by shore, and that is the word people use — "the Kona shore" as readily as
+    // "the east shore", so a named coast joins the list rather than breaking it.
+    if (/surf|swell|wave|rip current/i.test(item.fields?.event ?? item.title)) return `on the ${listWords(zones)} ${zones.length > 1 ? "shores" : "shore"}`;
+    if (zones.every((z) => DIRECTION.test(z))) return `on the ${listWords(zones)} ${zones.length > 1 ? "sides" : "side"}`;
+    return `in ${listWords(zones)}`;
+  }
+
   const isl = island && island !== "state" ? island : item.islands.find((i) => i !== "state");
   return isl ? `on ${ISLAND_LABEL[isl].split(" · ")[0]}` : "in Hawaiʻi";
 }
