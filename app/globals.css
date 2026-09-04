@@ -71,8 +71,8 @@
    * Values read off a map whose job is the same as ours.
    */
   --dmap-ground: #ededef;      /* ocean and everything with no data on it */
-  --dmap-land: #fcfcfd;        /* land: light enough to read as land, quiet enough not to compete */
-  --dmap-coast: #b6b6be;       /* one thin neutral line, never a colour — this is what makes an island visible */
+  --dmap-land: #ffffff;        /* land: the reference's islands carry a data fill to help them read; ours do not, so land goes all the way to white */
+  --dmap-coast: #9a9aa6;       /* the line does most of the work at 2.4:1 — an island has to be findable at a glance */
   --dmap-label: #1f2023;
   --dmap-track: #6a6a72;       /* where a storm has already been: past, not forecast */
 
@@ -136,8 +136,8 @@
     --map-coast: rgb(200 180 150 / .55);
     /* dark: the same idea inverted — a neutral ground the data sits on top of */
     --dmap-ground: #1c1c1f;
-    --dmap-land: #26262a;
-    --dmap-coast: #45454c;
+    --dmap-land: #2c2c31;
+    --dmap-coast: #5b5b66;
     --dmap-label: #f2f2f4;
     --dmap-track: #8a8a94;
     --map-relief: #4a3e32;
