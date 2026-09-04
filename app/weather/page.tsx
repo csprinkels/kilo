@@ -83,6 +83,10 @@ export default function WeatherPage() {
   // drops the superseded copies; this page was reading the raw list.
   const weatherItems = dropSuperseded(snap?.data?.items ?? []).filter((i) => i.tier !== "community" && (i.type === "advisory" || i.type === "storm"));
   const headsUp = weatherItems.filter((i) => plainAlert(i, now, island).level === 2);
+  // Level 3 and up had a pill and nothing else on this page: no body text, no "Read it on their
+  // site", no share, and — before the pill carried it — no action either. They are the items most
+  // worth reading in full, so they get the row that level 2 has always had.
+  const warnings = weatherItems.filter((i) => plainAlert(i, now, island).level >= 3);
   // Watches and warnings in effect: the pill under the hero, like Acme's "Flood Watch". Level 2 and up; worst first.
   const alerts = weatherItems.map((i) => ({ i, p: plainAlert(i, now, island) })).filter((x) => x.p.level >= 2).sort((a, b) => b.p.level - a.p.level);
   // The rain map opens by itself when there is a weather alert or rain is likely soon; otherwise it is one tap away.
@@ -135,20 +139,20 @@ export default function WeatherPage() {
         // Flash Flood Warning got an anchor to nothing, and a level 4 beside a level 2 scrolled the
         // reader to "Nothing dangerous, but good to know". With no row to open, the pill carries the
         // instruction itself — on this page nothing else prints it.
-        const row = headsUp.includes(i);
+        const anchor = headsUp.includes(i) ? "#heads-up" : warnings.includes(i) ? "#warnings" : null;
         const cls = `cs-card wx-alert mt-s3 ${p.level >= 4 ? "wx-alert--danger" : p.level >= 3 ? "wx-alert--warn" : ""}`;
         const inner = (
           <>
             <span className={`cs-ictile ${p.level >= 4 ? "cs-ictile--brick" : p.level >= 3 ? "cs-ictile--amber" : ""}`}><Icon name="warning-fill" size={21} /></span>
             <p className="wx-alert-t">
               {p.level >= 3 ? <span className="wx-sev">{p.word ?? LEVEL_WORD[p.level]}:</span> : <>{p.word ?? LEVEL_WORD[p.level]}:</>} {p.headline}
-              {!row && p.action && <span className="fd-pin-sub">{p.action}</span>}
+              {!anchor && p.action && <span className="fd-pin-sub">{p.action}</span>}
             </p>
-            {row && <Icon name="caret-right" size={17} className="wx-caret" />}
+            {anchor && <Icon name="caret-right" size={17} className="wx-caret" />}
           </>
         );
-        return row
-          ? <a key={i.key} href="#heads-up" className={cls}>{inner}</a>
+        return anchor
+          ? <a key={i.key} href={anchor} className={cls}>{inner}</a>
           : <div key={i.key} className={cls}>{inner}</div>;
       })}
 
@@ -218,6 +222,16 @@ export default function WeatherPage() {
             </section>
           )}
         </>
+      )}
+
+      {warnings.length > 0 && (
+        <section id="warnings" className="cs-card mt-s3 scroll-mt-s4">
+          <h2 className="cs-display cs-display--hero">{LEVEL_WORD[Math.max(...warnings.map((i) => plainAlert(i, now, island).level))]}</h2>
+          <p className="cs-body max-w-[36rem]">What the agency said, in full.</p>
+          <div className="wx-rows">
+            <ul className="list">{warnings.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(warnings.map((x) => x.source)).size > 1} />)}</ul>
+          </div>
+        </section>
       )}
 
       {headsUp.length > 0 && (

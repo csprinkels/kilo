@@ -96,9 +96,7 @@ export default function RoadsPage() {
   const { bar, show, only } = usePageFilter([
     { id: "map", label: "Map" },
     ...(roadwork.length ? [{ id: "roadwork", label: "Roadwork" }] : []),
-    // navigator.onLine only means an interface is up: a captive portal or a dead upstream still
-    // reads as online. The feed's own verdict is the one that has actually tried to reach something.
-    ...(online && !offline ? [{ id: "live", label: "Live traffic" }] : []),
+    { id: "live", label: "Live traffic" },
   ]);
 
   const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon, approx: i.fields?.approx === "area" }] : []; });
@@ -228,7 +226,9 @@ export default function RoadsPage() {
               )
             )}
 
-            {show("live") && online && !offline && (showMap || only === "live" ? (
+            {show("live") && (!online || offline ? (
+              <p className="cs-card cs-body hm-flat">The live traffic map is Waze&rsquo;s, so it needs a signal. Everything above is saved on your phone.</p>
+            ) : showMap || only === "live" ? (
               <section className="cs-card">
                 <div className="cs-figure tr-top">
                   <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
