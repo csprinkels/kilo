@@ -8,9 +8,17 @@ export type Hourly = { t0: number; t: number[]; p: number[]; w: number[]; wd: nu
 /** Another model's hourly temperatures (°F) on the same t0/hour grid as the NWS arrays: the faint "alternate predictions" behind the curve. */
 export type AltModel = { m: string; t: number[] };
 export type TownWx = { id: string; name: string; obs?: Obs; fc: Period[]; fcAt?: number; hourly?: Hourly };
+/**
+ * NOAA tide predictions for the island's reference station. `h` is hourly height in feet above MLLW
+ * from `t0`, the same shape as Hourly; `hl` is the turns, which is what people actually ask for —
+ * nobody wants the height at 3pm, they want to know when it is high.
+ */
+export type Tide = { station: string; name: string; t0: number; h: number[]; hl: { t: number; v: number; hi: boolean }[] };
 export type Weather = {
   upd: number; island: Island;
   towns: TownWx[];
+  tide?: Tide;
+  tideAt?: number;  // when we last fetched: predictions are computed, not observed, so this is a slow gate
   surf?: { at: number; zones: Record<string, Record<string, [string, string]>>; uv?: string }; // zone -> shore -> [today, tomorrow] feet
   surfAt?: number;  // when we last fetched surf, not when the product was issued: the refresh gate reads this
   buoys: { id: string; name: string; at: number; hFt: number; perS: number; dir: number }[];

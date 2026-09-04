@@ -43,9 +43,12 @@ const METRICS: { id: Metric; label: string; unit: string }[] = [
 const series = (h: Hourly, m: Metric, n: number) =>
   (m === "t" ? h.t : m === "fl" ? h.t.map((t, i) => feelsLike(t, h.rh[i])) : m === "w" ? h.w : m === "p" ? h.p : h.rh).slice(0, n);
 
-// The picture is drawn in px on purpose: 1 hour = 14px (Acme's density: eight 3-hour marks across a phone), like a photo; only the words scale.
-// PAD: room on the left so the first figure is not cut by the screen edge.
-const COL = 14, PAD = 30, HEAD = 56, PLOT = 250, AXIS = 24, NOWROW = 20;
+// The picture is drawn in px on purpose: 1 hour = 14px (Acme's density: eight 3-hour marks across a phone),
+// like a photo; only the words scale. That is the FLOOR, not the width: on a screen wide enough to hold all
+// 36 hours the hours spread out to fill it, because a strip that stops two thirds of the way across a desktop
+// card reads as missing data rather than as a picture you scroll.
+// PAD: room at each end so the first and last figures are not cut by the edge.
+const COL = 14, PAD = 30, HEAD = 56, PLOT = 212, AXIS = 24, NOWROW = 20;
 
 /**
  * The next 36 hours as one scrolling strip: period names with the chance of rain, then the curve with a sky icon and
@@ -54,7 +57,23 @@ const COL = 14, PAD = 30, HEAD = 56, PLOT = 250, AXIS = 24, NOWROW = 20;
 export default function HourlyChart({ h }: { h: Hourly }) {
   const [metric, setMetric] = useState<Metric>("t");
   const n = h.t.length;
-  const W = PAD + n * COL, TOTAL = HEAD + PLOT + AXIS + NOWROW;
+
+  // One hour is COL px, or wider if the strip has room to spare. Measured rather than guessed at with a
+  // breakpoint: this card is a different width on a phone, a tablet, a split screen and a desktop.
+  const wrap = useRef<HTMLDivElement>(null);
+  const [col, setCol] = useState(COL);
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el || !("ResizeObserver" in window)) return;
+    const fit = () => setCol(Math.max(COL, (el.clientWidth - PAD * 2) / n));
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [n]);
+  const fits = col > COL;   // nothing to scroll, so the edge fade would just be a smudge
+
+  const W = PAD + n * col, TOTAL = HEAD + PLOT + AXIS + NOWROW;
   const unit = METRICS.find((m) => m.id === metric)!.unit;
   const main = series(h, metric, n);
   // Alternates hug the forecast: anything more than 3° off is clamped so the lines stay out of the icon stack.
@@ -62,9 +81,11 @@ export default function HourlyChart({ h }: { h: Hourly }) {
 
   const all = [...main, ...alts.flat()];
   const vMin = Math.min(...all), vMax = Math.max(...all), span = Math.max(metric === "t" || metric === "fl" ? 6 : 10, (vMax - vMin) * 1.2);
-  // The curve lives in the lower 55% of the plot; the icon + figure stack rides above it.
-  const y = (v: number) => HEAD + PLOT - 14 - ((v - vMin) / span) * (PLOT * 0.55);
-  const x = (i: number) => PAD + (i + 0.5) * COL;
+  // The curve lives in the lower 62% of the plot; the icon + figure stack rides above it. The plot is
+  // only as tall as those two need: the band left over above a flat day was dead space, and on a wide
+  // screen dead space is the first thing you see.
+  const y = (v: number) => HEAD + PLOT - 14 - ((v - vMin) / span) * (PLOT * 0.62);
+  const x = (i: number) => PAD + (i + 0.5) * col;
   const pts = (s: number[]) => s.map((v, i) => [x(i), y(v)] as const);
 
   const marks = main.map((_, i) => i).filter((i) => i % 3 === 0);
@@ -80,11 +101,11 @@ export default function HourlyChart({ h }: { h: Hourly }) {
   return (
     <>
       {/* The strip bleeds to the card's edges and is clipped by them, like a photo wider than the page. */}
-      <div className="wx-strip">
-        <div className="no-scrollbar wx-scroll">
+      <div className={`wx-strip${fits ? " wx-strip--fits" : ""}`}>
+        <div ref={wrap} className="no-scrollbar wx-scroll">
           <div className="wx-chart" style={{ width: W, height: TOTAL }}>
             <svg width={W} height={TOTAL} viewBox={`0 0 ${W} ${TOTAL}`} aria-hidden>
-              {blocks.slice(1).map((p) => <line key={p.from} x1={PAD + p.from * COL} y1={0} x2={PAD + p.from * COL} y2={HEAD + PLOT + AXIS} stroke="var(--hairline)" strokeWidth={1} />)}
+              {blocks.slice(1).map((p) => <line key={p.from} x1={PAD + p.from * col} y1={0} x2={PAD + p.from * col} y2={HEAD + PLOT + AXIS} stroke="var(--hairline)" strokeWidth={1} />)}
               {/* where we are right now */}
               <line x1={x(0)} y1={HEAD} x2={x(0)} y2={HEAD + PLOT} stroke="var(--brand)" strokeWidth={1.5} strokeDasharray="4 4" />
               {/* other models' guesses sit behind the forecast */}
@@ -95,7 +116,7 @@ export default function HourlyChart({ h }: { h: Hourly }) {
 
             {/* Period names with the chance of rain, centred over their hours */}
             {blocks.map((p) => (
-              <div key={p.from} className="wx-blk" style={{ left: PAD + (p.from + p.len / 2) * COL }}>
+              <div key={p.from} className="wx-blk" style={{ left: PAD + (p.from + p.len / 2) * col }}>
                 <b>{p.name}</b>
                 <span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1236,6 +1236,9 @@ body {
   background:linear-gradient(to right, transparent, var(--card));
 }
 .wx-strip::after{ width:28px; }
+/* When every hour already fits there is nothing to scroll to, so the fade would sit on real numbers. */
+.wx-strip--fits::after{ display:none; }
+.wx-strip--fits .wx-scroll{ overflow-x:hidden; }
 .wx-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 /*
  * A finger discovers a scrolling strip by pushing it. A mouse cannot: the scrollbar is hidden,
@@ -1927,3 +1930,12 @@ body {
 /* MapLibre's own chrome, brought into the app's type and colour. */
 .zm-frame .maplibregl-ctrl-attrib{ font-size:11px; }
 .zm-frame .maplibregl-ctrl-group{ border-radius:9px; }
+
+/* ── Tides: the hourly strip's language, one curve and its turns ── */
+.td-turn{
+  position:absolute; text-align:center; white-space:nowrap; line-height:1.25;
+  /* the same halo the hourly figures use, so a label never sits on the curve it belongs to */
+  filter:drop-shadow(0 0 3px var(--card)) drop-shadow(0 0 3px var(--card));
+}
+.td-turn b{ display:block; font-size:15px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+.td-turn span{ display:block; font-size:13px; color:var(--mute); font-variant-numeric:tabular-nums; }

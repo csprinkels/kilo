@@ -26,3 +26,15 @@ export const BUOYS: { id: string; name: string; island: Exclude<Island, "state">
 
 // Surf Zone Forecast (SRF) zone blocks per island, in the order HFO prints them.
 export const SRF_ZONES: Record<Exclude<Island, "state">, string[]> = { hawaii: ["Big Island Windward and Southeast", "Big Island Leeward"], maui: ["Maui"], oahu: ["Oahu"], kauai: ["Kauai"] };
+
+/**
+ * NOAA CO-OPS reference tide stations, one per island — the harbour each island's tide tables are
+ * published against. Tides differ by only minutes around one island, so a second station would be
+ * another fetch for a difference nobody can act on.
+ */
+export const TIDES: Record<Exclude<Island, "state">, { id: string; name: string }> = {
+  hawaii: { id: "1617760", name: "Hilo Bay" },
+  maui: { id: "1615680", name: "Kahului Harbor" },
+  oahu: { id: "1612340", name: "Honolulu Harbor" },
+  kauai: { id: "1611400", name: "Nāwiliwili Harbor" },
+};
