@@ -1,0 +1,181 @@
+{
+  "artboards": [
+    {
+      "file": "Today.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1380,
+      "title": "Today — as it ships",
+      "page": "page-1"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1380,
+      "title": "Proposed — hue per topic",
+      "page": "page-1"
+    },
+    {
+      "file": "System.dc.html",
+      "x": 1470,
+      "y": 0,
+      "w": 620,
+      "h": 1000,
+      "title": "The system",
+      "page": "page-1"
+    },
+    {
+      "file": "HeadsUp.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 430,
+      "h": 980,
+      "title": "Heads-up band — B was chosen",
+      "page": "page-2"
+    },
+    {
+      "file": "Feed.dc.html",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1860,
+      "title": "Feed — severity bands, map thumbs",
+      "page": "page-1"
+    },
+    {
+      "file": "Weather.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2400,
+      "title": "Weather",
+      "page": "page-3"
+    },
+    {
+      "file": "Roads.dc.html",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1900,
+      "title": "Roads",
+      "page": "page-3"
+    },
+    {
+      "file": "Storms.dc.html",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1950,
+      "title": "Storms",
+      "page": "page-3"
+    },
+    {
+      "file": "Quakes.dc.html",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1500,
+      "title": "Earthquakes",
+      "page": "page-3"
+    },
+    {
+      "file": "Volcano.dc.html",
+      "x": 0,
+      "y": 2600,
+      "w": 390,
+      "h": 1900,
+      "title": "Volcano",
+      "page": "page-3"
+    },
+    {
+      "file": "Tsunami.dc.html",
+      "x": 490,
+      "y": 2600,
+      "w": 390,
+      "h": 1600,
+      "title": "Tsunami",
+      "page": "page-3"
+    },
+    {
+      "file": "Reports.dc.html",
+      "x": 980,
+      "y": 2600,
+      "w": 390,
+      "h": 2500,
+      "title": "Reports",
+      "page": "page-3"
+    },
+    {
+      "file": "Settings.dc.html",
+      "x": 1470,
+      "y": 2600,
+      "w": 390,
+      "h": 2750,
+      "title": "Settings and about",
+      "page": "page-3"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "note-compare",
+      "x": 0,
+      "y": -150,
+      "w": 880,
+      "text": "Same content, same live feed, Hawaiʻi Island at 12:50 PM.\nLeft is exactly what ships now, on the brown ground.\nRight moves to a warm white with white cards. Hue appears only in the icon tile and the label — no card is filled except the one carrying emphasis.",
+      "page": "page-1"
+    },
+    {
+      "id": "note-decide",
+      "x": 980,
+      "y": -150,
+      "w": 620,
+      "text": "The one decision: this bends Kilo's rule that colour appears only in pictures and danger blocks, as far as a tile and a label.",
+      "page": "page-1"
+    },
+    {
+      "id": "note-headsup",
+      "x": 0,
+      "y": -150,
+      "w": 430,
+      "text": "Option B is now live on the Now page.\nA and C kept here for the record.",
+      "page": "page-2"
+    },
+    {
+      "id": "note-feed",
+      "x": 980,
+      "y": -150,
+      "w": 390,
+      "page": "page-1",
+      "text": "Heads-ups pinned in one amber block at the top.\nBelow: one stream of real items, newest first inside each severity band, with a map where the item has a location."
+    },
+    {
+      "id": "note-screens",
+      "x": 0,
+      "y": -160,
+      "w": 1470,
+      "page": "page-3",
+      "text": "Every remaining route in the agreed language: white cards, a hint of hue per topic, Amatic on the little headers only, at most one emphasised block per screen. Each drawn from its real page source."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-3"
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Now page"
+    },
+    {
+      "id": "page-2",
+      "name": "Explorations"
+    },
+    {
+      "id": "page-3",
+      "name": "Every screen"
+    }
+  ]
+}

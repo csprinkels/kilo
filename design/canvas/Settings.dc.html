@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap');
+    body { margin: 0; font-family: Nunito, system-ui, sans-serif; }
+    a { color: #445e72; } a:hover { color: #374c5c; }
+    .ic svg { width: 100%; height: 100%; fill: none; stroke: currentColor; }
+    /* Amatic carries the little headers only. It has no ā ī ū or ʻokina, so nothing that can
+       contain a Hawaiian place name is ever set in it — every island name, county name and
+       source name on this page is Nunito. */
+    .lab { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font-family: 'Amatic SC', cursive;
+           font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: .055em; text-transform: uppercase;
+           color: #6a5a4a; }
+    .tile { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            background: rgb(160 140 120 / .14); color: #6a5a4a; }
+    .tile .ic { width: 15px; height: 15px; display: block; }
+    .card { box-sizing: border-box; padding: 16px 18px; background: #ffffff;
+            border: 1px solid rgb(190 178 158 / .40); border-radius: 20px; box-shadow: 0 4px 24px rgb(80 60 40 / .10); }
+    .head { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .body { margin: 0; font-size: 15px; line-height: 1.5; color: #5a4a3a; }
+    .meta { margin: 0; font-size: 13px; line-height: 1.45; color: #6a5a4a; }
+    /* every control is a pill at least 44px tall */
+    .btn  { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 20px; border-radius: 9999px; background: #e6d8c2;
+            font-size: 15px; font-weight: 600; color: #4a3a2a; }
+    .btn--big { width: 100%; min-height: 56px; justify-content: flex-start; }
+    .btn--on  { background: #4a3a2a; color: #f4f1eb; }
+    .btn--go  { background: #557085; color: #fffaf2; }
+    /* the source list: a neutral pip, the name, what it covers */
+    .srow { display: flex; align-items: flex-start; gap: 11px; padding: 11px 0; }
+    .srow + .srow { border-top: 1px solid rgb(200 180 150 / .45); }
+    .pip  { width: 7px; height: 7px; flex: 0 0 auto; margin-top: 7px; border-radius: 9999px;
+            background: rgb(160 140 120 / .12); box-shadow: inset 0 0 0 1px rgb(200 180 150 / .55); }
+    .sname { display: block; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .swhat { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: #6a5a4a; }
+    /* the two links at the foot of the page, each its own 44px row */
+    .go { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+    .go + .go { border-top: 1px solid rgb(200 180 150 / .45); }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 2750px; background: #f4f1eb; box-sizing: border-box; padding: 0 20px 28px;">
+
+  <!-- 1 · top bar: the way back, and the island this whole app is about -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-top: 8px;">
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-left: -4px; padding: 0 4px; font-size: 13.5px; font-weight: 700; color: #445e72;">&#8249; Now</span>
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgb(200 180 150 / .55); font-size: 13.5px; font-weight: 700; color: #4a3a2a;">Hawai&#699;i Island</span>
+  </div>
+
+  <!-- 2 · freshness -->
+  <p style="margin: 6px 0 0; text-align: center; font-size: 13px; color: #6a5a4a;">Latest update: Sep 3, 12:50 PM</p>
+
+  <!-- 3 · the title, then one plain sentence -->
+  <h1 style="margin: 18px 0 0; font-size: 26px; font-weight: 800; line-height: 1.18; letter-spacing: -.01em; color: #4a3a2a;">Settings and about</h1>
+  <p class="body" style="margin: 8px 0 0;">Pick your island and text size, turn on warnings, and see where Kilo&#8217;s information comes from.</p>
+
+  <!-- 4 · the content -->
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px;">
+
+    <!-- YOUR ISLAND -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><circle cx="164" cy="52" r="20" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M8,200,81.1,75.94a8,8,0,0,1,13.8,0L168,200Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="50.35" y1="128" x2="125.65" y2="128" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M146.61,163.71l33.06-55.79a8,8,0,0,1,13.76,0L248,200H168" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Your island</p>
+      <p class="body">Everything in Kilo is about this island.</p>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
+        <span class="btn btn--big btn--on">Hawai&#699;i Island</span>
+        <span class="btn btn--big">Maui, Moloka&#699;i and L&#257;na&#699;i</span>
+        <span class="btn btn--big">O&#699;ahu</span>
+        <span class="btn btn--big">Kaua&#699;i and Ni&#699;ihau</span>
+      </div>
+    </div>
+
+    <!-- TEXT SIZE -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><polygon points="128 160 96 160 96 128 192 32 224 64 128 160" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="168" y1="56" x2="200" y2="88" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M216,128v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h80" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Text size</p>
+      <p class="body">Makes every word in Kilo bigger. Your phone&#8217;s own text setting still works too.</p>
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <span class="btn btn--on" style="flex: 1; padding: 0 8px;">Normal</span>
+        <span class="btn" style="flex: 1; padding: 0 8px;">Large</span>
+        <span class="btn" style="flex: 1; padding: 0 8px;">Largest</span>
+      </div>
+    </div>
+
+    <!-- WARNINGS ON THIS PHONE — the block shared with the Now page, on the card ground.
+         No tile here: the shared block brings its own heading, not an icon. -->
+    <div class="card">
+      <h2 class="head">Warnings on this phone</h2>
+      <p class="body" style="margin-top: 8px;">Get shelter openings, evacuations and warnings for Hawai&#699;i Island as notifications. The whole message is in the notification, so you can read it with no signal.</p>
+      <div style="display: flex; align-items: center; gap: 14px; margin-top: 14px;">
+        <span class="btn btn--go">Turn on</span>
+      </div>
+    </div>
+
+    <!-- YOUR COUNTY'S OWN ALERTS -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><line x1="128" y1="16" x2="128" y2="8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="40" x2="208" y2="32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56" y1="40" x2="48" y2="32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M48,168V128a80,80,0,0,1,80.61-80c44.11.33,79.39,36.89,79.39,81v39" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,80c22.7,3.81,40,24.22,40,48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><rect x="32" y="168" width="192" height="40" rx="8" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Your county&#8217;s own alerts</p>
+      <p class="body">Hawai&#699;i County: Text HAWAIIALERTS to 888777. These come straight from the county, even when Kilo is down.</p>
+      <div style="display: flex; align-items: center; gap: 14px; margin-top: 15px; flex-wrap: wrap;">
+        <span class="btn">Open the county&#8217;s alerts page <span class="ic" style="width: 15px; height: 15px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+      </div>
+    </div>
+
+    <!-- ADD KILO TO YOUR HOME SCREEN — the iPhone wording; the page reads the phone and shows one -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><path d="M104,216V152h48v64h64V120a8,8,0,0,0-2.34-5.66l-80-80a8,8,0,0,0-11.32,0l-80,80A8,8,0,0,0,40,120v96Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Add Kilo to your Home Screen</p>
+      <p class="body">Tap the Share button, then &#8220;Add to Home Screen&#8221;. It then opens full screen and works with no signal.</p>
+    </div>
+
+    <!-- WHERE THE INFORMATION COMES FROM — every source, one row each.
+         The pip is deliberately the neutral one: nothing on this phone knows whether a
+         feed answered, so no row may claim one did. -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><path d="M160,80V200.67a8,8,0,0,0,3.56,6.65l11,7.33a8,8,0,0,0,12.2-4.72L200,160" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,200a8,8,0,0,0,13.15,6.12C105.55,162.16,160,160,160,160h40a40,40,0,0,0,0-80H160S105.55,77.84,53.15,33.89A8,8,0,0,0,40,40Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Where the information comes from</p>
+      <p class="body">Every item says who reported it. Nothing is written by a computer.</p>
+      <div style="margin-top: 10px;">
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">National Weather Service</span><span class="swhat">weather, surf, warnings</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Hawai&#699;i County Civil Defense</span><span class="swhat">shelters, road closures, schools</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">State highways department</span><span class="swhat">roadwork</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Hawai&#699;i County Department of Water Supply</span><span class="swhat">boil-water notices and water outages</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">USGS</span><span class="swhat">earthquakes</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">USGS Hawaiian Volcano Observatory</span><span class="swhat">K&#299;lauea and Mauna Loa</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Pacific Tsunami Warning Center</span><span class="swhat">tsunami</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Central Pacific Hurricane Center</span><span class="swhat">storms</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Hawai&#699;i Department of Health and AirNow</span><span class="swhat">air and vog</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Honolulu 911 dispatch</span><span class="swhat">crashes on O&#699;ahu</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Hawai&#699;i Statewide GIS Program and USGS</span><span class="swhat">map roads, coastlines, and elevation</span></div></div>
+        <div class="srow"><span class="pip"></span><div style="flex: 1; min-width: 0;"><span class="sname">Neighbors</span><span class="swhat">their own reports, on the Reports page</span></div></div>
+      </div>
+      <div style="height: 1px; margin: 13px 0 10px; background: rgb(200 180 150 / .55);"></div>
+      <p class="meta">Surf heights are the local Hawaiian scale; the face of the wave looks about twice as big.</p>
+    </div>
+
+    <!-- WHAT KILO IS NOT — the one card that takes the brick tile. Not a topic hue, and not an
+         emphasis block either: this screen has nothing urgent on it. -->
+    <div class="card">
+      <p class="lab" style="color: #9a3d2c;"><span class="tile" style="background: rgb(154 61 44 / .12); color: #9a3d2c;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="144" x2="128" y2="104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>What Kilo is not</p>
+      <p class="body">Not an emergency service. Not part of any government. <span style="font-weight: 600; color: #9a3d2c;">In an emergency call 911.</span> When Civil Defense says something different, do what Civil Defense says.</p>
+    </div>
+
+    <!-- WHAT KILO WILL NEVER DO -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><polyline points="88 136 112 160 168 104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>What Kilo will never do</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px;"><span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><line x1="200" y1="56" x2="56" y2="200" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="200" x2="56" y2="56" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><span class="body">Show ads.</span></div>
+        <div style="display: flex; align-items: flex-start; gap: 12px;"><span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><line x1="200" y1="56" x2="56" y2="200" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="200" x2="56" y2="56" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><span class="body">Make you create an account.</span></div>
+        <div style="display: flex; align-items: flex-start; gap: 12px;"><span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><line x1="200" y1="56" x2="56" y2="200" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="200" x2="56" y2="56" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><span class="body">Sell or share where you are.</span></div>
+        <div style="display: flex; align-items: flex-start; gap: 12px;"><span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><line x1="200" y1="56" x2="56" y2="200" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="200" x2="56" y2="56" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><span class="body">Let a computer write an alert.</span></div>
+        <div style="display: flex; align-items: flex-start; gap: 12px;"><span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><line x1="200" y1="56" x2="56" y2="200" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="200" x2="56" y2="56" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><span class="body">Make a neighbor&#8217;s post look official.</span></div>
+      </div>
+    </div>
+
+    <!-- the two pages that are their own reading: a card of rows, no hue, no tile -->
+    <div class="card" style="padding: 6px 18px;">
+      <div class="go">
+        <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #4a3a2a;">Neighbor rules</span>
+        <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+      <div class="go">
+        <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #4a3a2a;">Privacy</span>
+        <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 5 · the footer line. This page has no agency behind it, so it signs itself. -->
+  <p class="meta" style="margin: 26px 0 0;">Made in Hilo. Free, no ads, no account.</p>
+
+  <!-- 6 · the settings row every page carries, this one included -->
+  <div style="display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgb(190 178 158 / .40);">
+    <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M41.43,178.09A99.14,99.14,0,0,1,31.36,153.8l16.78-21a81.59,81.59,0,0,1,0-9.64l-16.77-21a99.43,99.43,0,0,1,10.05-24.3l26.71-3a81,81,0,0,1,6.81-6.81l3-26.7A99.14,99.14,0,0,1,102.2,31.36l21,16.78a81.59,81.59,0,0,1,9.64,0l21-16.77a99.43,99.43,0,0,1,24.3,10.05l3,26.71a81,81,0,0,1,6.81,6.81l26.7,3a99.14,99.14,0,0,1,10.07,24.29l-16.78,21a81.59,81.59,0,0,1,0,9.64l16.77,21a99.43,99.43,0,0,1-10,24.3l-26.71,3a81,81,0,0,1-6.81,6.81l-3,26.7a99.14,99.14,0,0,1-24.29,10.07l-21-16.78a81.59,81.59,0,0,1-9.64,0l-21,16.77a99.43,99.43,0,0,1-24.3-10l-3-26.71a81,81,0,0,1-6.81-6.81Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: #6a5a4a;">Settings and about</span>
+    <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

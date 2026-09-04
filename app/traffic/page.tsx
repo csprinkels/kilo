@@ -143,7 +143,7 @@ export default function RoadsPage() {
         {loaded && (
           <>
             {/* The island map is the card's picture; its key rides under it, each word wearing its own swatch. */}
-            <section className="cs-card">
+            <section className="cs-card t-roads">
               <div className="cs-figure tr-top">
                 <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
               </div>
@@ -168,7 +168,7 @@ export default function RoadsPage() {
             )}
             {youMsg && <p className="cs-body">{youMsg}</p>}
 
-            <section className="cs-card">
+            <section className="cs-card t-roads">
               <p className="cs-label"><Icon name="traffic-cone-fill" size={18} aria-hidden /> Closed or blocked</p>
               {official.length ? (
                 <>
@@ -189,7 +189,7 @@ export default function RoadsPage() {
             </section>
 
             {island === "hawaii" && (
-              <section className="cs-card">
+              <section className="cs-card t-reports">
                 <p className="cs-label"><Icon name="users-three-fill" size={18} aria-hidden /> What neighbors say</p>
                 {neighbors.length ? <ul className="tr-list">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="cs-body">Nothing from neighbors today.</p>}
               </section>
@@ -197,7 +197,7 @@ export default function RoadsPage() {
 
             {roadwork.length > 0 && (
               showWork ? (
-                <section className="cs-card">
+                <section className="cs-card t-roads">
                   <p className="cs-label"><Icon name="traffic-cone-fill" size={18} aria-hidden /> Roadwork</p>
                   <p className="cs-body tr-top">Planned work. Expect a wait, not a closed road.</p>
                   <ul className="tr-list">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
@@ -218,7 +218,7 @@ export default function RoadsPage() {
             )}
 
             {island === "hawaii" && (
-              <Link href="/report/?type=road_blocked" className="cs-card tr-tell">
+              <Link href="/report/?type=road_blocked" className="cs-card t-reports tr-tell">
                 <span className="cs-ictile"><Icon name="note-pencil" size={21} /></span>
                 <span className="cs-title">Saw something on the road? Tell your neighbors</span>
                 <Icon name="caret-right" size={18} className="tr-caret" aria-hidden />

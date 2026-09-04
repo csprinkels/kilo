@@ -88,11 +88,11 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
             {!snap?.data ? (
               offline
                 ? <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
-                : <p className="cs-card rp-quiet mt-s3">Loading what neighbors reported…</p>
+                : <p className="cs-card t-reports rp-quiet mt-s3">Loading what neighbors reported…</p>
             ) : posts.length === 0 ? (
-              <section className="cs-card cs-hero mt-s3"><p className="cs-display cs-display--hero">Nothing reported today.</p></section>
+              <section className="cs-card cs-hero t-reports mt-s3"><p className="cs-display cs-display--hero">Nothing reported today.</p></section>
             ) : (
-              <section className="cs-card mt-s3"><ul className="rp-feed">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul></section>
+              <section className="cs-card t-reports mt-s3"><ul className="rp-feed">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul></section>
             )}
             <RulesChip>Rules for reports</RulesChip>
           </>

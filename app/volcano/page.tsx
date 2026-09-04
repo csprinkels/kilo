@@ -98,7 +98,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
       )}
       {d && (
         <div className="vo-stack mt-s6">
-          <section className="cs-card">
+          <section className="cs-card t-volcano">
             <p className="cs-label"><Icon name="wind" size={15} />Vog</p>
             <h2 className="cs-title">{airHead}</h2>
             {airRest && <p className="cs-body">{airRest}</p>}
@@ -131,7 +131,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
           </section>
 
           {k && (
-            <section className="cs-card">
+            <section className="cs-card t-volcano">
               <p className="cs-label"><Icon name="mountains" size={15} />From the observatory</p>
               <h2 className="cs-title">{proseHead}</h2>
               {proseRest && <p className="cs-body">{proseRest}</p>}
@@ -142,7 +142,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
           )}
 
           {d.cams.length > 0 && (
-            <section className="cs-card">
+            <section className="cs-card t-volcano">
               <p className="cs-label"><Icon name="camera" size={15} />Crater camera</p>
               <h2 className="cs-title">{camHead}</h2>
               {camRest && <p className="cs-body">{camRest}</p>}

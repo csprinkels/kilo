@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap');
+    body { margin: 0; font-family: Nunito, system-ui, sans-serif; }
+    a { color: #445e72; } a:hover { color: #374c5c; }
+    .ic svg { width: 100%; height: 100%; fill: none; stroke: currentColor; }
+    /* Amatic carries the little headers only. It has no ā ī ū or ʻokina, so nothing that can
+       contain a Hawaiian place name is ever set in it — not a town, not a shore, not a headline. */
+    .lab { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font-family: 'Amatic SC', cursive;
+           font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: .055em; text-transform: uppercase; }
+    .tile { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .tile .ic { width: 15px; height: 15px; display: block; }
+    .card { box-sizing: border-box; padding: 16px 18px; background: #ffffff;
+            border: 1px solid rgb(190 178 158 / .40); border-radius: 20px; box-shadow: 0 4px 24px rgb(80 60 40 / .10); }
+    .body { margin: 0; font-size: 15px; line-height: 1.5; color: #5a4a3a; }
+    .meta { margin: 0; font-size: 13px; line-height: 1.45; color: #6a5a4a; }
+    /* the hourly strip: HTML for every word and icon, one SVG for the lines and the dots */
+    .blk  { position: absolute; top: 2px; transform: translateX(-50%); text-align: center; white-space: nowrap; line-height: 1.15; }
+    .blk b    { display: block; font-size: 15px; font-weight: 700; color: #4a3a2a; }
+    .blk span { display: flex; align-items: center; justify-content: center; gap: 3px; margin-top: 3px; font-size: 13.5px; color: #445e72; }
+    .stack { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px;
+             transform: translateX(-50%); white-space: nowrap; }
+    .stack b { font-size: 14px; font-weight: 700; color: #4a3a2a; }
+    .clk  { position: absolute; transform: translateX(-50%); white-space: nowrap; font-size: 12.5px; line-height: 1; color: #6a5a4a; }
+    /* one day of the week: the numbers are the content, the bar is a picture of them */
+    .day  { padding: 10px 0; }
+    .day + .day { border-top: 1px solid rgb(190 178 158 / .40); }
+    .dtop { display: flex; align-items: center; gap: 12px; }
+    .dname{ min-width: 0; flex: 1; font-size: 15px; font-weight: 700; color: #4a3a2a; }
+    .dpop { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 700; color: #445e72; }
+    .dbar { display: flex; align-items: center; gap: 12px; margin-top: 5px; padding-left: 40px; }
+    .dt   { width: 3ch; font-size: 13px; color: #6a5a4a; }
+    .dt--hi { font-weight: 700; color: #4a3a2a; }
+    .bar  { position: relative; flex: 1; height: 6px; border-radius: 999px; background: #efe9df; }
+    .bar i{ position: absolute; top: 0; bottom: 0; min-width: 6px; border-radius: 999px; background: #445e72; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 2400px; background: #f4f1eb; box-sizing: border-box; padding: 0 20px 28px;">
+
+  <!-- ── PageShell: back link · island chip · freshness · title · sentence ── -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding-top: 8px;">
+    <span style="display: inline-flex; align-items: center; gap: 2px; min-height: 44px; font-size: 13.5px; font-weight: 700; color: #445e72;">
+      <span class="ic" style="width: 15px; height: 15px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="160 208 80 128 160 48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      Now
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgb(200 180 150 / .55); font-size: 13.5px; font-weight: 700; color: #4a3a2a;">Hawai&#699;i Island</span>
+  </div>
+  <p style="margin: 6px 0 0; text-align: center; font-size: 13px; color: #6a5a4a;">Latest update: Sep 3, 12:50 PM</p>
+
+  <!-- The town picker is the first line of the h1: a native wheel hides behind the words. -->
+  <div style="margin-top: 14px;">
+    <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 44px; font-size: 22px; font-weight: 700; line-height: 1; color: #445e72;">
+      <span class="ic" style="width: 17px; height: 17px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><path d="M152,152,234.35,129a8,8,0,0,0,.27-15.21l-176-65.28A8,8,0,0,0,48.46,58.63l65.28,176a8,8,0,0,0,15.21-.27Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      Hilo
+      <span class="ic" style="width: 17px; height: 17px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="208 96 128 176 48 96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    </span>
+    <h1 style="margin: 2px 0 0; font-size: 26px; font-weight: 800; line-height: 1.18; letter-spacing: -.01em; color: #4a3a2a;">Right Now</h1>
+    <p class="body" style="margin: 8px 0 0;">The sky over your town, the rain on the way, and the water.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+
+    <!-- ── 1 · RIGHT NOW: the picture first, the reading beside it ── -->
+    <div class="card" style="padding: 18px;">
+      <div style="display: flex; align-items: flex-start; gap: 10px;">
+        <span class="ic" style="width: 104px; height: 104px; flex: 0 0 auto; margin: -8px 0 -10px -8px; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+        <div style="flex: 1; min-width: 0; padding-top: 6px;">
+          <p style="margin: 0; font-size: 44px; font-weight: 400; line-height: 1; letter-spacing: -.02em; color: #4a3a2a;">77&#176;</p>
+          <p style="margin: 6px 0 0; font-size: 21px; line-height: 1.15; color: #5a4a3a;">Overcast</p>
+          <p style="margin: 3px 0 0; font-size: 17px; line-height: 1.2; color: #6a5a4a;">High 80&#176; Low 71&#176;</p>
+          <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-bottom: -10px; font-size: 17px; color: #4a3a2a;">
+            More
+            <span class="ic" style="width: 15px; height: 15px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="208 96 128 176 48 96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2 · what is in effect, worst first. Tapping one drops you at "Heads up". ── -->
+    <div class="card" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 14px;">
+      <span class="tile" style="width: 30px; height: 30px; border-radius: 10px; background: #f3e2c2; color: #7d5c2e;"><span class="ic" style="width: 17px; height: 17px; display: block;"><svg viewBox="0 0 256 256"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="144" x2="128" y2="104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+      <p style="flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; color: #4a3a2a;">Heads up: Strong wind until tomorrow 6 AM.</p>
+      <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 14px;">
+      <span class="tile" style="width: 30px; height: 30px; border-radius: 10px; background: #f3e2c2; color: #7d5c2e;"><span class="ic" style="width: 17px; height: 17px; display: block;"><svg viewBox="0 0 256 256"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="144" x2="128" y2="104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+      <p style="flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; color: #4a3a2a;">Heads up: Big waves until tomorrow 6 AM.</p>
+      <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    </div>
+
+    <!-- ── 3 · the rain map. It opens by itself when something is in effect. ── -->
+    <div class="card">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,192c20-3.37,36.61-20,40-40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Rain radar</p>
+      <div style="height: 200px; border-radius: 16px; overflow: hidden; border: 1px solid rgb(190 178 158 / .40); background: #dfeaf0;">
+        <svg viewBox="-40 -5 180 110" preserveAspectRatio="xMidYMid meet" style="display: block; width: 100%; height: 100%;">
+          <rect x="-40" y="-5" width="180" height="110" fill="#dfeaf0"/>
+          <path d="M80.0,36.3L79.7,34.4L79.9,30.6L78.8,29.1L72.0,22.8L63.7,17.7L49.9,11.7L42.5,9.7L39.5,9.6L31.6,5.2L30.7,4.1L27.9,2.2L24.0,0.8L19.7,0.0L17.0,0.5L14.8,1.4L13.1,3.4L11.9,5.9L11.9,10.5L13.8,16.3L17.3,20.8L13.3,24.7L11.6,28.3L7.9,29.6L4.8,32.8L2.9,33.7L1.8,34.8L1.0,36.0L0.0,40.8L2.3,45.3L3.0,47.8L5.9,49.5L6.6,50.4L7.9,56.4L8.9,58.7L10.4,60.1L11.5,64.1L13.0,67.1L12.8,70.3L12.0,72.9L10.7,83.0L12.2,87.0L14.2,90.2L18.0,92.4L21.4,93.0L24.8,95.3L27.9,96.4L29.1,98.8L30.4,99.7L32.5,100.0L34.6,99.6L37.0,98.3L41.3,94.6L42.8,91.5L44.3,90.0L45.9,85.8L48.0,84.2L51.5,82.9L53.5,80.8L58.4,79.0L62.6,75.7L69.3,76.2L74.4,74.7L76.4,73.6L76.1,73.6L76.4,73.3L82.2,71.4L86.6,69.2L90.4,66.0L96.2,62.2L98.7,59.3L100.0,56.4L99.9,53.9L98.5,52.3L95.3,50.0L90.5,47.8L88.8,45.3L87.4,44.4L87.7,43.2L87.2,41.6L84.9,37.9L82.6,36.5L80.0,36.3Z" fill="#f0e9dc" stroke="rgb(148 120 86 / .8)" stroke-width="1.5"/>
+          <ellipse cx="79" cy="43" rx="11" ry="8" fill="#a8cbe2" opacity=".55"/>
+          <ellipse cx="90" cy="53" rx="15" ry="11" fill="#6fa8cd" opacity=".55"/>
+          <ellipse cx="96" cy="69" rx="11" ry="8" fill="#3d7fb0" opacity=".45"/>
+          <ellipse cx="118" cy="61" rx="13" ry="9" fill="#6fa8cd" opacity=".4"/>
+          <ellipse cx="63" cy="30" rx="8" ry="6" fill="#a8cbe2" opacity=".45"/>
+          <circle cx="72" cy="62" r="2.6" fill="#445e72" stroke="#ffffff" stroke-width="1.1"/>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 12.5px; color: #6a5a4a;">
+        <span>Two hours back</span>
+        <b style="font-size: 13.5px; color: #4a3a2a;">Now</b>
+        <span>Next half hour</span>
+      </div>
+      <div style="position: relative; height: 22px; margin-top: 4px;">
+        <span style="position: absolute; left: 0; right: 0; top: 8px; height: 6px; border-radius: 999px; background: #efe9df;"></span>
+        <span style="position: absolute; left: 0; width: 78%; top: 8px; height: 6px; border-radius: 999px; background: #445e72;"></span>
+        <span style="position: absolute; left: 78%; top: 0; width: 22px; height: 22px; margin-left: -11px; border-radius: 999px; background: #ffffff; border: 1px solid rgb(190 178 158 / .55); box-shadow: 0 2px 6px rgb(80 60 40 / .18);"></span>
+      </div>
+    </div>
+
+    <!-- ── 4 · NEXT 24 HOURS: one sentence, then the strip. 1 hour = 14px, so it runs off the edge. ── -->
+    <div class="card" style="overflow: hidden;">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Next 24 hours</p>
+      <p class="body">Overcast, showers by late afternoon. Down to 71&#176; around 4 AM, then up to 79&#176; by 10 AM. Sunrise at 6:02 AM, sets at 6:35 PM.</p>
+
+      <div style="position: relative; height: 214px; margin: 14px -18px 0; overflow: hidden;">
+        <svg width="350" height="214" viewBox="0 0 350 214" style="position: absolute; inset: 0;">
+          <line x1="114" y1="0" x2="114" y2="178" stroke="rgb(190 178 158 / .55)" stroke-width="1"/>
+          <line x1="202" y1="0" x2="202" y2="178" stroke="rgb(190 178 158 / .55)" stroke-width="1"/>
+          <line x1="290" y1="0" x2="290" y2="178" stroke="rgb(190 178 158 / .55)" stroke-width="1"/>
+          <line x1="30" y1="56" x2="30" y2="178" stroke="#445e72" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <path d="M30,118.5 C37.3,117.8 59.3,112.5 74,114 C88.7,115.5 103.3,123.8 118,127.5 C132.7,131.3 147.3,134.3 162,136.5 C176.7,138.8 191.3,139.5 206,141 C220.7,142.5 235.3,146.3 250,145.5 C264.7,144.8 279.3,142.5 294,136.5 C308.7,130.5 330.7,114 338,109.5" fill="none" stroke="#4a3a2a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="30"  cy="118.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="74"  cy="114"   r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="118" cy="127.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="162" cy="136.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="206" cy="141"   r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="250" cy="145.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="294" cy="136.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="338" cy="109.5" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2.5"/>
+        </svg>
+
+        <div class="blk" style="left: 70px;"><b>Afternoon</b><span><span class="ic" style="width: 14px; height: 14px; display: block; color: #445e72;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>60%</span></div>
+        <div class="blk" style="left: 158px;"><b>Evening</b><span><span class="ic" style="width: 14px; height: 14px; display: block; color: #445e72;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>40%</span></div>
+        <div class="blk" style="left: 246px;"><b>Overnight</b><span><span class="ic" style="width: 14px; height: 14px; display: block; color: #445e72;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>20%</span></div>
+        <div class="blk" style="left: 326px;"><b>Morning</b><span><span class="ic" style="width: 14px; height: 14px; display: block; color: #445e72;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>30%</span></div>
+
+        <div class="stack" style="left: 30px;  bottom: 105px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>77&#176;</b></div>
+        <div class="stack" style="left: 74px;  bottom: 110px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,192c20-3.37,36.61-20,40-40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>78&#176;</b></div>
+        <div class="stack" style="left: 118px; bottom: 96px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,192c20-3.37,36.61-20,40-40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>75&#176;</b></div>
+        <div class="stack" style="left: 162px; bottom: 87px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>73&#176;</b></div>
+        <div class="stack" style="left: 206px; bottom: 83px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>72&#176;</b></div>
+        <div class="stack" style="left: 250px; bottom: 78px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>71&#176;</b></div>
+        <div class="stack" style="left: 294px; bottom: 87px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>73&#176;</b></div>
+        <div class="stack" style="left: 338px; bottom: 114px;"><span class="ic" style="width: 26px; height: 26px; display: block; color: #1d547c;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span><b>79&#176;</b></div>
+
+        <span class="clk" style="left: 30px;  top: 182px;">1 PM</span>
+        <span class="clk" style="left: 74px;  top: 182px;">4 PM</span>
+        <span class="clk" style="left: 118px; top: 182px;">7 PM</span>
+        <span class="clk" style="left: 162px; top: 182px;">10 PM</span>
+        <span class="clk" style="left: 206px; top: 182px;">1 AM</span>
+        <span class="clk" style="left: 250px; top: 182px;">4 AM</span>
+        <span class="clk" style="left: 294px; top: 182px;">7 AM</span>
+        <span class="clk" style="left: 338px; top: 182px;">10 AM</span>
+        <span style="position: absolute; left: 30px; top: 196px; transform: translateX(-50%); font-size: 13px; font-weight: 700; line-height: 1; color: #445e72;">Now</span>
+
+        <span style="position: absolute; top: 0; right: 0; bottom: 0; width: 18px; background: linear-gradient(to right, rgb(255 255 255 / 0), #ffffff);"></span>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; padding: 9px 12px; border-radius: 14px; background: #faf8f4; font-size: 13px; font-weight: 700; color: #6a5a4a;">
+        <svg width="28" height="14" viewBox="0 0 28 14" style="display: block;"><line x1="2" y1="7" x2="26" y2="7" stroke="#4a3a2a" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="7" r="5" fill="#4a3a2a" stroke="#ffffff" stroke-width="2"/></svg>
+        Forecast
+      </div>
+
+      <!-- which figure the curve shows; the row runs off the edge like the strip -->
+      <div style="position: relative; margin: 8px -18px 0; overflow: hidden;">
+        <div style="display: flex; gap: 2px; padding: 0 18px;">
+          <span style="flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; font-size: 17px; font-weight: 700; white-space: nowrap; color: #445e72;">Temperature</span>
+          <span style="flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; font-size: 17px; white-space: nowrap; color: #445e72;">Feels like</span>
+          <span style="flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; font-size: 17px; white-space: nowrap; color: #445e72;">Wind</span>
+          <span style="flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; font-size: 17px; white-space: nowrap; color: #445e72;">Rain</span>
+          <span style="flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; font-size: 17px; white-space: nowrap; color: #445e72;">Humidity</span>
+        </div>
+        <span style="position: absolute; top: 0; right: 0; bottom: 0; width: 28px; background: linear-gradient(to right, rgb(255 255 255 / 0), #ffffff);"></span>
+      </div>
+    </div>
+
+    <!-- ── 5 · the week. The heading says the number of days the forecast holds, never more. ── -->
+    <div class="card">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Next 6 days</p>
+      <p class="body">Warmest Friday, 84&#176;. Some showers Saturday.</p>
+
+      <div style="margin-top: 8px;">
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,192c20-3.37,36.61-20,40-40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Today</span>
+            <span class="dpop"><span class="ic" style="width: 14px; height: 14px; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>60%</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">71&#176;</span><span class="bar"><i style="left: 7%; right: 29%;"></i></span><span class="dt dt--hi">80&#176;</span></div>
+        </div>
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Thursday</span>
+            <span class="dpop"><span class="ic" style="width: 14px; height: 14px; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>20%</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">70&#176;</span><span class="bar"><i style="left: 0%; right: 14%;"></i></span><span class="dt dt--hi">82&#176;</span></div>
+        </div>
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Friday</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">71&#176;</span><span class="bar"><i style="left: 7%; right: 0%;"></i></span><span class="dt dt--hi">84&#176;</span></div>
+        </div>
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M136,192c20-3.37,36.61-20,40-40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Saturday</span>
+            <span class="dpop"><span class="ic" style="width: 14px; height: 14px; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>50%</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">72&#176;</span><span class="bar"><i style="left: 14%; right: 7%;"></i></span><span class="dt dt--hi">83&#176;</span></div>
+        </div>
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Sunday</span>
+            <span class="dpop"><span class="ic" style="width: 14px; height: 14px; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>30%</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">71&#176;</span><span class="bar"><i style="left: 7%; right: 21%;"></i></span><span class="dt dt--hi">81&#176;</span></div>
+        </div>
+        <div class="day">
+          <div class="dtop">
+            <span class="ic" style="width: 28px; height: 28px; flex: 0 0 auto; color: #1d547c; display: block;"><svg viewBox="0 0 256 256"><line x1="87.66" y1="56.73" x2="83.5" y2="33.09" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="56.69" y1="76.46" x2="37.03" y2="62.69" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="48.73" y1="112.31" x2="25.09" y2="116.48" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="123.52" y1="64.69" x2="137.28" y2="45.03" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,144a68.06,68.06,0,1,1,68,72H84a44,44,0,1,1,14.2-85.66" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M59.65,135.35a48,48,0,1,1,80.19-50.94" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+            <span class="dname">Monday</span>
+            <span class="dpop"><span class="ic" style="width: 14px; height: 14px; display: block;"><svg viewBox="0 0 256 256"><path d="M208,144c0-72-80-128-80-128S48,72,48,144a80,80,0,0,0,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>20%</span>
+          </div>
+          <div class="dbar"><span class="dt" style="text-align: right;">70&#176;</span><span class="bar"><i style="left: 0%; right: 29%;"></i></span><span class="dt dt--hi">80&#176;</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 6 · SURF: one sentence, by side of the island ── -->
+    <div class="card">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M40,185.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Surf</p>
+      <p class="body">Waves 8 to 12 feet on the Hilo side, 3 to 5 on the Kona side. About the same tomorrow.</p>
+    </div>
+
+    <!-- ── 7 · AIR. On Hawaiʻi Island the air card is the vog card, and it hands off to the volcano page. ── -->
+    <div class="card">
+      <p class="lab" style="color: #1d547c;"><span class="tile" style="background: #c8dfef; color: #1d547c;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Air</p>
+      <p class="body">Vog is bad for people with asthma in Hilo today. Stay inside if it bothers you.</p>
+      <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 44px; margin-bottom: -10px; font-size: 13.5px; font-weight: 700; color: #445e72;">
+        Vog details
+        <span class="ic" style="width: 15px; height: 15px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </span>
+    </div>
+
+    <!-- ── 8 · HEADS UP: where the two pills at the top land. Both rows come from the same
+             agency, so the page says who once, in the footer, and the rows only carry the time. ── -->
+    <div class="card">
+      <p class="lab" style="color: #7d5c2e;"><span class="tile" style="background: #f3e2c2; color: #7d5c2e;"><span class="ic"><svg viewBox="0 0 256 256"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="144" x2="128" y2="104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Heads up</p>
+      <p class="body">Nothing dangerous, but good to know.</p>
+
+      <div style="display: flex; align-items: flex-start; gap: 11px; min-height: 44px; margin-top: 10px; padding-top: 12px; border-top: 1px solid rgb(190 178 158 / .40);">
+        <span class="tile" style="width: 34px; height: 34px; border-radius: 11px; background: #f3e2c2; color: #7d5c2e;"><span class="ic" style="width: 19px; height: 19px; display: block;"><svg viewBox="0 0 256 256"><path d="M128,192c3.39,9.15,13.67,16,24,16a24,24,0,0,0,0-48H40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M96,64c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H24" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M184,96c3.39-9.15,13.67-16,24-16a24,24,0,0,1,0,48H32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <span style="display: block; font-size: 13px; font-weight: 700; color: #7d5c2e;">Heads up</span>
+          <span style="display: block; margin-top: 1px; font-size: 15px; font-weight: 600; line-height: 1.35; color: #4a3a2a;">Strong wind on Hawai&#699;i Island until tomorrow 6 AM.</span>
+          <span style="display: block; margin-top: 2px; font-size: 15px; line-height: 1.35; color: #5a4a3a;">Tie down anything loose. Drive carefully in tall vehicles.</span>
+          <span style="display: block; margin-top: 5px; font-size: 13px; color: #6a5a4a;">11:20 AM</span>
+        </span>
+        <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; margin-top: 8px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="208 96 128 176 48 96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 11px; min-height: 44px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgb(190 178 158 / .40);">
+        <span class="tile" style="width: 34px; height: 34px; border-radius: 11px; background: #f3e2c2; color: #7d5c2e;"><span class="ic" style="width: 19px; height: 19px; display: block;"><svg viewBox="0 0 256 256"><path d="M40,185.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,129.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M40,73.61c72-59.69,104,56.47,176-3.22" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>
+        <span style="flex: 1; min-width: 0;">
+          <span style="display: block; font-size: 13px; font-weight: 700; color: #7d5c2e;">Heads up</span>
+          <span style="display: block; margin-top: 1px; font-size: 15px; font-weight: 600; line-height: 1.35; color: #4a3a2a;">Big waves on east and southeast shores until tomorrow 6 AM.</span>
+          <span style="display: block; margin-top: 2px; font-size: 15px; line-height: 1.35; color: #5a4a3a;">Stay off the rocks and out of the water there.</span>
+          <span style="display: block; margin-top: 5px; font-size: 13px; color: #6a5a4a;">10:45 AM</span>
+        </span>
+        <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; margin-top: 8px; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="208 96 128 176 48 96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="meta" style="margin: 24px 0 0;">From the National Weather Service. Checked 12:50 PM.</p>
+
+  <div style="display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgb(190 178 158 / .40); font-size: 13.5px; font-weight: 700; color: #6a5a4a;">
+    <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M41.43,178.09A99.14,99.14,0,0,1,31.36,153.8l16.78-21a81.59,81.59,0,0,1,0-9.64l-16.77-21a99.43,99.43,0,0,1,10.05-24.3l26.71-3a81,81,0,0,1,6.81-6.81l3-26.7A99.14,99.14,0,0,1,102.2,31.36l21,16.78a81.59,81.59,0,0,1,9.64,0l21-16.77a99.43,99.43,0,0,1,24.3,10.05l3,26.71a81,81,0,0,1,6.81,6.81l26.7,3a99.14,99.14,0,0,1,10.07,24.29l-16.78,21a81.59,81.59,0,0,1,0,9.64l16.77,21a99.43,99.43,0,0,1-10,24.3l-26.71,3a81,81,0,0,1-6.81,6.81l-3,26.7a99.14,99.14,0,0,1-24.29,10.07l-21-16.78a81.59,81.59,0,0,1-9.64,0l-21,16.77a99.43,99.43,0,0,1-24.3-10l-3-26.71a81,81,0,0,1-6.81-6.81Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    <span style="flex: 1;">Settings and about</span>
+    <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

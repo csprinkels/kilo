@@ -96,7 +96,7 @@ export default function WeatherPage() {
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
             : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>)}
           {storm && (
-            <section className="cs-card mt-s3">
+            <section className="cs-card t-storms mt-s3">
               <div className="cs-heroline">
                 <span className="cs-ictile"><Icon name="wind-fill" size={21} /></span>
                 <p className="cs-title">{storm.text}</p>
@@ -107,14 +107,14 @@ export default function WeatherPage() {
             </section>
           )}
 
-          <section className="cs-card mt-s3">
+          <section className="cs-card t-weather mt-s3">
             <h2 className="cs-display cs-display--hero">Next 24 Hours</h2>
             <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
             <HourlyChart h={h} />
           </section>
 
           {town.fc.length > 0 && (
-            <section className="cs-card mt-s3">
+            <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">{daysTitle(town.fc)}</h2>
               <p className="cs-body max-w-[36rem]">{weekSentence(town.fc)}</p>
               <DailyRows fc={town.fc} />
@@ -122,14 +122,14 @@ export default function WeatherPage() {
           )}
 
           {d.surf && Object.keys(d.surf.zones).length > 0 && (
-            <section className="cs-card mt-s3">
+            <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">Surf</h2>
               <p className="cs-body max-w-[36rem]">{surfSentence(d.surf.zones, island)}</p>
             </section>
           )}
 
           {d.air.length > 0 && (
-            <section className="cs-card mt-s3">
+            <section className={`cs-card ${island === "hawaii" ? "t-volcano" : "t-weather"} mt-s3`}>
               <h2 className="cs-display cs-display--hero">Air</h2>
               <p className="cs-body max-w-[36rem]">{airSentence(d.air, town.name, island)}</p>
               {island === "hawaii" && (
@@ -179,7 +179,7 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
   const sun = sunTimes(dayStartHST(now), meta.lat, meta.lon);
   return (
     <>
-      <section className="cs-card cs-hero mt-s3" aria-label={`${town.name} right now`}>
+      <section className="cs-card cs-hero t-weather mt-s3" aria-label={`${town.name} right now`}>
         <div className="wx-now">
           <ConditionIcon code={code} night={!!h.n[0]} size={164} className="wx-now-ic" />
           <div className="wx-now-read">
@@ -193,7 +193,7 @@ function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon:
         </div>
       </section>
       {open && (
-        <section className="cs-card mt-s3">
+        <section className="cs-card t-weather mt-s3">
           <div className="cs-grid">
             {fl != null && <div className="cs-tile"><p className="wx-stat-v">Feels like {fl}°</p></div>}
             {mph != null && <div className="cs-tile"><p className="wx-stat-v">{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p></div>}

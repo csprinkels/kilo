@@ -6,20 +6,20 @@
   and in the one accent for things you can tap. Every text colour clears 4.5:1 on --bg in both schemes.
 */
 :root {
-  --bg: #f0e4d2;          /* paper */
+  --bg: #f4f1eb;          /* paper: a warm white, so a card can be plain white and still read */
   --surface: #fffaf2;     /* map fills + tab bar only */
-  --surface-2: #e6d8c2;   /* island/town button, secondary buttons, the quiet card */
+  --surface-2: #f7f4ee;   /* a well inside a card: the recessed footer, a field, a quiet tile */
   /* The card is the glass from the mockup, already composited. rgba(255,250,242,.92) over --bg
      resolves to exactly this, so it looks identical and costs no GPU. backdrop-filter buys
      nothing until there is an island to blur; swap these two lines the day the scene lands. */
-  --card: #fdf8ef;
+  --card: #ffffff;
   --card-shadow: 0 4px 24px rgb(80 60 40 / .12);
   --card-radius: 20px;
   --ink: #4a3a2a;
   --ink-2: #5a4a3a;       /* 6.8:1 on --bg */
   --mute: #6a5a4a;        /* 5.3:1 — the floor for text */
-  --line: rgb(200 180 150 / .55);   /* card borders */
-  --hairline: rgb(200 180 150 / .45); /* row dividers inside cards */
+  --line: rgb(190 178 158 / .55);   /* card borders */
+  --hairline: rgb(190 178 158 / .40); /* row dividers inside cards */
   --tint: rgb(160 140 120 / .12);   /* tile + chip ground */
   --brand: #557085;       /* slate: fills and marks */
   --brand-ink: #fffaf2;
@@ -28,10 +28,24 @@
   --danger-ink: #fffaf2;  /* text on a filled danger card */
   --danger-edge: #8a3526;
   --ok: #7ab8c0;          /* the "nothing wrong here" pip */
+
+  /* One hue per topic, every fill at the same lightness, so nothing is louder than anything
+     else by value. Hue says WHAT a thing is; amber and brick still say how urgent it is. */
+  --t-roads: #f1e9c5;  --t-roads-ink: #7d6a1c;
+  --t-storms: #d5ccea;  --t-storms-ink: #3d2673;
+  --t-quakes: #f0d8c7;  --t-quakes-ink: #7d441c;
+  --t-volcano: #f1cbc5;  --t-volcano-ink: #7d291c;
+  --t-tsunami: #cce8eb;  --t-tsunami-ink: #256e74;
+  --t-weather: #c8dfef;  --t-weather-ink: #1d547c;
+  --t-reports: #cdeada;  --t-reports-ink: #28714a;
+
   --brand-hover: #4a6376;
   /* Two ambers on purpose: --amber paints, --warn is the one you can read (4.9:1). */
   --amber: #b89060;
   --warn: #7d5c2e;    --warn-bg: rgb(184 144 96 / .14);
+  /* The page's one emphasised ground. The only surface DARKER than --bg, which is what makes it
+     read as raised rather than as another card. Nothing else on a screen may use it. */
+  --hero-warn: #f5e8d0;
 
   /* data + condition colours (marks in pictures only, never text) */
   --precip: #0b7a90;
@@ -87,8 +101,17 @@
     --danger-ink: #241d17;
     --danger-edge: #f0a898;
     --ok: #8fc4c8;
+    --t-roads: #51471f;  --t-roads-ink: #e3d496;
+    --t-storms: #332b46;  --t-storms-ink: #b09ddd;
+    --t-quakes: #4f3422;  --t-quakes-ink: #e3b696;
+    --t-volcano: #51261f;  --t-volcano-ink: #e3a196;
+    --t-tsunami: #2a4447;  --t-tsunami-ink: #9cd8de;
+    --t-weather: #243b4c;  --t-weather-ink: #96c3e3;
+    --t-reports: #2b4637;  --t-reports-ink: #9edbbb;
+
     --brand-hover: #a6c2d4;
     --amber: #c9a06a;
+    --hero-warn: #3a2f22;   /* dark: the emphasised ground is LIGHTER than --bg, same idea inverted */
     --warn: #d9ae72;    --warn-bg: rgb(201 160 106 / .16);
     --precip: #4fb8cc;
     --night-band: rgb(255 255 255 / .07);
@@ -155,10 +178,10 @@
     Nothing under 1rem (16px). Body is 19px, GOV.UK's tested size.
   */
   --text-number: 3.5rem;      --text-number--line-height: 1;     --text-number--letter-spacing: -0.02em;
-  /* Display sizes are for Amatic, so they run large and tight: 2rem of Merriweather and
-     2.75rem of Amatic occupy about the same optical weight. Line-height drops with them. */
-  --text-display: 2.75rem;    --text-display--line-height: .94;   --text-display--letter-spacing: 0.01em;
-  --text-title: 2rem;         --text-title--line-height: .96;     --text-title--letter-spacing: 0.01em;
+  /* Headings are Nunito now, so the scale comes back down: Amatic ran ~1.4x for the same
+     optical weight. Amatic keeps the little headers, where no Hawaiian place name can appear. */
+  --text-display: 1.625rem;   --text-display--line-height: 1.18;  --text-display--letter-spacing: -0.01em;
+  --text-title: 1.375rem;     --text-title--line-height: 1.25;    --text-title--letter-spacing: -0.005em;
   --text-body: 1.1875rem;     --text-body--line-height: 1.5;
   --text-small: 1rem;         --text-small--line-height: 1.4;
 
@@ -172,8 +195,8 @@
 /* A loud numeral is never Amatic — its figures go spindly above ~40px. Use this, not
    `font-display`, wherever a number is the biggest thing in a card. */
 @utility bignum { font-family: var(--font-num); font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-@utility h-display { @apply font-display text-display font-bold text-ink; }
-@utility h-title { @apply font-display text-title font-bold text-ink; }
+@utility h-display { @apply font-sans text-display font-extrabold text-ink; }
+@utility h-title { @apply font-sans text-title font-extrabold text-ink; }
 @utility card { @apply relative overflow-hidden rounded-card bg-card p-5 shadow-card; }
 /* A card holding rows: no padding of its own, hairlines between rows, rows pad themselves (see .list > *). */
 @utility list { @apply overflow-hidden rounded-card bg-card shadow-card divide-y divide-line; }
@@ -437,10 +460,10 @@ body {
 .st-hero { display: flex; align-items: flex-start; gap: 0.75rem; }
 .st-h {
   margin: 0.55rem 0 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
   text-wrap: pretty;
 }
 .st-hero .st-h { margin-top: 0; }
@@ -595,18 +618,22 @@ body {
   box-shadow:var(--card-shadow);
 }
 .cs-hero--amber{ border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
+/* At most one of these per screen, and only when the day has something to act on. */
+.cs-hero--warn{ background:var(--hero-warn); box-shadow:0 6px 22px rgb(120 88 40 / .18); }
 
 /* ── type ── */
+/* A headline carries place names, and Amatic has no ā ī ū or ʻokina — so headlines are Nunito
+   and Amatic is confined to .cs-label, where only English topic words ever appear. */
 .cs-display{
-  font-family:var(--font-display);
-  font-weight:700;
-  line-height:.94;
-  letter-spacing:.01em;
+  font-family:var(--font-body);
+  font-weight:800;
+  line-height:1.18;
+  letter-spacing:-.01em;
   color:var(--ink);
   margin:0;
 }
-.cs-display--hero{ font-size:38px; }
-.cs-display--card{ font-size:31px; }
+.cs-display--hero{ font-size:26px; }
+.cs-display--card{ font-size:21px; }
 /* Hawaiian never renders in Amatic — no ā ī ū ʻokina in that face. */
 .cs-haw{ font-family:var(--font-body); font-weight:700; }
 .cs-title{
@@ -631,17 +658,35 @@ body {
 }
 
 /* ── accent label above a card title ── */
+/*
+ * A card says which topic it is by carrying one class: .t-roads, .t-storms, .t-quakes,
+ * .t-volcano, .t-tsunami, .t-weather, .t-reports. That sets two custom properties, and the
+ * label and the icon tile inside it pick them up. Nothing else in the card changes colour —
+ * the sentence stays --ink everywhere, so hue never competes with reading.
+ * Severity (amber, brick) is a different axis and always wins: .cs-ictile--amber and
+ * .hm-alarm keep working on top of any topic.
+ */
+.t-roads   { --topic: var(--t-roads);   --topic-ink: var(--t-roads-ink); }
+.t-storms  { --topic: var(--t-storms);  --topic-ink: var(--t-storms-ink); }
+.t-quakes  { --topic: var(--t-quakes);  --topic-ink: var(--t-quakes-ink); }
+.t-volcano { --topic: var(--t-volcano); --topic-ink: var(--t-volcano-ink); }
+.t-tsunami { --topic: var(--t-tsunami); --topic-ink: var(--t-tsunami-ink); }
+.t-weather { --topic: var(--t-weather); --topic-ink: var(--t-weather-ink); }
+.t-reports { --topic: var(--t-reports); --topic-ink: var(--t-reports-ink); }
+
+/* The one place Amatic lives. Topic words only — never a line that could carry a place name. */
 .cs-label{
   display:flex;
   align-items:center;
-  gap:7px;
-  margin:0 0 9px;
-  font-size:.75rem;
+  gap:9px;
+  margin:0 0 10px;
+  font-family:var(--font-display);
+  font-size:1.125rem;
   font-weight:700;
   line-height:1;
-  letter-spacing:.075em;
+  letter-spacing:.055em;
   text-transform:uppercase;
-  color:var(--mute);
+  color:var(--topic-ink, var(--mute));
 }
 
 /* ── pulsing status dot ── */
@@ -752,8 +797,8 @@ body {
   align-items:center;
   justify-content:center;
   border-radius:12px;
-  background:color-mix(in srgb, var(--brand) 14%, transparent);
-  color:var(--sea);
+  background:var(--topic, color-mix(in srgb, var(--brand) 14%, transparent));
+  color:var(--topic-ink, var(--sea));
 }
 .cs-ictile--amber{ background:var(--warn-bg); color:var(--mute); }
 .cs-ictile--teal{ background:color-mix(in srgb, var(--ok) 22%, transparent); color:var(--ok); }

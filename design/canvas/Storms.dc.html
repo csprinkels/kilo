@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap');
+    body { margin: 0; font-family: Nunito, system-ui, sans-serif; }
+    a { color: #445e72; } a:hover { color: #374c5c; }
+    .ic svg { width: 100%; height: 100%; fill: none; stroke: currentColor; }
+    /* Amatic carries the little headers only. It has no ā ī ū or ʻokina, so nothing that can
+       contain a Hawaiian place name is ever set in it. Storms is the hue on this page. */
+    .lab { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font-family: 'Amatic SC', cursive;
+           font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: .055em; text-transform: uppercase; color: #3d2673; }
+    .tile { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            background: #d5ccea; color: #3d2673; }
+    .tile .ic { width: 15px; height: 15px; display: block; }
+    .card { box-sizing: border-box; padding: 16px 18px; background: #ffffff;
+            border: 1px solid rgb(190 178 158 / .40); border-radius: 20px; box-shadow: 0 4px 24px rgb(80 60 40 / .10); }
+    /* the forecast timeline: one row per point, wind on the right */
+    .row { display: flex; align-items: center; gap: 11px; padding: 11px 0; border-top: 1px solid rgb(190 178 158 / .38); }
+    .row:first-child { border-top: 0; padding-top: 2px; }
+    .rmain { flex: 1 1 auto; min-width: 0; }
+    .rname { display: block; margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .rname em { font-style: normal; font-weight: 400; color: #6a5a4a; }
+    .rsub { display: block; margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: #6a5a4a; }
+    .mph { flex: 0 0 auto; text-align: right; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: #4a3a2a; }
+    .mph span { font-size: 12px; font-weight: 400; color: #6a5a4a; }
+    /* the closest pass: a band, not a coloured word, so it reads at a glance */
+    .peak { margin: 8px 0; padding: 10px 12px; border: 0; border-radius: 12px; background: rgb(190 178 158 / .20); }
+    .rule { height: 1px; margin: 13px 0 10px; background: rgb(190 178 158 / .40); }
+    .meta { margin: 0; font-size: 13px; line-height: 1.45; color: #6a5a4a; }
+    .mapkey { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+              padding: 7px 12px 9px; font-size: 12px; line-height: 1; color: #4a3a2a; background: #c9dfe0; }
+    .sw { display: flex; align-items: center; gap: 4px; }
+    .sw i { width: 10px; height: 10px; border-radius: 99px; display: block; box-shadow: 0 0 0 2px #ffffff; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 1950px; background: #f4f1eb; box-sizing: border-box; padding: 0 20px 28px;">
+
+  <!-- ── PageShell: top bar · freshness · title · one sentence ── -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-top: 8px;">
+    <span style="display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-left: -4px; padding: 0 4px; font-size: 13.5px; font-weight: 700; color: #445e72;">&#8249; Now</span>
+    <span style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgb(200 180 150 / .55); font-size: 13.5px; font-weight: 700; color: #4a3a2a;">Hawai&#699;i Island</span>
+  </div>
+  <p style="margin: 6px 0 0; text-align: center; font-size: 13px; color: #6a5a4a;">Latest update: Sep 3, 12:50 PM</p>
+
+  <h1 style="margin: 14px 0 0; font-size: 26px; font-weight: 800; line-height: 1.18; letter-spacing: -.01em; color: #4a3a2a;">Hurricane Lowell</h1>
+  <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: #5a4a3a;">Where it is now, where it is going, and what that means for this island.</p>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+
+    <!-- ── 1 · summary: winds now, then the one sentence. Lowell is moving away, so the hero
+              stays plain glass: no amber edge, no brick wash, no emphasis block on this page. ── -->
+    <div class="card">
+      <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <span style="width: 38px; height: 38px; flex: 0 0 auto; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #d5ccea; color: #3d2673;">
+          <span class="ic" style="width: 21px; height: 21px; display: block;"><svg viewBox="0 0 256 256"><path d="M120,104H24a8,8,0,0,1-8-8.53A8.17,8.17,0,0,1,24.27,88H112a8,8,0,0,0,8-8.53A8.17,8.17,0,0,0,111.73,72H92.29a4,4,0,0,1-4-4.58A32,32,0,1,1,120,104Zm119.92-2.29a32,32,0,0,0-63.59-2.29,4,4,0,0,0,4,4.58h19.44a8.17,8.17,0,0,1,8.25,7.47,8,8,0,0,1-8,8.53H32.27A8.17,8.17,0,0,0,24,127.47,8,8,0,0,0,32,136H208A32,32,0,0,0,239.92,101.71ZM152,152H40.27A8.17,8.17,0,0,0,32,159.47,8,8,0,0,0,40,168H143.73a8.17,8.17,0,0,1,8.25,7.47,8,8,0,0,1-8,8.53H124.29a4,4,0,0,0-4,4.58A32,32,0,1,0,152,152Z" fill="currentColor" stroke="none"/></svg></span>
+        </span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; color: #4a3a2a;">Winds around 120 mph</p>
+          <p style="margin: 0; padding-top: 7px; font-size: 15px; line-height: 1.5; color: #5a4a3a;">Hurricane Lowell is 436 miles to the south and moving away.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2 · the picture: ocean, the islands, the track it is on, the shaded shape it will
+              probably stay inside. Dot colour is how strong the wind is. ── -->
+    <div class="card" style="padding: 16px 18px;">
+      <div style="border: 1px solid rgb(190 178 158 / .40); border-radius: 14px; overflow: hidden; background: #c9dfe0;">
+        <svg viewBox="0 0 314 250" style="display: block; width: 100%; height: auto;">
+          <rect width="314" height="250" fill="#c9dfe0"/>
+          <line x1="0" y1="70" x2="314" y2="70" stroke="rgb(68 94 114 / .07)" stroke-width="1.25"/>
+          <line x1="0" y1="125" x2="314" y2="125" stroke="rgb(68 94 114 / .07)" stroke-width="1.25"/>
+          <line x1="0" y1="180" x2="314" y2="180" stroke="rgb(68 94 114 / .07)" stroke-width="1.25"/>
+
+          <!-- the chain: Ni&#699;ihau, Kaua&#699;i, O&#699;ahu, Moloka&#699;i, L&#257;na&#699;i, Kaho&#699;olawe, Maui, then the island itself -->
+          <g fill="#f4e9d6" stroke="rgb(148 120 86 / .9)" stroke-width="1.2" stroke-linejoin="round">
+            <ellipse cx="150" cy="59" rx="2.6" ry="3.4"/>
+            <path d="M158,55 L165,54 L167,57 L164,60 L157,59 Z"/>
+            <path d="M186,68 L191,63 L195,65 L194,70 L189,71 Z"/>
+            <path d="M202,74 L211,72 L212,75 L203,76 Z"/>
+            <ellipse cx="207" cy="79" rx="2.6" ry="1.9"/>
+            <ellipse cx="213.5" cy="84.5" rx="2" ry="1.2"/>
+            <path d="M213,79 L219,75 L224,78 L224,83 L218,85 L213,83 Z"/>
+          </g>
+          <g transform="translate(224,90) scale(0.227,0.258)">
+            <path d="M80.0,36.3L79.7,34.4L79.9,30.6L78.8,29.1L72.0,22.8L63.7,17.7L49.9,11.7L42.5,9.7L39.5,9.6L31.6,5.2L30.7,4.1L27.9,2.2L24.0,0.8L19.7,0.0L17.0,0.5L14.8,1.4L13.1,3.4L11.9,5.9L11.9,10.5L13.8,16.3L17.3,20.8L13.3,24.7L11.6,28.3L7.9,29.6L4.8,32.8L2.9,33.7L1.8,34.8L1.0,36.0L0.0,40.8L2.3,45.3L3.0,47.8L5.9,49.5L6.6,50.4L7.9,56.4L8.9,58.7L10.4,60.1L11.5,64.1L13.0,67.1L12.8,70.3L12.0,72.9L10.7,83.0L12.2,87.0L14.2,90.2L18.0,92.4L21.4,93.0L24.8,95.3L27.9,96.4L29.1,98.8L30.4,99.7L32.5,100.0L34.6,99.6L37.0,98.3L41.3,94.6L42.8,91.5L44.3,90.0L45.9,85.8L48.0,84.2L51.5,82.9L53.5,80.8L58.4,79.0L62.6,75.7L69.3,76.2L74.4,74.7L76.4,73.6L76.1,73.6L76.4,73.3L82.2,71.4L86.6,69.2L90.4,66.0L96.2,62.2L98.7,59.3L100.0,56.4L99.9,53.9L98.5,52.3L95.3,50.0L90.5,47.8L88.8,45.3L87.4,44.4L87.7,43.2L87.2,41.6L84.9,37.9L82.6,36.5L80.0,36.3Z" fill="#f4e9d6" stroke="rgb(148 120 86 / .9)" stroke-width="5"/>
+          </g>
+
+          <!-- the cone: where the center will probably go, widening as the days run out -->
+          <path d="M214,223 L194,212 L171,207 L146,200 L122,191 L117,168 L121,126 L139,75 Q95,20 51,65 L55,140 L81,204 L122,227 L146,230 L171,231 L194,228 Z"
+                fill="#9a3d2c" fill-opacity="0.12" stroke="#9a3d2c" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="7 6"/>
+
+          <!-- where it has been -->
+          <path d="M265,228 L245,228 L229,226 L214,223" fill="none" stroke="rgb(148 120 86 / .9)" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"/>
+          <circle cx="265" cy="228" r="2.2" fill="rgb(148 120 86 / .9)"/>
+          <circle cx="245" cy="228" r="2.2" fill="rgb(148 120 86 / .9)"/>
+          <circle cx="229" cy="226" r="2.2" fill="rgb(148 120 86 / .9)"/>
+
+          <!-- where it is going: a white halo under the line, then a segment per wind step -->
+          <path d="M214,223 L194,220 L171,219 L146,215 L122,209 L99,186" fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M214,223 L194,220" fill="none" stroke="#7a2a1c" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M194,220 L171,219" fill="none" stroke="#7a2a1c" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M171,219 L146,215" fill="none" stroke="#9a3d2c" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M146,215 L122,209" fill="none" stroke="#9a3d2c" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M122,209 L99,186" fill="none" stroke="#9a3d2c" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- the last two points are an outlook, not a forecast: hollow dots on a broken line -->
+          <path d="M99,186 L88,133 L95,70" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M99,186 L88,133" fill="none" stroke="#9a3d2c" stroke-opacity="0.7" stroke-width="2" stroke-dasharray="6 7" stroke-linecap="round"/>
+          <path d="M88,133 L95,70" fill="none" stroke="#b89060" stroke-opacity="0.7" stroke-width="2" stroke-dasharray="6 7" stroke-linecap="round"/>
+
+          <circle cx="214" cy="223" r="12" fill="#7a2a1c" opacity="0.2"/>
+          <circle cx="214" cy="223" r="4" fill="#7a2a1c" stroke="#7a2a1c" stroke-width="2.25"/>
+          <circle cx="194" cy="220" r="3.6" fill="#7a2a1c" stroke="#7a2a1c" stroke-width="2"/>
+          <circle cx="171" cy="219" r="3.4" fill="#9a3d2c" stroke="#9a3d2c" stroke-width="2"/>
+          <circle cx="146" cy="215" r="3.3" fill="#9a3d2c" stroke="#9a3d2c" stroke-width="2"/>
+          <circle cx="122" cy="209" r="3.1" fill="#9a3d2c" stroke="#9a3d2c" stroke-width="2"/>
+          <circle cx="99" cy="186" r="3" fill="#9a3d2c" stroke="#9a3d2c" stroke-width="2"/>
+          <circle cx="88" cy="133" r="2.9" fill="#c9dfe0" stroke="#b89060" stroke-width="2"/>
+          <circle cx="95" cy="70" r="2.8" fill="#c9dfe0" stroke="#b89060" stroke-width="2"/>
+
+          <g font-family="Nunito, system-ui, sans-serif" font-size="11" font-weight="600" fill="#4a3a2a" text-anchor="middle"
+             stroke="#ffffff" stroke-width="3" paint-order="stroke">
+            <text x="214" y="208">Now</text>
+            <text x="171" y="238">Fri</text>
+            <text x="99" y="205">Sun</text>
+            <text x="112" y="68">Tue</text>
+          </g>
+        </svg>
+        <div class="mapkey">
+          <span class="sw">
+            <i style="background: #557085;"></i><i style="background: #b89060;"></i><i style="background: #9a3d2c;"></i><i style="background: #7a2a1c;"></i>
+            <span style="margin-left: 6px;">weaker &#8594; stronger</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; gap: 6px;">
+            <span style="display: block; width: 55px; height: 2px; background: #4a3a2a;"></span>200 miles
+          </span>
+        </div>
+      </div>
+      <div class="rule"></div>
+      <p class="meta">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+    </div>
+
+    <!-- ── 3 · what to do. Level 0, so this is the calm line, not a checklist. ── -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><polyline points="88 136 112 160 168 104" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="96" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>What to do</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #5a4a3a;">Nothing to do. Kilo will say if that changes.</p>
+    </div>
+
+    <!-- ── 4 · where it will be: the forecast timeline, the closest pass in a band ── -->
+    <div class="card">
+      <p class="lab"><span class="tile"><span class="ic"><svg viewBox="0 0 256 256"><circle cx="128" cy="104" r="32" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M208,104c0,72-80,128-80,128S48,176,48,104a80,80,0,0,1,160,0Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span></span>Where it will be</p>
+
+      <div class="row peak" style="border-top: 0;">
+        <span class="rmain">
+          <span class="rname">Thu 11 PM</span>
+          <span class="rsub">451 miles south &#183; closest to Hawai&#699;i Island</span>
+        </span>
+        <span class="mph">115 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Fri 11 AM</span>
+          <span class="rsub">479 miles southwest</span>
+        </span>
+        <span class="mph">110 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Fri 11 PM</span>
+          <span class="rsub">517 miles southwest</span>
+        </span>
+        <span class="mph">105 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Sat 11 AM</span>
+          <span class="rsub">559 miles southwest</span>
+        </span>
+        <span class="mph">90 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Sun 11 AM</span>
+          <span class="rsub">575 miles southwest</span>
+        </span>
+        <span class="mph">80 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Mon 11 AM <em>&#183; less certain</em></span>
+          <span class="rsub">538 miles west</span>
+        </span>
+        <span class="mph">65 <span>mph</span></span>
+      </div>
+      <div class="row">
+        <span class="rmain">
+          <span class="rname">Tue 11 AM <em>&#183; less certain</em></span>
+          <span class="rsub">514 miles west</span>
+        </span>
+        <span class="mph">50 <span>mph</span></span>
+      </div>
+    </div>
+
+    <!-- ── 5 · the agency's own words, and the satellite picture behind a tap ── -->
+    <div class="card">
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; font-weight: 700; color: #4a3a2a;">Lowell moving away from the Hawaiian Islands.</p>
+      <p class="meta" style="margin-top: 7px;">Update 32, issued 11:00 AM, next 5:00 PM.</p>
+      <p class="meta" style="margin-top: 4px;">Winds 121 mph, gusts 145 mph. Moving west near 12 mph.</p>
+      <p style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 15px 0 0;">
+        <span style="display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 700; color: #445e72;">Official update</span>
+        <span style="display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 700; color: #445e72;">Official graphics</span>
+      </p>
+      <div class="rule"></div>
+      <span style="display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; border: 1px solid rgb(190 178 158 / .55); border-radius: 9999px; font-size: 15px; font-weight: 700; color: #4a3a2a;">
+        <span class="ic" style="width: 19px; height: 19px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><path d="M208,208H48a16,16,0,0,1-16-16V80A16,16,0,0,1,48,64H80L96,40h64l16,24h32a16,16,0,0,1,16,16V192A16,16,0,0,1,208,208Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="132" r="36" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+        See the satellite picture (big download)
+      </span>
+    </div>
+
+    <!-- ── 6 · the other storm. Tapping it swaps the whole tracker above. ── -->
+    <div class="card" style="padding: 8px 18px;">
+      <div style="display: flex; align-items: center; gap: 11px; min-height: 44px;">
+        <span class="rname" style="flex: 1 1 auto; min-width: 0;">Also: Hurricane Karina, 1,222 miles east</span>
+        <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; color: #6a5a4a; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="margin: 22px 0 0; font-size: 13px; line-height: 1.45; color: #6a5a4a;">From the Central Pacific Hurricane Center. Checked 12:50 PM.</p>
+
+  <div style="display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgb(190 178 158 / .40); font-size: 13.5px; font-weight: 700; color: #6a5a4a;">
+    <span class="ic" style="width: 18px; height: 18px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="40" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M41.43,178.09A99.14,99.14,0,0,1,31.36,153.8l16.78-21a81.59,81.59,0,0,1,0-9.64l-16.77-21a99.43,99.43,0,0,1,10.05-24.3l26.71-3a81,81,0,0,1,6.81-6.81l3-26.7A99.14,99.14,0,0,1,102.2,31.36l21,16.78a81.59,81.59,0,0,1,9.64,0l21-16.77a99.43,99.43,0,0,1,24.3,10.05l3,26.71a81,81,0,0,1,6.81,6.81l26.7,3a99.14,99.14,0,0,1,10.07,24.29l-16.78,21a81.59,81.59,0,0,1,0,9.64l16.77,21a99.43,99.43,0,0,1-10,24.3l-26.71,3a81,81,0,0,1-6.81,6.81l-3,26.7a99.14,99.14,0,0,1-24.29,10.07l-21-16.78a81.59,81.59,0,0,1-9.64,0l-21,16.77a99.43,99.43,0,0,1-24.3-10l-3-26.71a81,81,0,0,1-6.81-6.81Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+    <span style="flex: 1;">Settings and about</span>
+    <span class="ic" style="width: 16px; height: 16px; flex: 0 0 auto; display: block;"><svg viewBox="0 0 256 256"><polyline points="96 48 176 128 96 208" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg></span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
