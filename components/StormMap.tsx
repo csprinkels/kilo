@@ -94,7 +94,7 @@ export default function StormMap({ storm, place, className }: Props) {
           <path key={`halo-${i}`} d={path(poly[0])} fill="var(--dmap-land)" stroke="var(--dmap-land)" strokeOpacity={0.9} strokeWidth={6} strokeLinejoin="round" />
         ))}
         {coast?.coordinates.map((poly, i) => (
-          <path key={`land-${i}`} d={path(poly[0])} fill="var(--dmap-land)" stroke="var(--dmap-coast)" strokeWidth={1.1} strokeLinejoin="round" />
+          <path key={`land-${i}`} d={path(poly[0])} fill="var(--dmap-land)" stroke="var(--dmap-coast)" strokeWidth={1.3} strokeLinejoin="round" />
         ))}
 
         {cone.length > 2 && (

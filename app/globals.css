@@ -71,8 +71,8 @@
    * Values read off a map whose job is the same as ours.
    */
   --dmap-ground: #ededef;      /* ocean and everything with no data on it */
-  --dmap-land: #fcfcfd;        /* land: light enough to read as land, quiet enough not to compete */
-  --dmap-coast: #b6b6be;       /* one thin neutral line, never a colour — this is what makes an island visible */
+  --dmap-land: #ffffff;        /* land: the reference's islands carry a data fill to help them read; ours do not, so land goes all the way to white */
+  --dmap-coast: #9a9aa6;       /* the line does most of the work at 2.4:1 — an island has to be findable at a glance */
   --dmap-label: #1f2023;
   --dmap-track: #6a6a72;       /* where a storm has already been: past, not forecast */
 
@@ -136,8 +136,8 @@
     --map-coast: rgb(200 180 150 / .55);
     /* dark: the same idea inverted — a neutral ground the data sits on top of */
     --dmap-ground: #1c1c1f;
-    --dmap-land: #26262a;
-    --dmap-coast: #45454c;
+    --dmap-land: #2c2c31;
+    --dmap-coast: #5b5b66;
     --dmap-label: #f2f2f4;
     --dmap-track: #8a8a94;
     --map-relief: #4a3e32;
@@ -223,6 +223,20 @@
 @utility btn-primary { @apply bg-brand text-brand-ink; }
 @utility btn-big { @apply min-h-14 w-full; }
 @utility chip-active { @apply bg-ink text-bg; }
+
+/*
+ * Wide screens had four .btn pills with the lit one filled ink — a black blob beside three that
+ * had gone nearly invisible once --surface-2 became a near-white. This is the phone's tab bar in
+ * a row: one quiet trough, and the lit tab raised out of it on its own white pill.
+ */
+.nav-wide{ display:inline-flex; gap:2px; padding:4px; border-radius:9999px;
+  background:var(--surface-2); border:1px solid var(--line); }
+.nav-wide a{ display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 16px;
+  border-radius:9999px; font-size:15px; font-weight:700; line-height:1; color:var(--ink-2);
+  text-decoration:none; white-space:nowrap; }
+.nav-wide a:hover{ color:var(--ink); }
+.nav-wide a[aria-current="page"]{ background:var(--card); color:var(--ink);
+  box-shadow:0 1px 3px rgb(80 60 40 / .12); }
 @utility row { @apply flex min-h-14 w-full items-center gap-s3 py-s3 text-left; }
 @utility picture { @apply overflow-hidden rounded-card bg-card shadow-card; }
 /* A picture inside a card row (the zoomed road map): an inset, never a card in a card. */
@@ -1239,8 +1253,20 @@ body {
   content:""; position:absolute; top:0; right:0; bottom:0; pointer-events:none;
   background:linear-gradient(to right, transparent, var(--card));
 }
-.wx-strip::after{ width:16px; }
+.wx-strip::after{ width:28px; }
 .wx-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+/*
+ * A finger discovers a scrolling strip by pushing it. A mouse cannot: the scrollbar is hidden,
+ * so on a desktop the next day is there and unreachable. Give a fine pointer a slim bar back —
+ * touch keeps the clean edge, since the gesture is its own affordance.
+ */
+@media (pointer: fine) {
+  .wx-scroll{ scrollbar-width: thin; scrollbar-color: var(--line) transparent; padding-bottom:6px; }
+  .wx-scroll::-webkit-scrollbar{ display:block; height:8px; }
+  .wx-scroll::-webkit-scrollbar-track{ background:transparent; }
+  .wx-scroll::-webkit-scrollbar-thumb{ background:var(--line); border-radius:9999px; }
+  .wx-scroll::-webkit-scrollbar-thumb:hover{ background:var(--mute); }
+}
 .wx-chart{ position:relative; }
 .wx-chart > svg{ position:absolute; inset:0; }
 
