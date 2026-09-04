@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseNws } from "../convex/parsers/nws.ts";
 import { parseHccda } from "../convex/parsers/hccda.ts";
+import { parseTides } from "../convex/parsers/pages.ts";
 
 const fx = (f: string) => JSON.parse(readFileSync(new URL(`../fixtures/${f}`, import.meta.url), "utf8"));
 const NOW = Date.parse("2026-08-19T21:00:00-10:00");
@@ -236,4 +237,55 @@ test("DWS: plain wording matches the kind", async () => {
   assert.match(say("conserve").headline, /Use less water in South Kona/);
   assert.equal(say("conserve").level, 1);
   assert.equal(say("boil").source, "the county Water Supply");
+});
+
+test("NOAA tide predictions: 36 hours from the current hour, plus the turns inside it", () => {
+  const heights = fx("coops-hilo-hourly.json"), turns = fx("coops-hilo-hilo.json");
+  // The fixture starts at midnight HST on its own day; ask as if it were 09:12 that morning.
+  const first = heights.predictions[0].t as string;
+  const [y, mo, d] = first.slice(0, 10).split("-").map(Number);
+  const now = Date.UTC(y, mo - 1, d, 9 + 10, 12);
+
+  const t = parseTides(heights, turns, "1617760", "Hilo Bay", 36, now);
+  assert.ok(t, "the fixture covers the window, so this must parse");
+  assert.equal(t.h.length, 36);
+  // Contiguous hours end to end: the chart's x axis is the array index, so one missing hour would
+  // shift every later point an hour earlier and quietly move high tide.
+  for (let i = 1; i < t.h.length; i++) assert.ok(Number.isFinite(t.h[i]));
+  assert.equal(t.t0, Date.UTC(y, mo - 1, d, 9 + 10), "starts at the top of the current hour, HST");
+  // Contiguous hours: the x axis is the array index, so a gap would shift every later point.
+  assert.ok(t.h.every((v) => Number.isFinite(v)));
+  // Every turn lands inside the window and carries a real height.
+  const last = t.t0 + 35 * 3_600_000;
+  for (const p of t.hl) {
+    assert.ok(p.t >= t.t0 && p.t <= last, "a turn outside the window would be drawn off the chart");
+    assert.equal(typeof p.hi, "boolean");
+    assert.ok(p.v > -5 && p.v < 15, "feet above MLLW, not metres");
+  }
+  assert.ok(t.hl.some((p) => p.hi) || t.hl.length === 0);
+});
+
+test("tides: a window the data cannot cover returns null, not a short chart", () => {
+  const heights = fx("coops-hilo-hourly.json"), turns = fx("coops-hilo-hilo.json");
+  const first = heights.predictions[0].t as string;
+  const [y, mo, d] = first.slice(0, 10).split("-").map(Number);
+  // Ask from the last day of the fixture: there are not 36 hours left after it.
+  assert.equal(parseTides(heights, turns, "1617760", "Hilo Bay", 36, Date.UTC(y, mo - 1, d + 2, 20)), null);
+  assert.equal(parseTides(null, null, "1617760", "Hilo Bay", 36, Date.UTC(y, mo - 1, d, 19)), null);
+});
+
+test("tides: the stored window can start hours before now, and the chart's slice still lands", () => {
+  const heights = fx("coops-hilo-hourly.json"), turns = fx("coops-hilo-hilo.json");
+  const first = heights.predictions[0].t as string;
+  const [y, mo, d] = first.slice(0, 10).split("-").map(Number);
+  const fetched = Date.UTC(y, mo - 1, d, 2 + 10);      // fetched at 2am HST
+  const t = parseTides(heights, turns, "1617760", "Hilo Bay", 36, fetched);
+  assert.ok(t);
+
+  // Six hours later the app slices from the real current hour — the gate this window exists to allow.
+  const nowHour = fetched + 6 * 3_600_000;
+  const skip = Math.round((nowHour - t.t0) / 3_600_000);
+  assert.equal(skip, 6);
+  assert.equal(t.t0 + skip * 3_600_000, nowHour, "the slice starts exactly at the current hour");
+  assert.ok(t.h.length - skip >= 24, "and still has most of a day left to draw");
 });

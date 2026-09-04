@@ -3,8 +3,8 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { ISLANDS } from "../lib/types.ts";
 import type { Quakes, Tsunami, Volcano, Weather } from "../lib/pages.ts";
-import { BUOYS, TOWNS } from "../lib/towns.ts";
-import { compactQuakes, parseAirNow, parseCap, parseAltModels, parseForecast, parseHans, parseHourly, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf } from "./parsers/pages.ts";
+import { BUOYS, TIDES, TOWNS } from "../lib/towns.ts";
+import { compactQuakes, parseAirNow, parseCap, parseAltModels, parseForecast, parseHans, parseHourly, parseNdbc, parseObs, parseSirens, parseSo2, parseSrf, parseTides } from "./parsers/pages.ts";
 import { UA, publishToR2, putSnapshot } from "./ingest.ts";
 
 const MIN = 60_000;
@@ -124,8 +124,31 @@ export const run = internalAction({
           }
           return { id: t.id, name: t.name, obs: (obsJson && parseObs(obsJson as never)) || prevTown?.obs, fc: fc?.fc ?? prevTown?.fc ?? [], fcAt: fc ? now : prevTown?.fcAt, hourly };
         }));
+        // Tide predictions are computed, not observed: the same table is true all day, so this is a
+        // slow gate. It stores 60 hours and the chart draws 36 of them from the real current hour,
+        // which is what lets the gate be slow without the chart's "Now" drifting into the past.
+        const st = TIDES[island];
+        let fresh: Weather["tide"];
+        if (stale(prev?.tideAt, 6 * 60, now)) {
+          const d = (days: number) => {
+            const x = new Date(now - 10 * 3_600_000 + days * 86_400_000); // HST calendar date
+            return `${x.getUTCFullYear()}${String(x.getUTCMonth() + 1).padStart(2, "0")}${String(x.getUTCDate()).padStart(2, "0")}`;
+          };
+          const q = `station=${st.id}&begin_date=${d(0)}&end_date=${d(3)}&product=predictions&datum=MLLW&time_zone=lst_ldt&units=english&format=json&application=kilohi.org`;
+          const [hJson, hlJson] = await Promise.all([
+            settle(get(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${q}&interval=h`), null),
+            settle(get(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${q}&interval=hilo`), null),
+          ]);
+          fresh = parseTides(hJson as never, hlJson as never, st.id, st.name, 60, now) ?? undefined;
+        }
+        // Only a fetch that actually parsed moves the clock. Stamping `now` after a failure would
+        // mark yesterday's table fresh and stop us retrying for six hours.
+        const tide = fresh ?? prev?.tide;
+
         const weather: Weather = {
           upd: now, island, towns,
+          tide,
+          tideAt: fresh ? now : prev?.tideAt,
           surf: srf ? { at: srf.at, uv: srf.uv, zones: Object.fromEntries(Object.entries(srf.zones).filter(([z]) => (island === "hawaii" ? /Big Island/ : island === "maui" ? /^Maui/ : island === "oahu" ? /^Oahu/ : /^Kauai/).test(z))) } : prev?.surf,
           surfAt: srf ? now : prev?.surfAt,
           buoys: buoysAll.filter((b) => BUOYS.find((x) => x.id === b.id)?.island === island),

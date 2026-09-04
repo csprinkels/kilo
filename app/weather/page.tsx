@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import PageShell from "@/components/PageShell";
 import ConditionIcon from "@/components/ConditionIcon";
 import HourlyChart from "@/components/HourlyChart";
+import TideChart from "@/components/TideChart";
 import DailyRows, { rowsFromPeriods } from "@/components/DailyRows";
 import ItemRow from "@/components/ItemRow";
 import RadarMap from "@/components/RadarMap";
@@ -108,7 +109,7 @@ export default function WeatherPage() {
           )}
 
           <section className="cs-card t-weather mt-s3">
-            <h2 className="cs-display cs-display--hero">Next 24 Hours</h2>
+            <h2 className="cs-display cs-display--hero">Next {Math.round(h.t.length / 12) * 12} Hours</h2>
             <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
             <HourlyChart h={h} />
           </section>
@@ -125,6 +126,13 @@ export default function WeatherPage() {
             <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">Surf</h2>
               <p className="cs-body max-w-[36rem]">{surfSentence(d.surf.zones, island)}</p>
+            </section>
+          )}
+
+          {d.tide && d.tide.h.length > 0 && (
+            <section className="cs-card t-weather mt-s3">
+              <h2 className="cs-display cs-display--hero">Tides</h2>
+              <TideChart tide={d.tide} />
             </section>
           )}
 

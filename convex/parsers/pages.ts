@@ -1,7 +1,7 @@
 // Parsers for page-only JSON (weather, quakes, volcano, tsunami). Pure functions; fixtures in fixtures/.
 import { XMLParser } from "fast-xml-parser";
 import { clip } from "../../lib/types.ts";
-import type { AltModel, Hourly, Obs, Period, Quake, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
+import type { AltModel, Hourly, Obs, Period, Quake, Tide, TsunamiLevel, VolcanoStatus, Weather } from "../../lib/pages.ts";
 import { COMPASS } from "../../lib/storm.ts";
 import { conditionCode } from "../../lib/summary.ts";
 export { conditionCode };
@@ -216,4 +216,50 @@ export function parseSirens(fc: { features?: SirenFeature[] }) {
     ll: [Math.round((f.geometry?.coordinates[1] ?? f.properties.Lat ?? 0) * 1000) / 1000, Math.round((f.geometry?.coordinates[0] ?? f.properties.Long ?? 0) * 1000) / 1000] as [number, number],
   }));
   return { total: feats.length, bad };
+}
+
+// ---------- NOAA CO-OPS tide predictions ----------
+type Pred = { t: string; v: string; type?: "H" | "L" };
+
+/**
+ * CO-OPS stamps times "YYYY-MM-DD HH:MM" in the station's own local time. Every Hawaiʻi station is
+ * HST, which never observes daylight saving, so the offset is a constant +10 and not a timezone
+ * lookup. Anywhere else this would be wrong.
+ */
+const hstMs = (t: string): number => {
+  const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(t.trim());
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] + 10, +m[5]) : NaN;
+};
+
+/**
+ * The hourly curve plus the turns, from the top of the current hour forward.
+ *
+ * `hours` is deliberately longer than any chart draws. Predictions are computed days ahead, so this
+ * is refetched slowly; storing only what the chart needs would mean its first point — the one
+ * labelled "Now" — drifted hours into the past between fetches. The chart slices from the real
+ * current hour instead. Returns null rather than a half-built object: a tide chart with a gap in
+ * it is worse than no tide chart.
+ */
+export function parseTides(
+  heights: { predictions?: Pred[] } | null,
+  turns: { predictions?: Pred[] } | null,
+  station: string, name: string, hours: number, now: number,
+): Tide | null {
+  const hs = (heights?.predictions ?? []).map((p) => ({ t: hstMs(p.t), v: Number(p.v) })).filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v));
+  if (hs.length < hours) return null;
+  const t0 = Math.floor(now / 3_600_000) * 3_600_000;
+  const start = hs.findIndex((p) => p.t >= t0);
+  if (start < 0 || hs.length - start < hours) return null;
+
+  const win = hs.slice(start, start + hours);
+  // Contiguity matters more than it looks: a missing hour would silently shift every later point
+  // an hour earlier on a chart whose x axis is the array index.
+  for (let i = 1; i < win.length; i++) if (win[i].t - win[i - 1].t !== 3_600_000) return null;
+
+  const from = win[0].t, to = win[win.length - 1].t;
+  const hl = (turns?.predictions ?? [])
+    .map((p) => ({ t: hstMs(p.t), v: Number(p.v), hi: p.type === "H" }))
+    .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v) && p.t >= from && p.t <= to);
+
+  return { station, name, t0: from, h: win.map((p) => Math.round(p.v * 100) / 100), hl };
 }
