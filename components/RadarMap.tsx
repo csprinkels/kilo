@@ -40,7 +40,14 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
         const j = (await r.json()) as Maps;
         const all = [...j.radar.past.map((f) => ({ ...f, future: false })), ...(j.radar.nowcast ?? []).map((f) => ({ ...f, future: true }))];
         if (!live) return;
-        setHost(j.host); setFrames(all); setAt(j.radar.past.length - 1); // start on "now"
+        // A 200 with no frames, or with no host to fetch them from, is a failure that looks like a
+        // success. Drawing it would put a bare street map under the words "blue where it is raining
+        // now" — which reads as "no rain anywhere" when it means "we do not know".
+        if (!j.host || !all.length) { setFailed(true); return; }
+        setHost(j.host); setFrames(all);
+        // Start on the last observed frame. With nothing observed, past.length - 1 is -1, which
+        // would put the slider below its own minimum.
+        setAt(Math.max(0, j.radar.past.length - 1));
       } catch { if (live) setFailed(true); }
     });
     return () => { live = false; };
@@ -70,7 +77,15 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
   // Slider → which frame is visible.
   useEffect(() => { layers.current.forEach((l, i) => l.setOpacity(i === at ? 0.72 : 0)); }, [at]);
 
-  if (!online || failed) return null;
+  // Offline, /weather has already dropped the radar section and its chip and said why, so a second
+  // "no signal" line here would only repeat it: this is the one case where drawing nothing is right.
+  if (!online) return null;
+  // Online and RainViewer still would not answer is the silent one — nothing else on the page knows
+  // the radar is missing, and the "Radar" chip filters down to a blank screen. Say it instead.
+  if (failed) return <p className="cs-meta mt-s3">The rain radar isn&rsquo;t answering right now. The forecast above doesn&rsquo;t depend on it.</p>;
+  // The fetch waits up to 15 seconds. Saying so beats twenty rems of empty grey, and this is the
+  // whole of what the reader sees after tapping the Radar chip until the frames land.
+  if (!frames) return <p className="cs-meta mt-s3">Loading the rain radar&hellip;</p>;
   const f = frames?.[at];
   const nowIdx = frames ? frames.findIndex((x) => x.future) - 1 : -1;
   const when = !f ? "" : at === (nowIdx < 0 ? frames!.length - 1 : nowIdx) ? "Now" : f.future ? `Expected at ${fmtTime(f.time * 1000)}` : fmtTime(f.time * 1000);

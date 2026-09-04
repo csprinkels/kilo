@@ -30,10 +30,14 @@ const AIR_PIP = ["", "cs-pip--ok", "cs-pip--warn", "cs-pip--down"];
 const airCat = (aqi: number) => (aqi <= 50 ? 0 : aqi <= 100 ? 1 : aqi <= 150 ? 2 : 3);
 // Monitors that are not on Hawaiʻi Island; everything else is. ponytail: three names, a field on the feed if the list grows.
 const MONITOR_ISLAND: Record<string, Island> = { Honolulu: "oahu", Kapolei: "oahu", Kīhei: "maui" };
+// The islands a monitor can be on at all. Only here is an empty list a fact about the island; on
+// Hawaiʻi Island, Oʻahu and Maui an empty list means the feed came back short, not that the
+// monitors were removed.
+const MONITOR_ISLANDS = new Set<Island>(["hawaii", ...Object.values(MONITOR_ISLAND)]);
 const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
-function airSentence(rows: { name: string; cat?: number }[], islandName: string): string {
-  if (!rows.length) return `There is no air monitor on ${islandName}.`;
+function airSentence(rows: { name: string; cat?: number }[], islandName: string, hasMonitors: boolean): string {
+  if (!rows.length && !hasMonitors) return `There is no air monitor on ${islandName}.`;
   const live = rows.filter((r) => r.cat != null);
   if (!live.length) return "No air readings right now.";
   const worst = Math.max(...live.map((r) => r.cat!));
@@ -57,6 +61,8 @@ function split(s: string): [string, string?] {
   const m = /^(.{16,}?[.!?])\s+(?=[A-Z“"])([\s\S]+)$/.exec(s.trim());
   return m ? [m[1], m[2]] : [s, undefined];
 }
+
+const mlTitle = (v: VolcanoStatus) => `Mauna Loa — USGS level: ${v.level} · Aviation color: ${v.color}`;
 
 const since = (ms?: number) => (ms ? ` · Since ${new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", month: "short", day: "numeric" }).format(ms)}` : "");
 
@@ -87,7 +93,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
   // otherwise be neither shown nor counted — and `worst` is what keeps this card past the filter.
   const worst = Math.max(-1, ...airAll.map((a) => a.cat ?? -1));
   const air = airAll.slice(0, 5);
-  const [airHead, airRest] = split(airSentence(air, islandName));
+  const [airHead, airRest] = split(airSentence(air, islandName, MONITOR_ISLANDS.has(island)));
   const [proseHead, proseRest] = split(plainProse(k?.sections ?? {}) || "The observatory's latest update is in the official wording below.");
   const [camHead, camRest] = split("A photo from the observatory's camera. Nothing loads until you tap.");
 
@@ -197,7 +203,7 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
             {k && (
               <div className="vo-notice">
                 <OfficialWording title={`USGS level: ${k.level} · Aviation color: ${k.color} (for aircraft only)${since(k.levelSince)}`} body={k.sms}>
-                  {ml && <p className="mt-s2">Mauna Loa — USGS level: {ml.level} · Aviation color: {ml.color}</p>}
+                  {ml && <p className="mt-s2">{mlTitle(ml)}</p>}
                   {Object.entries(k.sections).map(([h, body]) => (
                     <div key={h} className="mt-s4">
                       <p className="vo-sec-h">{h}</p>
@@ -205,6 +211,15 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
                     </div>
                   ))}
                 </OfficialWording>
+              </div>
+            )}
+
+            {/* Kīlauea's notice carries one Mauna Loa line, which is enough while Mauna Loa is
+                quiet. Once it is not, its own official wording has to reach the page whether or not
+                the feed happened to carry a Kīlauea block that day. */}
+            {ml && ml.sms && (ml.level !== "NORMAL" || ml.erupting) && (
+              <div className="vo-notice">
+                <OfficialWording title={`${mlTitle(ml)}${since(ml.levelSince)}`} body={ml.sms} />
               </div>
             )}
           </div>

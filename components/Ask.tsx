@@ -4,7 +4,12 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
 import { useRoads } from "@/components/RoadMap";
+import MiniMap from "@/components/MiniMap";
+import StormMap from "@/components/StormMap";
+import TideChart from "@/components/TideChart";
+import { markOf } from "@/lib/feed";
 import { useJson } from "@/lib/data";
+import { ISLAND_POINTS } from "@/lib/storm";
 import type { Weather } from "@/lib/pages";
 import { ask, type AskCtx } from "@/lib/ask";
 import type { Island } from "@/lib/types";
@@ -44,6 +49,21 @@ function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: strin
   const wx = useJson<Weather>(`v1/${island}/weather.json`);
   const a = ask(q, { ...ctx, roads: pack?.lines, tide: wx?.data?.tide, now });
 
+  /*
+   * Some answers are a picture. "When is high tide" is a curve, a storm is a track, and a closure
+   * is a line on a road — a sentence about any of them is the caption, not the answer. Only ever
+   * the app's own drawings of data it already has: there is nothing here to fetch and nothing to
+   * invent, so an answer with a picture still works with no signal.
+   */
+  const tide = a.topic?.key === "tides" ? wx?.data?.tide : undefined;
+  const storm = a.storms?.find((s) => s.s)?.s;
+  const mark = a.items.length ? markOf(a.items[0]) : undefined;
+  const figure =
+    tide ? <TideChart tide={tide} />
+    : storm ? <div className="cs-figure ask-figure"><StormMap storm={storm} place={ISLAND_POINTS[island]} compact /></div>
+    : mark ? <div className="ask-mark"><MiniMap island={island} mark={mark} size={220} /></div>
+    : null;
+
   if (!a.say) {
     return (
       <p className="cs-body mt-s3">
@@ -54,6 +74,7 @@ function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: strin
   return (
     <div className="mt-s3">
       <h3 className="cs-title">{a.say}</h3>
+      {figure}
       {a.items.length > 0 && <ul className="hm-rows">{a.items.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>}
       {a.topic && a.href && (
         <div className="cs-chiprow">

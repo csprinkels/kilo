@@ -1958,3 +1958,12 @@ body {
 .pf-chip:hover{ border-color:var(--mute); }
 /* The lit chip is the page's one filled control, so what you are looking at is never in doubt. */
 .pf-chip[aria-pressed="true"]{ background:var(--brand); border-color:var(--brand); color:var(--brand-ink); }
+
+/* The action under a danger pill on /weather sits inside a bold title, where .fd-pin-sub would
+   otherwise inherit the weight it does not carry on Now. Same class, same look, both pages. */
+.wx-alert-t .fd-pin-sub{ font-weight:400; }
+
+/* A picture in a search answer: the app's own drawing of data already on the phone. */
+.ask-figure{ margin-top:12px; }
+.ask-mark{ display:flex; justify-content:center; margin-top:12px; }
+.ask-mark svg{ border:1px solid var(--hairline); border-radius:14px; background:var(--map-water); }

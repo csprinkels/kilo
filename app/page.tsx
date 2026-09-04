@@ -110,7 +110,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   // No lead warning and no storm hero? The headline is still allowed to name the worst watch.
   const nextPlain = !lead && !mainStorm && headsUp[0] ? plain.get(headsUp[0].key) : undefined;
   /* ʻIo searches exactly what this page is rendering: same items, same wording, same storm lines. */
-  const askCtx = { items, plain, storms: stormsSnap?.data ? stormLines.map((x) => ({ name: x.s.name, short: x.short })) : undefined };
+  const askCtx = { items, plain, storms: stormsSnap?.data ? stormLines.map((x) => ({ name: x.s.name, short: x.short, s: x.s })) : undefined };
   /* The feed: everything that is not pinned, banded by how much it should change what you do.
      A topic summary is not a row — Lowell and Karina are two rows, not one "Storms" card. */
   const pinAll = pinned(items, plain);

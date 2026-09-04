@@ -57,7 +57,9 @@ export default function WeatherPage() {
    * promises. Two hours of runway is the floor for a curve worth looking at.
    */
   const tideLive = d?.tide && d.tide.t0 + (d.tide.h.length - 1) * 3_600_000 >= (w?.fetchedAt ?? 0) + 2 * 3_600_000 ? d.tide : undefined;
-  const now = w?.fetchedAt ?? 0;
+  // The alert pills and "Heads up" are timed against this too, and they outlive a weather.json
+  // failure — so fall back to the feed's own clock rather than 1970.
+  const now = w?.fetchedAt || snap?.fetchedAt || 0;
   const town = d?.towns.find((t) => t.id === townId) ?? d?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
   const h = town?.hourly;
@@ -98,7 +100,8 @@ export default function WeatherPage() {
   // a filter hides sections, never warnings. Air is both, depending on the day, so it is kept on
   // screen at category 2 and up, where its sentence turns into an instruction to stay inside.
   const { bar, show, only } = usePageFilter([
-    ...(TILES && online ? [{ id: "radar", label: "Radar" }] : []),
+    // No meta, no coordinates, no map — the chip would filter down to nothing.
+    ...(TILES && online && meta ? [{ id: "radar", label: "Radar" }] : []),
     ...(h && h.t.length > 0 ? [{ id: "hourly", label: "Hourly" }] : []),
     ...(town && town.fc.length > 0 ? [{ id: "forecast", label: "Forecast" }] : []),
     ...(surfLine ? [{ id: "surf", label: "Surf" }] : []),
@@ -114,38 +117,66 @@ export default function WeatherPage() {
         ? <section className="cs-card wx-flush mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
         : <p className="cs-body mt-s3">Loading the weather…</p>)}
 
-      {d && town && h && meta && (
+      {/*
+        Only the weather cards wait on `d`. The pills, the storm line and "Heads up" come from the
+        feed and storms.json, which fail on their own schedule — a dead weather.json used to take a
+        live Tsunami Warning off the screen with it. `h` and `meta` gate the two things that
+        genuinely need them (the hourly readings, and anything needing coordinates), not the page.
+      */}
+      {d && town && <RightNow town={town} h={h} meta={meta} now={now} />}
+      {d && !town && (
+        <section className="cs-card wx-flush mt-s3">
+          <EmptyState kind="error" title="No town weather for this island right now.">Any alerts still show below. In an emergency call 911.</EmptyState>
+        </section>
+      )}
+
+      {alerts.map(({ i, p }) => {
+        // The pill links to a row only when that row exists. "Heads up" is level 2 EXACTLY, so a lone
+        // Flash Flood Warning got an anchor to nothing, and a level 4 beside a level 2 scrolled the
+        // reader to "Nothing dangerous, but good to know". With no row to open, the pill carries the
+        // instruction itself — on this page nothing else prints it.
+        const row = headsUp.includes(i);
+        const cls = `cs-card wx-alert mt-s3 ${p.level >= 4 ? "wx-alert--danger" : p.level >= 3 ? "wx-alert--warn" : ""}`;
+        const inner = (
+          <>
+            <span className={`cs-ictile ${p.level >= 4 ? "cs-ictile--brick" : p.level >= 3 ? "cs-ictile--amber" : ""}`}><Icon name="warning-fill" size={21} /></span>
+            <p className="wx-alert-t">
+              {p.level >= 3 ? <span className="wx-sev">{p.word ?? LEVEL_WORD[p.level]}:</span> : <>{p.word ?? LEVEL_WORD[p.level]}:</>} {p.headline}
+              {!row && p.action && <span className="fd-pin-sub">{p.action}</span>}
+            </p>
+            {row && <Icon name="caret-right" size={17} className="wx-caret" />}
+          </>
+        );
+        return row
+          ? <a key={i.key} href="#heads-up" className={cls}>{inner}</a>
+          : <div key={i.key} className={cls}>{inner}</div>;
+      })}
+
+      {d && town && (
         <>
-          <RightNow town={town} meta={meta} now={now} />
-
-          {alerts.map(({ i, p }) => (
-            <a key={i.key} href="#heads-up" className={`cs-card wx-alert mt-s3 ${p.level >= 4 ? "wx-alert--danger" : p.level >= 3 ? "wx-alert--warn" : ""}`}>
-              <span className={`cs-ictile ${p.level >= 4 ? "cs-ictile--brick" : p.level >= 3 ? "cs-ictile--amber" : ""}`}><Icon name="warning-fill" size={21} /></span>
-              <p className="wx-alert-t">
-                {p.level >= 3 ? <span className="wx-sev">{p.word ?? LEVEL_WORD[p.level]}:</span> : <>{p.word ?? LEVEL_WORD[p.level]}:</>} {p.headline}
-              </p>
-              <Icon name="caret-right" size={17} className="wx-caret" />
-            </a>
-          ))}
-
           {bar}
 
-          {show("radar") && TILES && online && ((alerts.length > 0 || rainSoon || showRadar || only === "radar")
+          {show("radar") && TILES && online && meta && ((alerts.length > 0 || rainSoon || showRadar || only === "radar")
             ? <RadarMap lat={meta.lat} lon={meta.lon} label={`Rain radar around ${town.name}: blue where it is raining now`} />
             : <button className="btn mt-s3" onClick={() => setShowRadar(true)}><Icon name="drop" size={18} /> See the rain radar</button>)}
-          {storm && (
-            <section className="cs-card t-storms mt-s3">
-              <div className="cs-heroline">
-                <span className="cs-ictile"><Icon name="wind-fill" size={21} /></span>
-                <p className="cs-title">{storm.text}</p>
-              </div>
-              <div className="cs-actions">
-                <Link href="/storms/" className="cs-link wx-golink">See the storm <Icon name="caret-right" size={16} aria-hidden /></Link>
-              </div>
-            </section>
-          )}
+        </>
+      )}
 
-          {show("hourly") && h.t.length > 0 && (
+      {storm && (
+        <section className="cs-card t-storms mt-s3">
+          <div className="cs-heroline">
+            <span className="cs-ictile"><Icon name="wind-fill" size={21} /></span>
+            <p className="cs-title">{storm.text}</p>
+          </div>
+          <div className="cs-actions">
+            <Link href="/storms/" className="cs-link wx-golink">See the storm <Icon name="caret-right" size={16} aria-hidden /></Link>
+          </div>
+        </section>
+      )}
+
+      {d && town && (
+        <>
+          {show("hourly") && h && h.t.length > 0 && (
             <section className="cs-card t-weather mt-s3">
               <h2 className="cs-display cs-display--hero">Next {Math.round(h.t.length / 12) * 12} Hours</h2>
               <p className="cs-body num max-w-[36rem]">{nowAndLater(obsCode(town, now), h)} {trendSentence(h)} {sunLine(meta, now)}</p>
@@ -186,17 +217,17 @@ export default function WeatherPage() {
               )}
             </section>
           )}
-
-          {headsUp.length > 0 && (
-            <section id="heads-up" className="cs-card mt-s3 scroll-mt-s4">
-              <h2 className="cs-display cs-display--hero">Heads up</h2>
-              <p className="cs-body max-w-[36rem]">Nothing dangerous, but good to know.</p>
-              <div className="wx-rows">
-                <ul className="list">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((x) => x.source)).size > 1} />)}</ul>
-              </div>
-            </section>
-          )}
         </>
+      )}
+
+      {headsUp.length > 0 && (
+        <section id="heads-up" className="cs-card mt-s3 scroll-mt-s4">
+          <h2 className="cs-display cs-display--hero">Heads up</h2>
+          <p className="cs-body max-w-[36rem]">Nothing dangerous, but good to know.</p>
+          <div className="wx-rows">
+            <ul className="list">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((x) => x.source)).size > 1} />)}</ul>
+          </div>
+        </section>
       )}
     </PageShell>
   );
@@ -205,47 +236,55 @@ export default function WeatherPage() {
 const obsFresh = (town: TownWx, now: number) => !!town.obs && now - town.obs.at < 2 * HOUR;
 /** The station's sky when its reading is fresh, else nothing (the forecast's first hour stands in). */
 const obsCode = (town: TownWx, now: number) => (obsFresh(town, now) && town.obs?.sky ? conditionCode("", town.obs.sky) : undefined);
-/** "Sunrise at 6:02 AM, sets at 6:44 PM." for today. */
-function sunLine(meta: { lat: number; lon: number }, now: number) {
+/** "Sunrise at 6:02 AM, sets at 6:44 PM." for today, or nothing for a town this build has no coordinates for. */
+function sunLine(meta: { lat: number; lon: number } | undefined, now: number) {
+  if (!meta) return "";
   const s = sunTimes(dayStartHST(now), meta.lat, meta.lon);
   return `Sunrise at ${fmtTime(s.rise)}, sets at ${fmtTime(s.set)}.`;
 }
 
-/** The weather picture: big icon, then the temperature, the sky word, high and low, and a "More" card with the rest. */
-function RightNow({ town, meta, now }: { town: TownWx; meta: { lat: number; lon: number }; now: number }) {
+/**
+ * The weather picture: big icon, then the temperature, the sky word, high and low, and a "More" card
+ * with the rest. Every reading is optional — an hourly block can be absent or empty, and a town the
+ * feed ships but this build's TOWNS list lacks has no coordinates — so each line is dropped rather
+ * than guessed at. A fabricated "Clear" is worse than a missing word.
+ */
+function RightNow({ town, h, meta, now }: { town: TownWx; h?: Hourly; meta?: { lat: number; lon: number }; now: number }) {
   const [open, setOpen] = useState(false);
-  const h = town.hourly!;
   const fresh = obsFresh(town, now);
-  const code = obsCode(town, now) ?? h.c[0];
-  const temp = (fresh ? town.obs?.f : undefined) ?? h.t[0];
-  const rh = (fresh ? town.obs?.rh : undefined) ?? h.rh[0];
+  const code = obsCode(town, now) ?? h?.c[0];
+  const temp = (fresh ? town.obs?.f : undefined) ?? h?.t[0];
+  const rh = (fresh ? town.obs?.rh : undefined) ?? h?.rh[0];
   const fl = temp != null && rh != null ? feelsLike(temp, rh) : undefined;
   const hi = town.fc.find((p) => p.day)?.t, lo = town.fc.find((p) => !p.day)?.t;
-  const mph = (fresh ? town.obs?.wMph : undefined) ?? h.w[0];
-  const deg = fresh && town.obs?.wDir != null ? town.obs.wDir : h.wd[0] * 22.5;
-  const sun = sunTimes(dayStartHST(now), meta.lat, meta.lon);
+  const mph = (fresh ? town.obs?.wMph : undefined) ?? h?.w[0];
+  const deg = fresh && town.obs?.wDir != null ? town.obs.wDir : h?.wd[0] != null ? h.wd[0] * 22.5 : undefined;
+  const sun = meta ? sunTimes(dayStartHST(now), meta.lat, meta.lon) : undefined;
+  const more = fl != null || mph != null || rh != null || !!sun;
   return (
     <>
       <section className="cs-card cs-hero t-weather mt-s3" aria-label={`${town.name} right now`}>
         <div className="wx-now">
-          <ConditionIcon code={code} night={!!h.n[0]} size={164} className="wx-now-ic" />
+          {code != null && <ConditionIcon code={code} night={!!h?.n[0]} size={164} className="wx-now-ic" />}
           <div className="wx-now-read">
             <p className="cs-bignum cs-bignum--lg">{temp != null ? `${temp}°` : "—"}</p>
-            <p className="wx-now-word">{condWord(code)}</p>
+            {code != null && <p className="wx-now-word">{condWord(code)}</p>}
             {hi != null && lo != null && <p className="wx-now-hilo">High {hi}° Low {lo}°</p>}
-            <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="wx-more">
-              More <Icon name="caret-down" size={16} className={open ? "rotate-180" : ""} aria-hidden />
-            </button>
+            {more && (
+              <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="wx-more">
+                More <Icon name="caret-down" size={16} className={open ? "rotate-180" : ""} aria-hidden />
+              </button>
+            )}
           </div>
         </div>
       </section>
-      {open && (
+      {open && more && (
         <section className="cs-card t-weather mt-s3">
           <div className="cs-grid">
             {fl != null && <div className="cs-tile"><p className="wx-stat-v">Feels like {fl}°</p></div>}
-            {mph != null && <div className="cs-tile"><p className="wx-stat-v">{mph < 4 ? "Almost no wind" : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p></div>}
+            {mph != null && <div className="cs-tile"><p className="wx-stat-v">{mph < 4 ? "Almost no wind" : deg == null ? `Wind ${mph} mph` : `Wind from the ${dirWord(deg)}, ${mph} mph`}</p></div>}
             {rh != null && <div className="cs-tile"><p className="wx-stat-v">Humidity {rh}%</p></div>}
-            <div className="cs-tile"><p className="wx-stat-v">Sunrise {fmtTime(sun.rise)} · Sunset {fmtTime(sun.set)}</p></div>
+            {sun && <div className="cs-tile"><p className="wx-stat-v">Sunrise {fmtTime(sun.rise)} · Sunset {fmtTime(sun.set)}</p></div>}
           </div>
         </section>
       )}

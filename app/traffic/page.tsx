@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import ItemRow, { LEVEL_TEXT, NeighborRow } from "@/components/ItemRow";
@@ -32,6 +32,7 @@ const islandName = (i: IslandId) => ISLAND_LABEL[i].split(" · ")[0];
 // Who to call when the county has not listed a way around. Only Hawaiʻi County publishes closures with detours today.
 const CIVIL_DEFENSE: Partial<Record<IslandId, { tel: string; shown: string }>> = { hawaii: { tel: "+18089350031", shown: "(808) 935-0031" } };
 const NEAR_MILES = 5;
+const subscribeOnline = (cb: () => void) => { addEventListener("online", cb); addEventListener("offline", cb); return () => { removeEventListener("online", cb); removeEventListener("offline", cb); }; };
 const APP_NOTE = "Kilo does not save your location.";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const isRoadwork = (i: Item) => i.source === "hdot";
@@ -70,6 +71,9 @@ export default function RoadsPage() {
   const [youMsg, setYouMsg] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const roadsPack = useRoads(island);
+  // The Waze embed is a live third-party web app: with no signal it is a grey box, so the chip
+  // that reveals it has to go with it.
+  const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
 
   const items = useMemo(() => (snap?.data?.items ?? []).filter((i) => i.type === "traffic" || i.type === "road_closure"), [snap]);
   const plain = useMemo(() => new Map(items.map((i) => [i.key, plainAlert(i, now, island)] as [string, Plain])), [items, now, island]);
@@ -92,7 +96,9 @@ export default function RoadsPage() {
   const { bar, show, only } = usePageFilter([
     { id: "map", label: "Map" },
     ...(roadwork.length ? [{ id: "roadwork", label: "Roadwork" }] : []),
-    { id: "live", label: "Live traffic" },
+    // navigator.onLine only means an interface is up: a captive portal or a dead upstream still
+    // reads as online. The feed's own verdict is the one that has actually tried to reach something.
+    ...(online && !offline ? [{ id: "live", label: "Live traffic" }] : []),
   ]);
 
   const segments: Segment[] = [...official, ...roadwork].flatMap((i) => { const kind = segmentKind(i); return kind ? [{ key: i.key, kind, path: i.path, lat: i.lat, lon: i.lon, approx: i.fields?.approx === "area" }] : []; });
@@ -222,7 +228,7 @@ export default function RoadsPage() {
               )
             )}
 
-            {show("live") && (showMap || only === "live" ? (
+            {show("live") && online && !offline && (showMap || only === "live" ? (
               <section className="cs-card">
                 <div className="cs-figure tr-top">
                   <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />

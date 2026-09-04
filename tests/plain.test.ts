@@ -237,3 +237,38 @@ test("an alert reissued under a new id replaces the one it supersedes", () => {
   const bare: Item = { ...older, key: "x", fields: {} };
   assert.equal(dropSuperseded([bare, { ...bare, key: "y" }]).length, 2);
 });
+
+/** A county road closure, which is where the "location" free-text field comes from. */
+const roadItem = (key: string, road: string, districts: string[], location: string): Item => ({
+  key, source: "hccda:roads", tier: "official", type: "road_closure", sev: 2,
+  islands: ["hawaii"], districts, title: `${road} — Closed in Both Directions`, body: "",
+  status: "Closed in Both Directions", srcUrl: "", issuedAt: NOW - 3_600_000, lastConfirmedAt: NOW,
+  hash: "", fields: { location, alternate: "", reason: "Hazardous road conditions" },
+});
+
+test("road closures: three on the same road at three places must not read identically", () => {
+  const at = Date.UTC(2026, 8, 4, 20, 0);
+  const closure = (key: string, location: string) => plainAlert(roadItem(key, "Kaalaiki Road", ["Kau"], location), at, "hawaii");
+
+  const a = closure("a", "Closed from Mamalahoa Highway 11 intersection");
+  const b = closure("b", "Naalehu to Pahala");
+  const c = closure("c", "");
+
+  assert.notEqual(a.headline, b.headline, "two closures at different points must not read the same");
+  assert.notEqual(a.headline, c.headline);
+  assert.notEqual(b.headline, c.headline);
+  assert.match(a.headline, /Mamalahoa Highway 11 intersection/);
+  assert.match(b.headline, /Naalehu to Pahala/);
+  // The status is already in the sentence; the county's own "Closed from …" must not repeat it.
+  assert.doesNotMatch(a.headline, /closed both ways in Kau, closed/i);
+  assert.equal(c.headline, "Kaalaiki Road closed both ways in Kau", "no location, no tail");
+});
+
+test("road closures: a location that says nothing new is left off", () => {
+  const at = Date.UTC(2026, 8, 4, 20, 0);
+  const p = (location: string) => plainAlert(roadItem("k", "Saddle Road", ["Hamakua"], location), at, "hawaii").headline;
+
+  assert.equal(p("N/A"), p(""), "a placeholder is not a place");
+  assert.equal(p("Saddle Road"), p(""), "repeating the road name adds nothing");
+  assert.equal(p("x".repeat(80)), p(""), "a paragraph is not a headline");
+});
