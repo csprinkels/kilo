@@ -75,3 +75,21 @@ test("a storm that is not coming here is a feed row; one that is belongs to the 
   assert.equal(rows[0].mark?.kind, "dot", "a storm is placed by its own position");
   assert.equal(rows[0].source, "the Hurricane Center");
 });
+
+test("a notice row goes to the agency's own post; nothing else leaves the app", () => {
+  const items = [
+    item({ key: "n", type: "notice", srcUrl: "https://dod.hawaii.gov/hiema/news-release/" }),
+    item({ key: "n2", type: "notice", srcUrl: "" }),          // no link published: the row still has to land somewhere
+    item({ key: "r", type: "road_closure", srcUrl: "https://example.gov/closure" }),
+  ];
+  const plain = new Map([
+    ["n", P("State activates the joint information center", 1)],
+    ["n2", P("A proclamation", 1)],
+    ["r", P("Wood Valley Road closed", 1)],
+  ]);
+  const rows = buildFeed({ items, plain, now, island: "hawaii" }).flatMap((b) => b.rows);
+  const href = (k: string) => rows.find((r) => r.key === k)!.href;
+  assert.equal(href("n"), "https://dod.hawaii.gov/hiema/news-release/", "the release is the only place it can be read");
+  assert.equal(href("n2"), "/report/");
+  assert.equal(href("r"), "/traffic/", "roads have a page of their own: stay in the app");
+});
