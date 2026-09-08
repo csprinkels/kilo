@@ -93,7 +93,10 @@ function rowOf(i: Item, p: Plain, now: number): FeedRow {
     at: i.issuedAt,
     when: fmtClock(i.issuedAt, now),
     level: p.level,
-    href: HREF_OF[topic] ?? "/",
+    // A notice has no page of its own: "reports" is the neighbors' page, which never lists an
+    // agency release, so the row used to land somewhere the thing you tapped was not. The
+    // agency's own post is where it can be read, so that is where the row goes.
+    href: (topic === "reports" ? i.srcUrl : "") || HREF_OF[topic] || "/",
     mark: markOf(i),
   };
 }

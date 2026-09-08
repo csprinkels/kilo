@@ -8,6 +8,16 @@
  * are set here explicitly, the same ones .github/workflows/deploy.yml uses, and the build is
  * refused if they do not survive into the bundle.
  *
+ * iOS entitlements, if a build ever says "App.entitlements was modified during the build":
+ * with CODE_SIGN_STYLE = Automatic, Xcode syncs the entitlements FILE against the capabilities of
+ * whichever provisioning profile it resolved. A Debug build resolves a development profile, whose
+ * aps-environment is "development" — so a file hardcoding "production" gets rewritten mid-build, and
+ * Xcode refuses. Hence one file per configuration: App.entitlements (Debug, development) and
+ * AppRelease.entitlements (Release, production), wired through CODE_SIGN_ENTITLEMENTS per config.
+ * Keep both free of XML comments: any plist round-trip strips them, which is the same error again.
+ * The value that actually reaches the binary comes from the profile, so Release only carries
+ * "production" once it is signed with a distribution profile — which is what TestFlight export uses.
+ *
  *   node scripts/native.mjs            build + sync both platforms
  *   node scripts/native.mjs ios        …then open Xcode
  *   node scripts/native.mjs android    …then open Android Studio

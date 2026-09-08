@@ -257,12 +257,15 @@ const MORE_WORD: Record<string, string> = {
  */
 function FeedRow({ row, island, focus }: { row: FeedRowT; island: Exclude<Island, "state">; focus?: boolean }) {
   useFocusScroll(row.key, focus);
+  // An agency release has no page here, so its row is the agency's own post. Off-app links open in
+  // a new tab — a full navigation inside the app would replace the app with the agency's website.
+  const away = row.href.startsWith("http");
   return (
-    <Link href={row.href} id={`item-${hashOf(row.key)}`} className={`fd-row t-${row.topic}`}>
+    <Link href={row.href} {...(away ? { target: "_blank", rel: "noreferrer" } : {})} id={`item-${hashOf(row.key)}`} className={`fd-row t-${row.topic}`}>
       <span className="fd-main">
         <span className="fd-head">{row.headline}</span>
         {row.sub && <span className="fd-sub">{row.sub}</span>}
-        <span className="fd-meta"><span className="fd-dot" />{[row.source, row.when].filter(Boolean).join(" \u00b7 ")}</span>
+        <span className="fd-meta"><span className="fd-dot" />{[row.source, row.when].filter(Boolean).join(" \u00b7 ")}{away && <Icon name="arrow-square-out" size={13} className="ml-1 inline align-[-1px]" aria-hidden />}</span>
       </span>
       {row.mark && <span className="fd-thumb"><MiniMap island={island} mark={row.mark} /></span>}
     </Link>
