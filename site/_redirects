@@ -1,0 +1,6 @@
+# The privacy and support pages are routes in the app build (project `kilo`), not this static
+# page — but kilohi.org/privacy is the address a person guesses, and the one the App Store lists.
+/privacy    https://app.kilohi.org/privacy/  301
+/privacy/*  https://app.kilohi.org/privacy/  301
+/support    https://app.kilohi.org/support/  301
+/support/*  https://app.kilohi.org/support/  301
