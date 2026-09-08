@@ -165,6 +165,9 @@ export default function Settings() {
           <Link href="/privacy/" className="cs-row cs-row--mid sr-go">
             <span className="cs-rowmain font-semibold">Privacy</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
           </Link>
+          <Link href="/support/" className="cs-row cs-row--mid sr-go">
+            <span className="cs-rowmain font-semibold">Support</span><Icon name="caret-right" className="size-5 shrink-0" aria-hidden />
+          </Link>
         </nav>
       </div>
 
