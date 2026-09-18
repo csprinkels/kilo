@@ -245,6 +245,9 @@
 }
 
 body { padding-top: env(safe-area-inset-top); } /* the app draws under the status bar; browsers report 0 */
+/* …and lays the page's own ground behind that status bar, so a page scrolling up passes under it instead
+   of running into the clock. Zero tall in a browser. Above the content and the sticky chips (10), below the tab bar (20). */
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--bg); z-index: 15; pointer-events: none; }
 html {
   background: var(--bg);
   font-size: 100%;                 /* never px: inherits the browser/OS text size */
@@ -1952,8 +1955,10 @@ body {
   overflow-x:auto; -webkit-overflow-scrolling:touch;
   /* Warnings come first on every page, and on a bad day they fill the screen — so the row that
      cuts the page down would itself be below the fold. It sticks instead: scroll past the alerts
-     once and the chips stay with you. The tint is the page's own ground, so nothing shows through. */
-  position:sticky; top:0; z-index:10; background:var(--bg);
+     once and the chips stay with you. The tint is the page's own ground, so nothing shows through.
+     On iOS the status bar overlays the web view (body pads for it), but a sticky top:0 is measured
+     against the viewport, not that padding — so the chips parked under the clock. They stop below it. */
+  position:sticky; top:env(safe-area-inset-top); z-index:10; background:var(--bg);
 }
 .pf-chip{
   flex:0 0 auto; min-height:2.25rem; padding:0 13px;

@@ -26,14 +26,33 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+/**
+ * A real environment variable beats a dotenv file in Next, so passing "" here does not mean "unset" —
+ * it OVERRIDES .env.local. That is how a store build shipped with no Turnstile widget while the server
+ * still demanded a token: every report, vote and flag came back 429 "Please complete the verification."
+ * So fall back to .env.local, the one place these live locally, instead of blanking them.
+ */
+const fromEnvLocal = (name) => {
+  try { return (readFileSync(".env.local", "utf8").match(new RegExp(`^${name}=(.*)$`, "m"))?.[1] ?? "").trim(); }
+  catch { return ""; }
+};
+const pick = (name) => process.env[name] || fromEnvLocal(name);
+
 const PROD = {
   NEXT_PUBLIC_CONVEX_SITE_URL: "https://standing-ram-435.convex.site",
   NEXT_PUBLIC_CONVEX_URL: "https://standing-ram-435.convex.cloud",
   // Optional. Unset is fine: the client falls back to Convex itself for reads.
-  NEXT_PUBLIC_DATA_URL: process.env.NEXT_PUBLIC_DATA_URL ?? "",
-  NEXT_PUBLIC_CARTO_KEY: process.env.NEXT_PUBLIC_CARTO_KEY ?? "",
-  NEXT_PUBLIC_TURNSTILE_SITEKEY: process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "",
+  NEXT_PUBLIC_DATA_URL: pick("NEXT_PUBLIC_DATA_URL"),
+  NEXT_PUBLIC_CARTO_KEY: pick("NEXT_PUBLIC_CARTO_KEY"),
+  // NOT optional: TURNSTILE_SECRET is set on the Convex side, and a build with no site key posts no
+  // token, which the server answers with 429 — the whole Reports screen, flagging included.
+  NEXT_PUBLIC_TURNSTILE_SITEKEY: pick("NEXT_PUBLIC_TURNSTILE_SITEKEY"),
 };
+if (!PROD.NEXT_PUBLIC_TURNSTILE_SITEKEY) {
+  console.error("\n✗ no NEXT_PUBLIC_TURNSTILE_SITEKEY (env or .env.local). The server requires a Turnstile token:");
+  console.error("  reports, votes and flags would all answer 429. Set it before building for the store.");
+  process.exit(1);
+}
 
 const run = (cmd, args, env) =>
   execFileSync(cmd, args, { stdio: "inherit", env: { ...process.env, ...env } });
@@ -63,7 +82,12 @@ if (bundled.includes("abundant-dotterel-415")) {
   console.error("\n✗ the DEV Convex deployment is in the bundle. Do not ship this.");
   process.exit(1);
 }
-console.log(`✓ the bundle reads from ${host}`);
+if (!bundled.includes(PROD.NEXT_PUBLIC_TURNSTILE_SITEKEY)) {
+  console.error("\n✗ the Turnstile site key is not in the built bundle — the report form would ship without its");
+  console.error("  widget, and the server rejects a report with no token. Do not ship this.");
+  process.exit(1);
+}
+console.log(`✓ the bundle reads from ${host}, with the Turnstile widget`);
 
 console.log("· syncing into ios and android");
 run("npx", ["cap", "sync"]);

@@ -135,8 +135,13 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     let body: Record<string, unknown>;
     try { body = await req.json(); } catch { return json({ ok: false, error: "Bad request." }, 400); }
-    const bot = await botCheck({ ...body, openedAt: typeof body.openedAt === "number" ? body.openedAt : 0 });
-    if (bot && bot !== "honeypot" && process.env.TURNSTILE_SECRET) return json({ ok: false, error: bot }, 429);
+    // No Turnstile here on purpose. The only widget in the app is on the report form, so a vote or a flag
+    // can never carry a token — and with TURNSTILE_SECRET set, botCheck answered every one of them 429
+    // "Please complete the verification.", which silently killed the flag button the App Store requires
+    // (Guideline 1.2) along with "Still there" and "Gone". A spammable flag beats a dead one.
+    // ponytail: the remaining guards are the per-device dup check and VOTES_DAILY_CAP, both keyed to a
+    // client-minted uuid — three rotated ids can push a post to `pending`. Move flags to a signed device
+    // attestation if brigading ever actually happens.
     const hash = await deviceHash(body.deviceId);
     const vote = body.vote;
     if (!hash || typeof body.id !== "string" || !["still", "gone", "flag"].includes(String(vote))) return json({ ok: false, error: "Bad request." }, 400);

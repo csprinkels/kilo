@@ -101,7 +101,9 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
 
         {step === "location" && (
           <Screen picture={<TopicIcon topic="tsunami" size={120} />} title="Where you are" text="Kilo can check whether the spot you are standing on is in a tsunami evacuation zone, and which closed roads are near you. The check happens on your phone. Your location is never saved or sent anywhere.">
-            <button className="btn btn-primary btn-big" disabled={busy} onClick={askLocation}><Icon name="crosshair" size={20} /> {busy ? "Asking your phone…" : "Allow location"}</button>
+            {/* "Continue", not "Allow": App Review rejected 1.0.0 under 5.1.1(iv) because the button into a permission
+                prompt used the system prompt's own word. Apple named "Continue" and "Next" as the words to use instead. */}
+            <button className="btn btn-primary btn-big" disabled={busy} onClick={askLocation}><Icon name="crosshair" size={20} /> {busy ? "Asking your phone…" : "Continue"}</button>
             <button className="btn btn-big mt-s2" onClick={() => setStep(canAskPush ? "warnings" : "done")}>Not now</button>
             {note && <p className="mt-s3 text-body text-ink-2">{note}</p>}
           </Screen>

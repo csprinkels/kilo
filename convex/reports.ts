@@ -62,12 +62,16 @@ export const vote = internalMutation({
     const now = Date.now();
     const r = await ctx.db.get(id);
     if (!r || r.status !== "live") throw new ConvexError({ code: 404, message: "That report is no longer active." });
-    if (r.voters.includes(deviceHash)) return { ok: true, dup: true };
+    // Still/gone is one opinion per device. Flagging is a separate act — a reader who confirmed a post an hour
+    // ago must still be able to report it when it turns abusive, and the old shared check silently swallowed that.
+    const flaggers = r.flaggers ?? [];
+    if (vote === "flag" ? flaggers.includes(deviceHash) : r.voters.includes(deviceHash)) return { ok: true, dup: true };
     const myVotesToday = (await ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "live")).collect())
       .filter((x) => x.voters.includes(deviceHash) && x.lastConfirmedAt > now - DAY).length;
     if (myVotesToday >= VOTES_DAILY_CAP) throw new ConvexError({ code: 429, message: "That's plenty of votes for today." });
 
-    const patch: Record<string, unknown> = { voters: [...r.voters, deviceHash] };
+    const patch: Record<string, unknown> = { voters: r.voters.includes(deviceHash) ? r.voters : [...r.voters, deviceHash] };
+    if (vote === "flag") patch.flaggers = [...flaggers, deviceHash];
     if (vote === "still") { patch.confirmCount = r.confirmCount + 1; patch.lastConfirmedAt = now; patch.expiresAt = afterVote("still", r as never, now); }
     if (vote === "gone") { patch.goneCount = r.goneCount + 1; if (r.goneCount + 1 >= 3) patch.expiresAt = afterVote("gone", r as never, now); }
     if (vote === "flag") {

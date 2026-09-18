@@ -8,6 +8,7 @@ import { shareText } from "@/lib/native";
 import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 import { track } from "@/lib/stat";
+import { hidePoster } from "@/lib/hidden";
 
 export const ICON: Record<ItemType, IconName> = {
   shelter: "tent", road_closure: "traffic-cone", school: "student", advisory: "drop", storm: "wind", tsunami: "waves",
@@ -73,15 +74,20 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
 export function NeighborRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
   const [open, setOpen] = useState(!!focus);
   const rid = item.fields?.rid;
+  const by = item.fields?.by;   // the "same poster" label; older snapshots carry none, so the control hides itself
   const [voted, setVoted] = useState<boolean | null>(null);
   const [confirms, setConfirms] = useState(Number(item.fields?.confirms ?? 0));
   const [msg, setMsg] = useState<string | null>(null);
   const votedNow = voted ?? (open && rid ? hasVoted(rid) : false);
   const cast = async (v: "still" | "gone" | "flag") => {
     if (!rid) return;
-    const out = await voteReport(rid, v);
-    if (out.ok) { setVoted(true); if (v === "still") setConfirms((c) => c + 1); setMsg(v === "still" ? "Thanks. Marked as still there." : v === "gone" ? "Thanks. Marked as gone." : "Thanks. A person will look at it."); }
-    else setMsg(out.error ?? "Could not send that right now.");
+    // voteReport leaves fetch() and res.json() unguarded, so a dropped signal or a 30s timeout throws here.
+    // Without this catch the tap was a silent no-op — on the one control the App Store requires.
+    try {
+      const out = await voteReport(rid, v);
+      if (out.ok) { setVoted(true); if (v === "still") setConfirms((c) => c + 1); setMsg(v === "still" ? "Thanks. Marked as still there." : v === "gone" ? "Thanks. Marked as gone." : "Thanks. A person will look at it."); }
+      else setMsg(out.error ?? "Could not send that right now.");
+    } catch { setMsg("Could not send that right now. Check your signal and try again."); }
   };
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   const p = plainAlert(item, now);
@@ -103,8 +109,21 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
             <div className="mt-s3 flex flex-wrap items-center gap-s2">
               <button className="btn" onClick={() => cast("still")}>Still there</button>
               <button className="btn" onClick={() => cast("gone")}>Gone</button>
-              <button className="inline-flex min-h-11 items-center px-s2 text-small font-semibold text-ink-2" onClick={() => cast("flag")}>Flag this post</button>
             </div>
+          )}
+          {/* Outside the ternary: reporting a post must stay reachable after "Still there" or "Gone". */}
+          <p className="mt-s2">
+            <button className="inline-flex min-h-11 items-center px-s2 text-small font-semibold text-ink-2" onClick={() => cast("flag")}>Flag this post</button>
+          </p>
+          {/* Outside the ternary: cast() only flips `voted` on success, so a failed flag, a rate limit or a
+              dropped signal rendered nothing at all before this. */}
+          {!votedNow && msg && <p className="mt-s3 text-body text-ink-2" role="alert">{msg}</p>}
+          {by && (
+            <p className="mt-s2">
+              <button className="inline-flex min-h-11 items-center px-s2 text-small font-semibold text-ink-2" onClick={() => hidePoster(by)}>
+                Hide posts from this neighbor
+              </button>
+            </p>
           )}
           <Actions item={item} />
         </div>

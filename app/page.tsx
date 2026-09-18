@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
+import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import AlertsCard from "@/components/AlertsCard";
@@ -60,7 +61,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const quakesFile = useJson<Quakes>("v1/quakes.json");
   const now = ess?.fetchedAt || snap?.fetchedAt || 0;
   const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
-  const offline = !!ess?.offline && !!snap?.offline;
+  const offline = !!ess?.offline && (snap?.offline ?? true);  // no cache at all: snap is null, not offline
   const loaded = !!(snap?.data || ess?.data);
 
   const items = useMemo(() => {
@@ -219,6 +220,10 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           })}
 
           {!loaded && !offline && <p className="cs-body hm-flat">Loading what is happening around {islandName(island)}…</p>}
+          {/* Home was the one data page with no offline state: with nothing cached it sat on "Loading…" for ever. */}
+          {!loaded && offline && (
+            <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
+          )}
 
           <div className="cs-card"><AlertsCard island={island} compact /></div>
         </div>

@@ -21,6 +21,7 @@ const STAT_LABEL = (e: string): string => {
   const [kind, rest] = e.split(":");
   if (kind === "view") return `Opened the ${rest === "now" ? "Now" : rest === "reports" ? "Reports" : rest.replace(/^./, (c) => c.toUpperCase())} screen`;
   if (kind === "open") return `Opened a ${rest === "neighbor" ? "neighbor report" : (TYPE[rest] ?? rest).toLowerCase()}`;
+  if (kind === "visit") return `Opened the ${rest === "app" ? "app" : "site"} (once per person per day)`;
   if (kind === "warnings") return "Turned on warnings";
   if (kind === "report") return `Sent a report (${rest})`;
   return e;

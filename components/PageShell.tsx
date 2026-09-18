@@ -22,7 +22,7 @@ export default function PageShell({
     <main className="relative z-[1] mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
       <TopBar island={island} onIsland={onIsland} />
       <SectionNav />
-      {fetchedAt != null && <Freshness gen={gen ?? fetchedAt} checkedAt={fetchedAt} offline={!!offline} weak={weak} />}
+      {fetchedAt != null && <Freshness gen={gen ?? 0} checkedAt={fetchedAt} offline={!!offline} weak={weak} />}
       <h1 className="h-display mt-s6">{title}</h1>
       {line && <p className="mt-s2 max-w-[36rem] text-body text-ink-2">{line}</p>}
       {children}
