@@ -1,5 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
+import { showEveryone, useHidden } from "@/lib/hidden";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import PageShell from "@/components/PageShell";
@@ -86,6 +87,7 @@ export default function Settings() {
   const island = stored === "state" ? "hawaii" : stored;
   const [size, setSize] = useTextSize();
   const platform = usePlatform();
+  const hidden = useHidden();
   const county = COUNTY_ALERTS[island];
   const countyName = county.label.replace(/\s*\(.*\)$/, "");
   const countyHow = county.how.startsWith("Text") ? county.how : "Sign up on their website";
@@ -126,6 +128,16 @@ export default function Settings() {
           : platform === "android" ? <>Tap the menu, then &ldquo;Install app&rdquo;. It then opens full screen and works with no signal.</>
           : `Open ${APP_NAME} on your phone to add it to your Home Screen.`
         } />
+
+        <Card icon="users-three-fill" title="Neighbors you have hidden" sentence={
+          hidden.size
+            ? `${hidden.size} hidden on this phone. Nothing they post reaches you, on any screen.`
+            : "Open any neighbor report and tap \u201CHide posts from this neighbor\u201D to stop seeing that person. It stays on this phone, and nobody is told."
+        }>
+          {hidden.size > 0 && (
+            <div className="cs-actions mt-s4"><button className="btn" onClick={showEveryone}>Show them again</button></div>
+          )}
+        </Card>
 
         <Card icon="megaphone-fill" title="Where the information comes from" sentence="Every item says who reported it. Nothing is written by a computer.">
           {/* The feed row from the mockup: pip · who · what. The pip is the neutral one on purpose —

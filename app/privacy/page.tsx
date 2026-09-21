@@ -49,7 +49,7 @@ export default function Privacy() {
 
       <Section title="What we count">
         <p className="mt-s2 max-w-[36rem] text-body text-ink-2">
-          So we can see which parts of {APP_NAME} people actually use, we keep simple counts &mdash; how many times each screen is opened and each main button is tapped. These counts live on our own server, are added up across everyone, and are never tied to you, your phone, or where you are. There is no cookie, no advertising company, and nothing that could pick you out. Example: &ldquo;the Weather screen was opened 300 times today.&rdquo;
+          So we can see which parts of {APP_NAME} people actually use, we keep simple counts &mdash; how many times each screen is opened and each main button is tapped. These counts live on our own server, are added up across everyone, and are never tied to you, your phone, or where you are. There is no cookie, no advertising company, and nothing that could pick you out. Example: &ldquo;the Weather screen was opened 300 times today.&rdquo; One of those counts is a plain visit, added once per day: your browser remembers today&rsquo;s date so the second and third time you open {APP_NAME} today are not counted again. That date stays on your device, is never sent anywhere, and is not a name or a number for you.
         </p>
       </Section>
 

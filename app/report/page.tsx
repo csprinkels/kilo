@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import Icon, { type IconName } from "@/components/Icon";
@@ -16,6 +16,8 @@ import type { Island } from "@/lib/types";
 import { fmtClock } from "@/lib/brand";
 
 const TURNSTILE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
+type TurnstileApi = { render: (el: HTMLElement, opts: Record<string, unknown>) => string; reset: (id?: string) => void };
+const turnstile = () => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
 const SENTENCE = "What people nearby are seeing. Not checked by anyone official. Hurt or in danger? Call 911 first.";
 
 /** Tile words and pictures. Labels are the everyday words, not the form's internal names. */
@@ -71,7 +73,8 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
   const [writing, setWriting] = useState<boolean | null>(null);
   const open = writing ?? isType(linkedType);
   const now = snap?.fetchedAt || ess?.fetchedAt || 0;
-  const offline = !!ess?.offline && !!snap?.offline;
+  const offline = !!ess?.offline && (snap?.offline ?? true);
+  const snapFailed = !!snap && !snap.data && snap.offline;   // essentials fine, snapshot didn't arrive: still not "loading"
   const posts = (snap?.data?.items ?? []).filter((i) => i.tier === "community").sort((a, b) => b.lastConfirmedAt - a.lastConfirmedAt);
 
   return (
@@ -86,7 +89,7 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
             </button>
             <H2>Reported near you</H2>
             {!snap?.data ? (
-              offline
+              offline || snapFailed
                 ? <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
                 : <p className="cs-card t-reports rp-quiet mt-s3">Loading what neighbors reported…</p>
             ) : posts.length === 0 ? (
@@ -109,6 +112,9 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
   const [tried, setTried] = useState(false);
   const [result, setResult] = useState<{ r: SubmitResult; at: number } | null>(null);
   const [token, setToken] = useState<string | undefined>();
+  const [tsFailed, setTsFailed] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const widget = useRef<string | undefined>(undefined);
 
   // Words are kept on the phone until the post goes through, so a dropped signal never eats them.
   useEffect(() => {
@@ -118,10 +124,35 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
     queueMicrotask(() => { if (saved) setD((cur) => ({ ...EMPTY, ...saved, ...(cur.type ? { type: cur.type } : {}) })); setOpenedAt(Date.now()); });
   }, []);
   useEffect(() => { try { localStorage.setItem("reportDraft", JSON.stringify(d)); } catch { /* storage full: the words stay on screen */ } }, [d]);
+  // Explicit render, not the implicit data-callback widget. The implicit one scans the DOM once when the
+  // script loads; posting unmounts this form for the success card, and on the way back nothing re-scans, so
+  // no second token is ever issued and Post sits disabled on "Checking you are a person…" for good. Tokens
+  // are single-use, so "Report another" has to reset the widget too.
+  const mountTurnstile = (el: HTMLDivElement | null) => {
+    boxRef.current = el;
+    const ts = turnstile();
+    if (!el || !ts || widget.current !== undefined) return;
+    widget.current = ts.render(el, {
+      sitekey: TURNSTILE_KEY,
+      appearance: "interaction-only",
+      callback: (t: string) => { setToken(t); setTsFailed(false); },
+      "error-callback": () => setTsFailed(true),
+      "timeout-callback": () => setTsFailed(true),
+      "expired-callback": () => setToken(undefined),
+    });
+  };
+  const retryTurnstile = () => {
+    setTsFailed(false); setToken(undefined);
+    const ts = turnstile();
+    if (ts && widget.current !== undefined) ts.reset(widget.current);
+    else { widget.current = undefined; mountTurnstile(boxRef.current); }
+  };
+  // Blocked, offline or just slow: say so and offer a retry rather than leaving a dead button and no reason.
   useEffect(() => {
-    if (!TURNSTILE_KEY) return;
-    (window as unknown as { onTurnstile?: (t: string) => void }).onTurnstile = (t) => setToken(t);
-  }, []);
+    if (!TURNSTILE_KEY || token || tsFailed) return;
+    const t = setTimeout(() => setTsFailed(true), 30_000);   // long enough for an interactive challenge
+    return () => clearTimeout(t);
+  }, [token, tsFailed]);
 
   const guessed = districtFor(d.locText);
   const district = guessed ?? d.district;
@@ -133,6 +164,14 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
   const problem = rawError ? (PLAIN_ERROR[rawError] ?? rawError) : !d.agreed ? "Check the box to say this is not an emergency." : null;
   const checking = !!TURNSTILE_KEY && !token;
 
+  // Turnstile tokens are single-use and siteverify redeems them before the report is written, so any failure
+  // after that point leaves a spent token in state. Retrying with it is guaranteed to 429.
+  const spendToken = () => {
+    setToken(undefined);
+    const ts = turnstile();
+    if (ts && widget.current !== undefined) ts.reset(widget.current);
+  };
+
   const send = async () => {
     setTried(true);
     if (problem || !d.type || !district || checking) return;
@@ -141,12 +180,13 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       const r = await submitReport({ type: d.type, text: d.text, locText: d.locText, island: "hawaii", district, openedAt, website: "", turnstileToken: token });
       if (r.ok) track(`report:${r.status ?? "posted"}`);
       setResult({ r, at: Date.now() });
-      if (r.ok) localStorage.removeItem("reportDraft");
+      if (r.ok) localStorage.removeItem("reportDraft"); else spendToken();
     } catch {
       setResult({ r: { ok: false, error: "Could not send. Your words are saved. Try again when you have signal." }, at: Date.now() });
+      spendToken();
     } finally { setBusy(false); }
   };
-  const again = () => { setResult(null); setD(EMPTY); setTried(false); setOpenedAt(Date.now()); };
+  const again = () => { setResult(null); setD(EMPTY); setTried(false); setOpenedAt(Date.now()); setToken(undefined); setTsFailed(false); widget.current = undefined; };
 
   if (result?.r.ok) {
     const r = result.r;
@@ -228,15 +268,21 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
 
           {TURNSTILE_KEY && (
             <>
-              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
-              <div className="cf-turnstile mt-s3" data-sitekey={TURNSTILE_KEY} data-callback="onTurnstile" data-appearance="interaction-only" />
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={() => mountTurnstile(boxRef.current)} />
+              <div ref={mountTurnstile} className="mt-s3" />
+              {tsFailed && (
+                <p className="rp-bad" role="alert">
+                  <Icon name="warning-fill" size={18} />
+                  <span>Could not reach the check that keeps bots out. <button type="button" className="font-semibold underline" onClick={retryTurnstile}>Try again</button></span>
+                </p>
+              )}
             </>
           )}
 
           {tried && problem && <p className="rp-bad" role="alert"><Icon name="warning-fill" size={18} />{problem}</p>}
           {result && !result.r.ok && <p className="rp-bad" role="alert"><Icon name="wifi-slash" size={18} />{result.r.error}</p>}
           <div className="rp-stack">
-            <button type="submit" disabled={busy || checking} className="cs-cta cs-wide">{checking ? "Checking you are a person…" : busy ? "Sending…" : "Post to neighbors"}</button>
+            <button type="submit" disabled={busy || checking} className="cs-cta cs-wide">{checking ? (tsFailed ? "Verification unavailable" : "Checking you are a person…") : busy ? "Sending…" : "Post to neighbors"}</button>
             <button type="button" className="cs-ghost cs-wide" onClick={onClose}>Back to Reports</button>
           </div>
         </section>

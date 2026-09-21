@@ -87,6 +87,7 @@ export default defineSchema({
     goneCount: v.number(),
     flagCount: v.number(),
     voters: v.array(v.string()),
+    flaggers: v.optional(v.array(v.string())),   // flags are tracked apart from still/gone: one vote must not silence a report
     createdAt: v.number(),
     lastConfirmedAt: v.number(),
     expiresAt: v.number(),

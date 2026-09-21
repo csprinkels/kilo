@@ -116,7 +116,7 @@ export default function WeatherPage() {
   ], { clearOn: `${alerts[0]?.p.level ?? 0}-${storm?.level ?? 0}-${airLevel}` });
 
   return (
-    <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={w?.fetchedAt} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
+    <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={d ? w?.fetchedAt : undefined} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
       {!d && (w || slow
         ? <section className="cs-card wx-flush mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
         : <p className="cs-body mt-s3">Loading the weather…</p>)}

@@ -47,3 +47,14 @@ test("afterVote: still-there extends up to 2x default; gone winds down within 30
   assert.equal(afterVote("gone", { type: "crash", createdAt: created, expiresAt: t.ttlMs }, 0), 30 * 60_000);
   assert.equal(afterVote("gone", { type: "crash", createdAt: created, expiresAt: 10 * 60_000 }, 0), 10 * 60_000, "never extends");
 });
+
+test("reportToItem: an opaque poster label, only when the row has a device hash", () => {
+  const base = { _id: "abc", type: "road_flooded" as const, text: "Water over both lanes", locText: "Hwy 130 at Kea\u2018au", island: "hawaii" as const, district: "Puna", status: "live", confirmCount: 0, goneCount: 0, flagCount: 0, createdAt: 1, lastConfirmedAt: 1, expiresAt: 2 };
+  const one = reportToItem({ ...base, deviceHash: "sha-of-device-one" });
+  const oneLater = reportToItem({ ...base, deviceHash: "sha-of-device-one", confirmCount: 9, _id: "def" });
+  const two = reportToItem({ ...base, deviceHash: "sha-of-device-two" });
+  assert.equal(one.fields?.by, oneLater.fields?.by);        // same phone, same label: hiding sticks across posts
+  assert.notEqual(one.fields?.by, two.fields?.by);          // different phones, different labels
+  assert.notEqual(one.fields?.by, "sha-of-device-one");     // never the stored hash itself
+  assert.equal(reportToItem(base).fields?.by, undefined);   // rows written before this simply carry none
+});

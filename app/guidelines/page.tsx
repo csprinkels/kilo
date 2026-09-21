@@ -10,7 +10,7 @@ const RULES: [string, string][] = [
   ["If you are not sure, say so.", "Every post says “not checked” because a neighbor wrote it, not an official."],
   ["Posts clear by themselves.", `A crash after ${hours(REPORT_TYPES.crash.ttlMs)} hours, a light out after ${hours(REPORT_TYPES.signal_out.ttlMs)}, a lost pet after a week.`],
   ["Be kind.", "No threats, no insults, no piling on. A phone that keeps doing this gets blocked."],
-  ["Help keep it clean.", "If a post breaks these rules, open it and tap “Flag this post”. Three flags and a person reviews it."],
+  ["Help keep it clean.", "If a post breaks these rules, open it and tap “Flag this post”. Three flags send it back to a person, unless more neighbors have confirmed it than flagged it. To stop seeing one person entirely, open their post and tap \u201CHide posts from this neighbor\u201D."],
 ];
 
 export default function Guidelines() {

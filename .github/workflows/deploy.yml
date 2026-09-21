@@ -1,7 +1,9 @@
 # Pushing to main ships both Cloudflare Pages projects. Neither is Git-connected on Cloudflare's side;
 # this is what turns a merge into a deployment. Secrets: CLOUDFLARE_API_TOKEN (Pages: Edit),
-# CLOUDFLARE_ACCOUNT_ID. Optional repo variables, baked into the client bundle:
-# NEXT_PUBLIC_CARTO_KEY (street tiles), NEXT_PUBLIC_DATA_URL (the R2 mirror), NEXT_PUBLIC_TURNSTILE_SITEKEY.
+# CLOUDFLARE_ACCOUNT_ID. Repo variables baked into the client bundle: NEXT_PUBLIC_CARTO_KEY (street
+# tiles) and NEXT_PUBLIC_DATA_URL (the R2 mirror) are optional. NEXT_PUBLIC_TURNSTILE_SITEKEY is NOT:
+# Convex has TURNSTILE_SECRET set, so a build without the site key posts no token and every report comes
+# back 429. That shipped unnoticed for weeks; the step below fails the build rather than let it repeat.
 name: Deploy
 on:
   push:
@@ -36,6 +38,22 @@ jobs:
         env:
           NEXT_PUBLIC_CONVEX_SITE_URL: https://standing-ram-435.convex.site
           NEXT_PUBLIC_DATA_URL: ${{ vars.NEXT_PUBLIC_DATA_URL }}
+      # includes("") is always true, so prove the variable is non-empty BEFORE looking for it in the
+      # bundle — a naive port of this check green-lights exactly the build it exists to catch.
+      - name: The report form can prove you are a person
+        run: |
+          node --input-type=module -e '
+            import { readdirSync, readFileSync } from "node:fs";
+            import { join } from "node:path";
+            const key = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "";
+            if (!key) { console.error("::error::NEXT_PUBLIC_TURNSTILE_SITEKEY is unset — the report form would ship with no widget and every post would come back 429."); process.exit(1); }
+            const dir = "out/_next/static/chunks";
+            const js = readdirSync(dir, { recursive: true }).filter((f) => String(f).endsWith(".js"))
+              .map((f) => readFileSync(join(dir, String(f)), "utf8")).join("");
+            if (!js.includes(key)) { console.error("::error::the Turnstile site key is not in the built bundle."); process.exit(1); }
+            console.log("turnstile widget ships");'
+        env:
+          NEXT_PUBLIC_TURNSTILE_SITEKEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITEKEY }}
       - run: npx wrangler pages deploy out --project-name kilo --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

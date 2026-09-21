@@ -88,7 +88,9 @@ export default function RoadsPage() {
   const neighbors = items.filter((i) => i.tier === "community");
   const roadwork = items.filter(isRoadwork);
   const loaded = !!snap?.data;
-  const offline = !!snap?.offline && !!ess?.offline;
+  const offline = !!ess?.offline && (snap?.offline ?? true);
+  // Essentials can answer while the 30 KB snapshot fails: this page needs the snapshot, so that is not "loading".
+  const snapFailed = !!snap && !snap.data && snap.offline;
   // Only the sections this island has today: a chip that filters to an empty page is worse than no chip.
   // Neither list of what is wrong on the road gets a chip. "Closed or blocked" says "or when a neighbor
   // reports one", and a neighbor's report is drawn nowhere else — not in that list, not on the map, not
@@ -146,14 +148,14 @@ export default function RoadsPage() {
       fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source={SOURCE[island]}>
       {/* One column of glass cards on the paper ground, the way the mockup stacks them. */}
       <div className="mt-s5 flex flex-col gap-s3">
-        {!loaded && offline && (
+        {!loaded && (offline || snapFailed) && (
           <>
             <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
             {/* useFeed listens for "online" and re-polls a second later */}
             <button className="btn mt-s3" onClick={() => window.dispatchEvent(new Event("online"))}>Try again</button>
           </>
         )}
-        {!loaded && !offline && <p className="text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
+        {!loaded && !offline && !snapFailed && <p className="text-body text-ink-2">Loading the roads on {islandName(island)}…</p>}
         {loaded && (
           <>
             {bar}
@@ -231,7 +233,7 @@ export default function RoadsPage() {
             ) : showMap || only === "live" ? (
               <section className="cs-card">
                 <div className="cs-figure tr-top">
-                  <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" allow="geolocation" />
+                  <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" />
                 </div>
               </section>
             ) : (

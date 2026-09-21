@@ -33,7 +33,7 @@ function hasWebGL(): boolean {
 
 const FRAME: Record<IslandId, [number, number, number, number]> = {
   hawaii: [18.85, 20.33, -156.15, -154.73], maui: [20.45, 21.3, -157.4, -155.9],
-  oahu: [21.2, 21.77, -158.35, -157.58], kauai: [21.8, 22.3, -159.88, -159.22],
+  oahu: [21.2, 21.77, -158.35, -157.58], kauai: [21.75, 22.3, -160.3, -159.22],
 };
 
 export default function ZoneMap({ island, zones, you, label }: {

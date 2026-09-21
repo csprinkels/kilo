@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useHidden } from "./hidden.ts";   // extension required: deploy.yml imports this file in bare Node ESM
 import type { Digest, Essentials, Island, Snapshot } from "./types";
 
 // Where the JSON lives. Prod: the R2/CDN domain (same origin as the app). Dev: the Convex HTTP endpoint serving the same bytes.
@@ -157,7 +158,15 @@ export function useFeed(island: Island): Feed {
     return () => { alive = false; clearTimeout(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("online", now); window.removeEventListener("focus", now); window.removeEventListener("pageshow", now); };
   }, [island]);
 
-  return feed;
+  // Every neighbour list in the app reads this snapshot, so hiding is enforced once, here:
+  // a hidden neighbour's posts never reach the Now feed, the Roads page or Reports.
+  const hidden = useHidden();
+  return useMemo(() => {
+    const items = feed.snap?.data?.items;
+    if (!hidden.size || !items) return feed;
+    const kept = items.filter((i) => i.tier !== "community" || !hidden.has(i.fields?.by ?? ""));
+    return kept.length === items.length ? feed : { ...feed, snap: { ...feed.snap!, data: { ...feed.snap!.data!, items: kept } } };
+  }, [feed, hidden]);
 }
 
 /** Any other published JSON file (e.g. v1/storms.json), same cache + patient-timeout behaviour. */
