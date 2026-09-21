@@ -1,7 +1,8 @@
 # App Review notes — Kilo 1.0.0
 
-Paste into **App Store Connect → App Review Information → Notes**, and send the same text as a reply
-to the Guideline 2.1 message. Answers are numbered to match Apple's request of Sep 17, 2026.
+Send this as the **Resolution Center reply** to the Guideline 2.1 message, with the screen recording
+attached. Answers are numbered to match Apple's request of Sep 17, 2026. It does not fit the App Review
+Information → Notes field, which caps at 4000 bytes — paste **review-notes-short.md** there instead.
 
 ---
 
