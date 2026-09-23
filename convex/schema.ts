@@ -97,6 +97,9 @@ export default defineSchema({
     .index("by_district_type_created", ["district", "type", "createdAt"])
     .index("by_device_created", ["deviceHash", "createdAt"]),
 
+  // Phones the moderator has removed: no more posts or votes from them. Keyed by the same salted hash reports carry.
+  blockedDevices: defineTable({ deviceHash: v.string(), at: v.number() }).index("by_device", ["deviceHash"]),
+
   // Source health over time, so the owner hears about a feed that has been failing for a while (watch.ts).
   watch: defineTable({ source: v.string(), failsInRow: v.number(), lastOk: v.number(), lastAlertAt: v.number() }).index("by_source", ["source"]),
 

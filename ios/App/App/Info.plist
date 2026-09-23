@@ -4,8 +4,6 @@
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Kilo checks whether the spot you are standing on is inside a tsunami evacuation zone, and which closed roads are near you. Your location is never saved or sent anywhere.</string>
-		<key>UIViewControllerBasedStatusBarAppearance</key>
-	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
   <key>CAPACITOR_DEBUG</key>

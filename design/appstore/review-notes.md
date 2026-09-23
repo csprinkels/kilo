@@ -78,18 +78,22 @@ and in the onboarding that it is not an emergency service and that 911 and Civil
 **User-generated content (Guideline 1.2).** The Reports screen carries short-lived posts from
 neighbors, on Hawaiʻi Island only. Every precaution is in the build:
 
+- **Terms.** Before posting, the neighbor must check "I agree to the neighbor rules: no abusive, hateful or
+  offensive posts." The rules (linked beside the box) say there is no tolerance for abuse, and that such a post
+  is removed and the phone that sent it blocked.
 - **Filtering.** Posts are screened automatically before publication — license plates, phone numbers,
   contact details and links, accusations naming a person, home addresses, profanity and all-caps
   shouting are held for human review, and "Something else" posts are *always* held. Nothing is
   published above informational severity, no post can trigger a notification, and coordinates are
   never published.
 - **Reporting.** Any post can be flagged from the post itself ("Flag this post"), and the control stays
-  available after voting. Three flags send it back to human review, unless more neighbors have confirmed
-  the post than flagged it.
+  available after voting. Every flag alerts the moderator, who acts on it within 24 hours; three flags take the post down
+  until then, unless more neighbors have confirmed the post than flagged it.
 - **Blocking.** Every neighbor post carries "Hide posts from this neighbor". That hides every post from
   that person across the app, on that device, until it is undone in Settings → "Neighbors you have
   hidden", which shows the count and is the only way back.
-- **Moderation.** A named moderator reviews the held queue and can hide any post outright. Posts
+- **Moderation.** A named moderator reviews the held queue within 24 hours, can hide any post outright,
+  and can block the phone that sent it from ever posting or voting again. Posts
   expire on their own within hours (2–12 depending on type, 7 days for a lost pet).
 - **Rate limits.** Five posts per device per day, sixty per district per hour, thirty votes per day.
 - **Published contact.** aloha@csprinkels.com, on https://kilohi.org/support and in the app.

@@ -88,12 +88,21 @@ async function deviceHash(deviceId: unknown) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
-/** Turnstile is enforced as soon as TURNSTILE_SECRET is set in the Convex env (no deploy needed). */
-async function botCheck(body: Record<string, unknown>): Promise<string | null> {
+/**
+ * The app's own WebView origins. Turnstile only runs on http(s) pages, and iOS Capacitor serves the bundle from
+ * capacitor://localhost, so the widget can never issue a token there: every report from the iOS app answered 429,
+ * the exact flow App Review is asked to try. A browser on a real site cannot send these origins; a script can,
+ * so what stands behind them is the honeypot, the timer, the per-device and per-district caps and the hold rules.
+ */
+const NATIVE_ORIGINS = ["capacitor://localhost", "https://localhost"];
+
+/** Turnstile is enforced as soon as TURNSTILE_SECRET is set in the Convex env (no deploy needed), except from the app. */
+async function botCheck(body: Record<string, unknown>, req?: Request): Promise<string | null> {
   if (typeof body.website === "string" && body.website) return "honeypot";
   if (typeof body.openedAt !== "number" || Date.now() - body.openedAt < 3000) return "Too fast. Take a second and try again.";
   const secret = process.env.TURNSTILE_SECRET;
   if (!secret) return null;
+  if (req && NATIVE_ORIGINS.includes(req.headers.get("Origin") ?? "")) return null;
   if (typeof body.turnstileToken !== "string") return "Please complete the verification.";
   const res = await fetch(TURNSTILE_VERIFY, {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -116,7 +125,7 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     let body: Record<string, unknown>;
     try { body = await req.json(); } catch { return json({ ok: false, error: "Bad request." }, 400); }
-    const bot = await botCheck(body);
+    const bot = await botCheck(body, req);
     if (bot === "honeypot") return json({ ok: true, id: "x", status: "live" }); // lie to bots, store nothing
     if (bot) return json({ ok: false, error: bot }, 429);
     const hash = await deviceHash(body.deviceId);
@@ -174,7 +183,7 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     if (!modOk(req, body)) return json({ ok: false, error: "That key does not work." }, 403);
-    if (typeof body.id !== "string" || !["show", "hide"].includes(String(body.action))) return json({ ok: false, error: "Bad request." }, 400);
+    if (typeof body.id !== "string" || !["show", "hide", "block"].includes(String(body.action))) return json({ ok: false, error: "Bad request." }, 400);
     try { return json({ ok: true, ...(await ctx.runMutation(internal.reports.moderate, { id: body.id as never, action: body.action as "show" })) }); }
     catch (e) { return errJson(e); }
   }),

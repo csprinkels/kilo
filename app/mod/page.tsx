@@ -59,7 +59,7 @@ export default function ModPage() {
     return () => { live = false; };
   }, [load]);
 
-  const act = async (id: string, action: "show" | "hide") => {
+  const act = async (id: string, action: "show" | "hide" | "block") => {
     setBusy(id);
     try {
       const r = await fetch(`${API_URL}/v1/mod/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, id, action }) });
@@ -82,7 +82,7 @@ export default function ModPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-s7">
       <h1 className="h-display">Neighbor reports to read</h1>
-      <p className="mt-s2 text-body text-ink-2">Show puts a report on the Reports page for six hours. Hide takes it down for good. Nothing here is automatic.</p>
+      <p className="mt-s2 text-body text-ink-2">Show puts a report on the Reports page for six hours. Hide takes it down for good. Block hides everything from that phone and stops it posting or voting again. Nothing here is automatic. Read what is waiting within a day.</p>
 
       {err && <Notice title={err} icon="warning" />}
 
@@ -123,7 +123,7 @@ export default function ModPage() {
   );
 }
 
-function ModRow({ r, now, busy, onAct }: { r: Row; now: number; busy: boolean; onAct: (id: string, a: "show" | "hide") => void }) {
+function ModRow({ r, now, busy, onAct }: { r: Row; now: number; busy: boolean; onAct: (id: string, a: "show" | "hide" | "block") => void }) {
   return (
     <li className="py-s3">
       <p className="text-small text-ink-2 num">{TYPE[r.type] ?? r.type} · {r.locText || r.district}{r.district && r.locText ? ` · ${r.district}` : ""} · {fmtClock(r.createdAt, now)}</p>
@@ -133,6 +133,7 @@ function ModRow({ r, now, busy, onAct }: { r: Row; now: number; busy: boolean; o
       <div className="mt-s2 flex gap-s2">
         {r.status === "pending" && <button className="btn btn-primary" disabled={busy} onClick={() => onAct(r.id, "show")}><Icon name="check" size={18} /> Show</button>}
         <button className="btn" disabled={busy} onClick={() => onAct(r.id, "hide")}><Icon name="x" size={18} /> Hide</button>
+        <button className="btn" disabled={busy} onClick={() => { if (confirm("Hide everything from this phone and stop it posting or voting again?")) onAct(r.id, "block"); }}><Icon name="x" size={18} /> Block this neighbor</button>
       </div>
     </li>
   );

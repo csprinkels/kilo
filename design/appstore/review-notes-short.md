@@ -1,7 +1,6 @@
 # App Review Notes — Kilo
 
-The full reply, with all six numbered answers and the screen recording, goes to the Resolution
-Center (review-notes.md). This is the 4000-byte Notes field version.
+Full reply with the recording: Resolution Center (review-notes.md). This fits the 4000-byte Notes field.
 
 SETUP. Nothing to set up: no account, login, credentials, sample files or purchases. On first
 launch pick **Hawaiʻi Island** — neighbor reports are Hawaiʻi Island only, so Reports is where the
@@ -20,16 +19,17 @@ Hawaiʻi-specific by design; someone outside Hawaiʻi sees the same working app.
 
 USER-GENERATED CONTENT (Guideline 1.2). Reports carries short-lived neighbor posts, Hawaiʻi Island
 only.
+- Terms: posting requires agreeing to the neighbor rules, which have zero tolerance for abuse.
 - Filtering: posts are screened before publication — license plates, phone numbers, contact details
   and links, accusations naming a person, home addresses, profanity and all-caps are held for human
-  review, and "Something else" posts are always held. No neighbor post can raise a notification,
-  and coordinates are never published.
-- Reporting: every post carries "Flag this post", available before and after voting. Three flags
-  send it back to human review, unless more neighbors have confirmed it than flagged it.
+  review, and "Something else" posts are always held. No neighbor post can raise a notification.
+- Reporting: every post carries "Flag this post", before and after voting. Each flag alerts the
+  moderator, who acts within 24 hours; three flags take the post down until then.
 - Blocking: every post carries "Hide posts from this neighbor", which hides every post from that
   person across the app, on that device, until undone in Settings → "Neighbors you have hidden".
-- Moderation: a named moderator reviews the held queue and can hide any post. Posts expire on their
-  own (2–12 hours; 7 days for a lost pet). Limits: 5 posts per device per day, 60 per district per
+- Moderation: a named moderator reviews the held queue, hides posts, and can block the phone that
+  sent one from posting or voting again. Posts expire on their own
+  (2–12 hours; 7 days for a lost pet). Limits: 5 posts per device per day, 60 per district per
   hour, 30 votes per day.
 - Contact: aloha@csprinkels.com, published at https://kilohi.org/support and inside the app.
 

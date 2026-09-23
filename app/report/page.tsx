@@ -14,8 +14,11 @@ import { track } from "@/lib/stat";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import type { Island } from "@/lib/types";
 import { fmtClock } from "@/lib/brand";
+import { isNative } from "@/lib/native";
 
-const TURNSTILE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
+// Turnstile only runs on http(s) pages. The iOS app is served from capacitor://localhost, where the widget can
+// never issue a token, so inside the app the form goes without it and the server accepts the app's origin instead.
+const TURNSTILE_KEY = isNative() ? undefined : process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
 type TurnstileApi = { render: (el: HTMLElement, opts: Record<string, unknown>) => string; reset: (id?: string) => void };
 const turnstile = () => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
 const SENTENCE = "What people nearby are seeing. Not checked by anyone official. Hurt or in danger? Call 911 first.";
@@ -161,7 +164,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
   // Ask for things in the order they appear on the screen: what, where, which part, the rest.
   const rawError = !d.type ? "Pick a report type." : d.locText.trim().length < 3 ? `Where: 3–${LOC_MAX} characters.`
     : validateReport({ type: d.type, text: d.text, locText: d.locText, island: "hawaii", district: district ?? "" });
-  const problem = rawError ? (PLAIN_ERROR[rawError] ?? rawError) : !d.agreed ? "Check the box to say this is not an emergency." : null;
+  const problem = rawError ? (PLAIN_ERROR[rawError] ?? rawError) : !d.agreed ? "Check the box to agree to the neighbor rules." : null;
   const checking = !!TURNSTILE_KEY && !token;
 
   // Turnstile tokens are single-use and siteverify redeems them before the report is written, so any failure
@@ -261,7 +264,7 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
         <section className="cs-card">
           <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="rp-check">
             <span className={`rp-box${d.agreed ? " rp-box--on" : ""}`} aria-hidden><Icon name="check" size={16} /></span>
-            <span className="rp-checktxt">This is not an emergency and I am 18 or older.</span>
+            <span className="rp-checktxt">I agree to the neighbor rules: no abusive, hateful or offensive posts. This is not an emergency, and I am 18 or older.</span>
           </button>
           <div className="cs-rule" />
           <RulesChip>Neighbor rules</RulesChip>

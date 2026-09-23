@@ -1,4 +1,4 @@
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
@@ -8,12 +8,16 @@ import {
 } from "../lib/reportRules.ts";
 
 const HOUR = 3_600_000, DAY = 24 * HOUR;
+const BLOCKED = "This phone can no longer post or vote on neighbor reports.";
+const isBlocked = async (ctx: QueryCtx, deviceHash: string) =>
+  !!(await ctx.db.query("blockedDevices").withIndex("by_device", (q) => q.eq("deviceHash", deviceHash)).first());
 
 /** Validate, rate-limit, auto-hold, merge-or-insert. Called only from the HTTP action after bot checks. */
 export const submit = internalMutation({
   args: { type: v.string(), text: v.string(), locText: v.string(), island: v.string(), district: v.string(), deviceHash: v.string() },
   handler: async (ctx, a) => {
     const now = Date.now();
+    if (await isBlocked(ctx, a.deviceHash)) throw new ConvexError({ code: 403, message: BLOCKED });
     const text = clean(a.text), locText = clean(a.locText);
     const err = validateReport({ ...a, text, locText });
     if (err) throw new ConvexError({ code: 400, message: err });
@@ -62,6 +66,7 @@ export const vote = internalMutation({
     const now = Date.now();
     const r = await ctx.db.get(id);
     if (!r || r.status !== "live") throw new ConvexError({ code: 404, message: "That report is no longer active." });
+    if (await isBlocked(ctx, deviceHash)) throw new ConvexError({ code: 403, message: BLOCKED });
     // Still/gone is one opinion per device. Flagging is a separate act — a reader who confirmed a post an hour
     // ago must still be able to report it when it turns abusive, and the old shared check silently swallowed that.
     const flaggers = r.flaggers ?? [];
@@ -80,6 +85,8 @@ export const vote = internalMutation({
       if (r.flagCount + 1 >= FLAGS_TO_REVIEW && r.flagCount + 1 > r.confirmCount) { patch.status = "pending"; patch.holdReason = "flagged"; }
     }
     await ctx.db.patch(id, patch);
+    // Every flag reaches a person, not just the third: the moderator is asked to act on a report within a day.
+    if (vote === "flag") await ctx.scheduler.runAfter(0, internal.push.sendModerator, { text: `Flagged · ${r.locText || r.district}: ${r.text.slice(0, 80)}` });
     return { ok: true };
   },
 });
@@ -119,15 +126,27 @@ export const forModerator = internalQuery({
   },
 });
 
-/** Show (pending → live) or hide (anything → hidden). A shown report gets a fresh 6 hours from now, not from when it was written. */
+/**
+ * Show (pending → live), hide (anything → hidden), or block: hide everything that phone has live or waiting and
+ * refuse its posts and votes from now on. A shown report gets a fresh 6 hours from now, not from when it was written.
+ */
 export const moderate = internalMutation({
-  args: { id: v.id("reports"), action: v.union(v.literal("show"), v.literal("hide")) },
+  args: { id: v.id("reports"), action: v.union(v.literal("show"), v.literal("hide"), v.literal("block")) },
   handler: async (ctx, { id, action }) => {
     const r = await ctx.db.get(id);
     if (!r) throw new ConvexError({ code: 404, message: "That report is gone." });
     const now = Date.now();
-    if (action === "show") await ctx.db.patch(id, { status: "live", holdReason: undefined, lastConfirmedAt: now, expiresAt: Math.max(r.expiresAt, now + 6 * HOUR) });
-    else await ctx.db.patch(id, { status: "hidden" });
-    return { id, status: action === "show" ? "live" : "hidden" };
+    if (action === "show") {
+      await ctx.db.patch(id, { status: "live", holdReason: undefined, lastConfirmedAt: now, expiresAt: Math.max(r.expiresAt, now + 6 * HOUR) });
+      return { id, status: "live" };
+    }
+    await ctx.db.patch(id, { status: "hidden" });
+    if (action === "block") {
+      for (const x of await ctx.db.query("reports").withIndex("by_device_created", (q) => q.eq("deviceHash", r.deviceHash)).collect()) {
+        if (x.status === "live" || x.status === "pending") await ctx.db.patch(x._id, { status: "hidden" });
+      }
+      if (!(await isBlocked(ctx, r.deviceHash))) await ctx.db.insert("blockedDevices", { deviceHash: r.deviceHash, at: now });
+    }
+    return { id, status: "hidden" };
   },
 });
