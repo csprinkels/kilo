@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
@@ -26,6 +26,8 @@ type IslandId = Exclude<Island, "state">;
 export default function Ask({ island, ctx, now }: { island: IslandId; ctx: Ctx; now: number }) {
   const [q, setQ] = useState("");
   const asked = q.trim();
+  // Arrived from the dock's ʻIo button on another page: land in the field, ready to type.
+  useEffect(() => { if (window.location.hash === "#ask") document.getElementById("ask")?.focus(); }, []);
   return (
     <section className="cs-askwrap" aria-label="Ask Kilo">
       <label htmlFor="ask" className="cs-ask">

@@ -814,14 +814,20 @@ a.cs-card{ color:inherit; text-decoration:none; }
 .cs-fresh--down .cs-fresh-dot{ background:var(--danger); }
 
 /* ── the phone dock: a floating white rounded rectangle, the lit tab filled ink ── */
+/* the dock and the one detached button beside it: ʻIo, so the search never sits buried down the page */
+.cs-dock-row{ display:flex; align-items:center; gap:10px; width:100%; max-width:30rem; }
 .cs-dock{
-  display:flex; width:100%; max-width:26rem; margin:0; padding:6px; list-style:none;
-  border-radius:10px; background:var(--card); border:1px solid var(--hairline); box-shadow:var(--dock-shadow);
+  display:flex; flex:1 1 auto; min-width:0; margin:0; padding:6px; list-style:none;
+  border-radius:9999px; background:var(--card); border:1px solid var(--hairline); box-shadow:var(--dock-shadow);
+}
+.cs-dock-ask{
+  display:grid; place-items:center; flex:0 0 auto; width:64px; height:64px; border-radius:9999px;
+  background:var(--brand); color:var(--brand-ink); box-shadow:var(--dock-shadow); text-decoration:none;
 }
 .cs-dock > li{ flex:1 1 0; min-width:0; }
 .cs-dock-tab{
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-  min-height:52px; border-radius:10px;
+  min-height:52px; border-radius:9999px;
   font-size:12px; font-weight:700; line-height:1.2; color:var(--ink-2); text-decoration:none;
 }
 .cs-dock-tab[aria-current="page"]{ background:var(--ink); color:var(--brand-ink); }

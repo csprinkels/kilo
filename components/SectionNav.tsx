@@ -26,7 +26,8 @@ export default function SectionNav() {
       </div>
       {/* phones: a floating white rounded rectangle above the home indicator; the lit tab is filled ink inside it */}
       <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
-        <ul className="cs-dock pointer-events-auto">
+        <div className="cs-dock-row pointer-events-auto">
+        <ul className="cs-dock">
           {TABS.map((t) => {
             const on = isOn(path, t);
             return (
@@ -38,6 +39,12 @@ export default function SectionNav() {
             );
           })}
         </ul>
+        {/* ʻIo, detached: on Now it drops you into the field; elsewhere it takes you there. */}
+        <Link href="/#ask" aria-label="Ask Kilo" className="cs-dock-ask"
+          onClick={(e) => { if (path === "/") { e.preventDefault(); const el = document.getElementById("ask"); el?.scrollIntoView({ block: "center" }); el?.focus(); } }}>
+          <Icon name="magnifying-glass" size={26} px />
+        </Link>
+        </div>
       </nav>
     </>
   );
