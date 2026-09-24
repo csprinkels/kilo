@@ -23,19 +23,17 @@ export default function TopBar({ island: islandProp, onIsland: onIslandProp }: {
   const onIsland = onIslandProp ?? setStored;
   const label = ISLAND_LABEL[island].split(" · ")[0];
   return (
-    <header className="pt-s2">
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-s3 gap-y-s2">
-        {isTab
-          ? <Wordmark className="text-ink" />
-          : <Link href="/" className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-0.5 px-2 text-small font-semibold text-brand"><Icon name="caret-left" size={18} /> Now</Link>}
-        {/* A native <select> behind a quiet chip: iPhones show their wheel, and it stops shouting over the wordmark. */}
-        <label className="relative inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-s3 text-small font-semibold text-ink ring-1 ring-line">
-          {label} <Icon name="caret-down" size={14} className="text-ink-2" />
-          <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
-            {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
-          </select>
-        </label>
-      </div>
+    <header className="cs-top">
+      {isTab
+        ? <Wordmark className="text-ink" />
+        : <Link href="/" className="cs-btn-quiet -ml-1"><Icon name="caret-left" size={18} /> Now</Link>}
+      {/* A native <select> behind a white rounded-rect button: iPhones show their wheel, and it stops shouting over the wordmark. */}
+      <label className="cs-island">
+        <Icon name="map-pin" size={15} /> {label} <Icon name="caret-down" size={13} />
+        <select aria-label="Island" value={island} onChange={(e) => onIsland(e.target.value as Island)} className="absolute inset-0 cursor-pointer opacity-0">
+          {ISLANDS.map((i) => <option key={i} value={i}>{ISLAND_LABEL[i]}</option>)}
+        </select>
+      </label>
     </header>
   );
 }

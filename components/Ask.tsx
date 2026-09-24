@@ -21,21 +21,23 @@ type IslandId = Exclude<Island, "state">;
  * ʻIo: ask Kilo a question in your own words. Everything it searches is already on the phone, so it
  * answers with no signal and costs nothing to run. The road pack is only fetched once someone has
  * actually typed — the Now page must not pay for a search nobody used.
+ * One white field with the question mark; the answer arrives as a card under it.
  */
 export default function Ask({ island, ctx, now }: { island: IslandId; ctx: Ctx; now: number }) {
   const [q, setQ] = useState("");
   const asked = q.trim();
   return (
-    <section className="cs-card" aria-label="Ask Kilo">
-      <label htmlFor="ask" className="cs-label">Ask about {island === "hawaii" ? "Hawaiʻi Island" : "your island"}</label>
-      <input
-        id="ask" className="rp-field mt-s2" type="search" value={q} autoComplete="off"
-        enterKeyHint="search" placeholder="Is Saddle Road open?"
-        onChange={(e) => setQ(e.target.value)}
-      />
-      {asked
-        ? <Results island={island} ctx={ctx} q={asked} now={now} />
-        : <p className="cs-meta mt-s2">Answers come from what your phone already saved, so this works with no signal.</p>}
+    <section className="cs-askwrap" aria-label="Ask Kilo">
+      <label htmlFor="ask" className="cs-ask">
+        <Icon name="question" size={20} />
+        <span className="sr-only">Ask about {island === "hawaii" ? "Hawaiʻi Island" : "your island"}</span>
+        <input
+          id="ask" type="search" value={q} autoComplete="off"
+          enterKeyHint="search" placeholder="Is Saddle Road open?"
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </label>
+      {asked && <div className="cs-card"><Results island={island} ctx={ctx} q={asked} now={now} /></div>}
     </section>
   );
 }
@@ -66,16 +68,16 @@ function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: strin
 
   if (!a.say) {
     return (
-      <p className="cs-body mt-s3">
+      <p className="cs-body">
         Kilo has nothing about that. Try a road name, a town, or a word like storm, school or power.
       </p>
     );
   }
   return (
-    <div className="mt-s3">
+    <div>
       <h3 className="cs-title">{a.say}</h3>
       {figure}
-      {a.items.length > 0 && <ul className="hm-rows">{a.items.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>}
+      {a.items.length > 0 && <ul className="cs-rows">{a.items.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>}
       {a.topic && a.href && (
         <div className="cs-chiprow">
           <Link href={a.href} className="cs-chip cs-chip--link">

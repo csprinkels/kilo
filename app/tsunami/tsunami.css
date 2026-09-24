@@ -1,0 +1,13 @@
+/* /tsunami — the few shapes the shared card system has no word for. Everything else on the
+   page (card, hero, topic head, well, rows, tiles, foot, buttons, note) is .cs-*; the map row
+   button (.ts-mapbtn) is styled next to ZoneMap in globals. */
+
+/* the zone answer: a well with a lead inside; the well itself has no padding */
+.pg-tsunami .ts-answer{ margin-top:12px; padding:12px 14px; }
+
+/* the step numeral sits in an ordinary topic tile, set in the body face (Amatic is for labels only) */
+.pg-tsunami .ts-stepn{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+
+/* the steps and the official lines: rows on hairlines, body type, no list bullets */
+.pg-tsunami .ts-steps{ margin:8px 0 0; padding:0; list-style:none; }
+.pg-tsunami .ts-steps p{ margin:0; font-size:15px; line-height:1.45; color:var(--ink-2); }

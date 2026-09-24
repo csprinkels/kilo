@@ -39,8 +39,8 @@ export default function MiniMap({ island, mark, size = 56 }: { island: IslandId;
   const [s0, n0, w0, e0] = FRAME[island];
   let [s, n, w, e] = [s0, n0, w0, e0];
 
-  const pts: [number, number][] = mark.kind === "path" ? mark.path.map(([la, lo]) => [la, lo]) : [[mark.lat, mark.lon]];
-  for (const [la, lo] of pts) { s = Math.min(s, la); n = Math.max(n, la); w = Math.min(w, lo); e = Math.max(e, lo); }
+  // A road path is on the island by definition, so the frame stays the island and every thumb reads the same.
+  if (mark.kind === "dot") { s = Math.min(s, mark.lat); n = Math.max(n, mark.lat); w = Math.min(w, mark.lon); e = Math.max(e, mark.lon); }
   const padLat = (n - s) * 0.08, padLon = (e - w) * 0.08;
   s -= padLat; n += padLat; w -= padLon; e += padLon;
 

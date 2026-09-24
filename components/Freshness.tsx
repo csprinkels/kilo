@@ -10,15 +10,15 @@ export type FreshnessProps = {
 
 const STALE = 30 * 60_000, VERY_STALE = 12 * 3_600_000;
 
-/** One sentence, same place on every page, that says how fresh this is. Never a dot, never "Live", never "5 min ago". */
+/** One small line, same place on every page, that says how fresh this is: a dot and a clock time. Never "Live", never "5 min ago". */
 export default function Freshness({ gen, checkedAt, offline, weak }: FreshnessProps) {
-  let text: string, cls = "text-ink-2";
-  if (offline && !gen) { text = "No signal, and nothing saved yet."; cls = "rounded-card bg-danger-bg px-s3 py-s2 font-semibold text-danger"; }
-  else if (!gen) text = "Loading…";
-  else if (offline) { text = `No signal. Showing what your phone saved at ${fmtClock(gen, checkedAt)}.`; cls = "rounded-card bg-danger-bg px-s3 py-s2 font-semibold text-danger"; }
-  else if (checkedAt - gen > VERY_STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}. Something may be wrong on our end.`; cls = "font-semibold text-warn"; }
-  else if (checkedAt - gen > STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}.`; cls = "text-ink"; }
+  let text: string, mod = "";
+  if (offline && !gen) { text = "No signal, and nothing saved yet."; mod = "cs-fresh--down"; }
+  else if (!gen) { text = "Loading…"; mod = "cs-fresh--wait"; }
+  else if (offline) { text = `No signal. Showing what your phone saved at ${fmtClock(gen, checkedAt)}.`; mod = "cs-fresh--down"; }
+  else if (checkedAt - gen > VERY_STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}. Something may be wrong on our end.`; mod = "cs-fresh--warn"; }
+  else if (checkedAt - gen > STALE) { text = `No new information since ${fmtClock(gen, checkedAt)}.`; mod = "cs-fresh--stale"; }
   else text = `Latest update: ${fmtDateTime(gen)}`;
   if (weak && gen && !offline) text += " Weak signal, short version.";
-  return <p role="status" className={`mt-s3 text-center text-[0.8125rem] num ${cls}`}>{text}</p>;
+  return <p role="status" className={`cs-fresh ${mod}`}><span className="cs-fresh-dot" aria-hidden />{text}</p>;
 }

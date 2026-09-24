@@ -23,16 +23,17 @@ function Actions({ item }: { item: Item }) {
     if ((await shareText(smsText(item))) === "copied") setCopied(true);
   };
   return (
-    <p className="mt-s2 flex flex-wrap gap-x-s4 text-small font-semibold">
-      {item.lat && item.lon && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer"><Icon name="map-pin" className="size-4" aria-hidden /> Open in Maps</a>}
-      {item.srcUrl && item.tier !== "community" && <a className="inline-flex min-h-11 items-center gap-1 text-brand" href={item.srcUrl} target="_blank" rel="noreferrer"><Icon name="arrow-square-out" className="size-4" aria-hidden /> Read it on their site</a>}
-      <button className="inline-flex min-h-11 items-center gap-1 text-brand" onClick={share}><Icon name="share-network" className="size-4" aria-hidden /> {copied ? "Copied." : "Share"}</button>
+    <p className="mt-s2 flex flex-wrap gap-x-s4">
+      {item.lat && item.lon && <a className="cs-btn-quiet" href={`https://maps.apple.com/?ll=${item.lat},${item.lon}&q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer"><Icon name="map-pin" size={16} aria-hidden /> Open in Maps</a>}
+      {item.srcUrl && item.tier !== "community" && <a className="cs-btn-quiet" href={item.srcUrl} target="_blank" rel="noreferrer"><Icon name="arrow-square-out" size={16} aria-hidden /> Read it on their site</a>}
+      <button className="cs-btn-quiet" onClick={share}><Icon name="share-network" size={16} aria-hidden /> {copied ? "Copied." : "Share"}</button>
     </p>
   );
 }
 
 /**
  * One official item: [level word] · plain headline · what to do · who said it. Tap the whole row for the details.
+ * The row is the feed entry's shape on a hairline: a tile, the text stack, a caret.
  */
 export default function ItemRow({ item, now, focus, showSource = true }: { item: Item; now: number; focus?: boolean; showSource?: boolean }) {
   if (item.tier === "community") return <NeighborRow item={item} now={now} focus={focus} />;
@@ -49,20 +50,21 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
   return (
     <li id={`item-${hashOf(item.key)}`} className={focus ? "bg-surface-2" : ""}>
       <button className="row items-start" onClick={() => { if (!open) track(item.tier === "community" ? "open:neighbor" : `open:${item.type}`); setOpen((o) => !o); }} aria-expanded={open}>
-        <span className={`tile mt-0.5 ${p.level >= 4 ? "bg-danger-bg" : p.level >= 3 ? "bg-warn-bg" : ""}`}><Icon name={`${glyph}-fill`} size={20} className={LEVEL_TEXT[p.level]} /></span>
-        <span className="min-w-0 flex-1">
-          {(p.word || p.level >= 2) && <span className={`block text-small font-bold ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
-          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
-          {p.action && <span className="mt-0.5 block text-body leading-snug text-ink-2">{p.action}</span>}
-          <span className="mt-1 block text-small text-ink-2 num">{showSource ? `${p.source[0].toUpperCase() + p.source.slice(1)} · ` : ""}{fmtClock(lastUpdated(item, now).at, now)}</span>
-          {stale && <span className="mt-1 block text-small font-semibold text-ink">{stale}</span>}
+        {/* severity on the tile: solid brick at "act now", soft amber at "get ready", the topic's tint below that */}
+        <span className={`cs-ictile mt-0.5 ${p.level >= 4 ? "cs-ictile--danger" : p.level >= 3 ? "cs-ictile--warn" : ""}`}><Icon name={`${glyph}-fill`} size={18} /></span>
+        <span className="cs-entry-main">
+          {(p.word || p.level >= 2) && <span className={`cs-entry-word ${LEVEL_TEXT[p.level]}`}>{p.word ?? LEVEL_WORD[p.level]}</span>}
+          <span className="cs-entry-h">{p.headline}</span>
+          {p.action && <span className="cs-entry-sub">{p.action}</span>}
+          <span className="cs-entry-meta num">{showSource ? `${p.source[0].toUpperCase() + p.source.slice(1)} · ` : ""}{fmtClock(lastUpdated(item, now).at, now)}</span>
+          {stale && <span className="cs-source num"><b>{stale}</b></span>}
         </span>
-        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" size={20} className={`cs-entry-go ${open ? "cs-entry-go--open" : ""}`} aria-hidden />
       </button>
       {open && (
-        <div className="fade-up mb-s4 pl-9">
-          {item.body && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
-          {item.expiresAt && <p className="mt-s2 text-small text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
+        <div className="fade-up mb-s4 pl-[46px]">
+          {item.body && <p className="text-[15px] leading-normal text-ink-2">{item.body}</p>}
+          {item.expiresAt && <p className="mt-s2 text-[13px] text-ink-2 num">Until {fmtClock(item.expiresAt, now)}.</p>}
           <Actions item={item} />
         </div>
       )}
@@ -70,7 +72,7 @@ function OfficialRow({ item, now, focus, showSource }: { item: Item; now: number
   );
 }
 
-/** A neighbor's post: its own surface, a dashed rule, the word "Neighbor" every time, never a level word or colour. */
+/** A neighbor's post: its own quiet ground and a tile that says who it is from, the words "Neighbor report" every time, never a level word, a colour or an edge. */
 export function NeighborRow({ item, now, focus }: { item: Item; now: number; focus?: boolean }) {
   const [open, setOpen] = useState(!!focus);
   const rid = item.fields?.rid;
@@ -92,20 +94,21 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
   useEffect(() => { if (focus) document.getElementById(`item-${hashOf(item.key)}`)?.scrollIntoView({ block: "center" }); }, [focus, item.key]);
   const p = plainAlert(item, now);
   return (
-    <li id={`item-${hashOf(item.key)}`} className="border-l-[3px] border-dashed border-ink-2 bg-surface-2">
+    <li id={`item-${hashOf(item.key)}`} className="cs-neighbor">
       <button className="row items-start" onClick={() => { if (!open) track(item.tier === "community" ? "open:neighbor" : `open:${item.type}`); setOpen((o) => !o); }} aria-expanded={open}>
-        <span className="min-w-0 flex-1">
-          <span className="block text-small font-semibold text-ink-2">Neighbor report · not checked</span>
-          <span className="block text-body font-semibold leading-snug text-ink">{p.headline}</span>
-          <span className="mt-1 block text-small text-ink-2 num">{confirms + 1} {confirms ? "neighbors say it is still there" : "neighbor reported it"} · {fmtClock(item.lastConfirmedAt, now)}</span>
+        <span className="cs-ictile mt-0.5"><Icon name="users-three-fill" size={18} /></span>
+        <span className="cs-entry-main">
+          <span className="cs-entry-word text-ink-2">Neighbor report · not checked</span>
+          <span className="cs-entry-h">{p.headline}</span>
+          <span className="cs-entry-meta num">{confirms + 1} {confirms ? "neighbors say it is still there" : "neighbor reported it"} · {fmtClock(item.lastConfirmedAt, now)}</span>
         </span>
-        <Icon name="caret-down" className={`mt-2 size-5 shrink-0 text-ink-2 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Icon name="caret-down" size={20} className={`cs-entry-go ${open ? "cs-entry-go--open" : ""}`} aria-hidden />
       </button>
       {open && (
-        <div className="fade-up pb-s4">
-          {item.body && <p className="text-body leading-relaxed text-ink-2">{item.body}</p>}
-          <p className="mt-s2 text-small text-ink-2">Not checked by anyone official. Call 911 in an emergency.</p>
-          {votedNow ? <p className="mt-s3 text-body text-ink-2">{msg ?? "You already weighed in on this one."}</p> : (
+        <div className="fade-up pb-s4 pl-[46px]">
+          {item.body && <p className="text-[15px] leading-normal text-ink-2">{item.body}</p>}
+          <p className="mt-s2 text-[13px] text-ink-2">Not checked by anyone official. Call 911 in an emergency.</p>
+          {votedNow ? <p className="mt-s3 text-[15px] text-ink-2">{msg ?? "You already weighed in on this one."}</p> : (
             <div className="mt-s3 flex flex-wrap items-center gap-s2">
               <button className="btn" onClick={() => cast("still")}>Still there</button>
               <button className="btn" onClick={() => cast("gone")}>Gone</button>
@@ -113,14 +116,14 @@ export function NeighborRow({ item, now, focus }: { item: Item; now: number; foc
           )}
           {/* Outside the ternary: reporting a post must stay reachable after "Still there" or "Gone". */}
           <p className="mt-s2">
-            <button className="inline-flex min-h-11 items-center px-s2 text-small font-semibold text-ink-2" onClick={() => cast("flag")}>Flag this post</button>
+            <button className="cs-btn-quiet" onClick={() => cast("flag")}>Flag this post</button>
           </p>
           {/* Outside the ternary: cast() only flips `voted` on success, so a failed flag, a rate limit or a
               dropped signal rendered nothing at all before this. */}
-          {!votedNow && msg && <p className="mt-s3 text-body text-ink-2" role="alert">{msg}</p>}
+          {!votedNow && msg && <p className="mt-s3 text-[15px] text-ink-2" role="alert">{msg}</p>}
           {by && (
             <p className="mt-s2">
-              <button className="inline-flex min-h-11 items-center px-s2 text-small font-semibold text-ink-2" onClick={() => hidePoster(by)}>
+              <button className="cs-btn-quiet" onClick={() => hidePoster(by)}>
                 Hide posts from this neighbor
               </button>
             </p>

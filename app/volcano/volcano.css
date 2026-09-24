@@ -1,0 +1,13 @@
+/* /volcano — what the shared .cs-* set cannot say. Scoped to the page root. */
+
+/* The meter's three variables are declared on the mockup's .cs-col, which does not wrap
+   this page, so the stack carries them; and the top step, unhealthy for everyone, is brick. */
+.pg-volcano { --cs-lv: var(--brand); --cs-track: var(--tint); --cs-seg: 8px; }
+.pg-volcano .vo-meter--bad { --cs-lv: var(--danger); }
+
+/* Both full-width camera controls carry a whole sentence, so they may wrap;
+   the shared buttons are built for one line at line-height 1. */
+.pg-volcano .vo-cam-go { min-height: 3rem; padding-top: 0.6rem; padding-bottom: 0.6rem; line-height: 1.3; text-align: center; }
+
+/* The grid's cells expect a glyph first; the pip stands in its place. */
+.pg-volcano .cs-grid2 .cs-pip { flex: 0 0 auto; }

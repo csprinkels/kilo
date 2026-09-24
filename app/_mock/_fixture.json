@@ -1,0 +1,1309 @@
+{
+ "island": "Hawaiʻi Island",
+ "now": 1790225529749,
+ "checked": "Latest update: Sep 23, 6:52 PM",
+ "story": {
+  "title": "Nolo is headed this way.",
+  "sub": "Mamalahoa Highway closed both ways in Hamakua, Ookala. Robert N. Herkes Gym (Kau Gym) is open"
+ },
+ "pins": [
+  {
+   "key": "storm|Hurricane Watch",
+   "headline": "Hurricane possible on Hawaiʻi Island",
+   "action": "Get ready now. Know where you would go.",
+   "level": 3,
+   "type": "storm",
+   "href": "/storms/",
+   "members": [
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.006.1",
+     "headline": "Hurricane possible in Kohala",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.003.1",
+     "headline": "Hurricane possible in Southeast",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.001.1",
+     "headline": "Hurricane possible in Kona",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.008.1",
+     "headline": "Hurricane possible on Summit",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.005.1",
+     "headline": "Hurricane possible in North",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.002.1",
+     "headline": "Hurricane possible in South",
+     "href": "/storms/"
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.e4252018d6318bfb2a7a9a9d020c61228bd36409.004.1",
+     "headline": "Hurricane possible in East",
+     "href": "/storms/"
+    }
+   ]
+  },
+  {
+   "key": "shelter|Shelter open",
+   "headline": "4 shelters are open",
+   "action": "Bring medicine, ID, food and bedding. Pets only if it says pet-friendly.",
+   "level": 3,
+   "type": "shelter",
+   "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17",
+   "members": [
+    {
+     "key": "hccda:shelters:657be058-ac3f-43b8-bee1-af41f6ee4916",
+     "headline": "Robert N. Herkes Gym (Kau Gym) is open",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:shelters:130d3b71-2744-4278-8209-a7ff80314df4",
+     "headline": "Naalehu Community Center is open",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:shelters:5108ccde-a20e-428c-9a29-4c94677f4cbb",
+     "headline": "Keaau Armory is open",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:shelters:1ae38045-803d-482b-af5f-3d497393f443",
+     "headline": "Arthur C. Greenwell Park (Sgt. Rodney J.T. Yano Memorial Hall) is open",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    }
+   ]
+  },
+  {
+   "key": "school",
+   "headline": "103 schools are closed",
+   "action": "Keep kids home.",
+   "level": 2,
+   "type": "school",
+   "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17",
+   "members": [
+    {
+     "key": "hccda:schools:be1c9a61-e8da-40aa-b7db-6f2c793cfbb3",
+     "headline": "Chiefess Kapiolani Elementary is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c96842de-402f-4543-8f05-b3b8722adfb1",
+     "headline": "Christian Liberty Academy (Lower Campus) is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:31e0d06a-9ac1-4c26-ad42-7afbf6a07839",
+     "headline": "Christian Liberty Academy (Upper Campus) is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:fe3f83f7-6aab-4f28-a759-7e3353567835",
+     "headline": "College of Hawaiian Language - University of Hawaii at Hilo is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:aed00612-4534-4503-a43c-ba35f4046d5c",
+     "headline": "Connections Public Charter School is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:009bcc7e-8392-426a-8d86-1b57b2da43f8",
+     "headline": "Daniel K. Inouye College of Pharmacy - University of Hawaii at Hilo is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:629cb408-301c-4165-a04b-8b7c789ca3aa",
+     "headline": "E Makaala School is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:e4a47b72-8364-450f-a396-ffebed269c14",
+     "headline": "Haili Christian School is closed until Saturday 5:43 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:3479ee47-32aa-4685-b9de-0fb0a777fb35",
+     "headline": "Holualoa Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:eb9b2383-f2d0-4321-8759-03bc59b6d6fd",
+     "headline": "Haaheo Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c0828c61-b515-4664-b4fe-34d9671a8e5e",
+     "headline": "Ernest Bowen DeSilva Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:189cad2d-022a-4855-903f-be0b79663d97",
+     "headline": "Hale Aloha Nazarene School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7a410bd0-ef39-48f2-9eae-bf6a7e4c2e7a",
+     "headline": "Hawaii Academy of Arts and Science Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c3c96a36-91fb-4e33-806e-6830876d57b7",
+     "headline": "Konawaena High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:621030d8-1c7c-4b1f-a94c-c4af5b6d8a8a",
+     "headline": "Makua Lani Christian Academy is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:1c5a3221-e980-41f1-84e5-966b71173e25",
+     "headline": "Malamalama Waldorf School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:61887251-f76f-4c26-ad77-0b3984d85fd1",
+     "headline": "Mauna Loa School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c2cfb6b1-bd0d-49c7-afcf-b5bd1b68f858",
+     "headline": "Mountain View Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:653b102d-8f80-4ef3-8289-272f776eaa68",
+     "headline": "Na Wai Ola Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:da730455-35f1-4bb8-b6bd-807d7a381570",
+     "headline": "Paauilo Elementary & Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:93820bf0-b3ff-4f6d-b4fa-dc5d9388d8df",
+     "headline": "Pahoa Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:415585a3-ee65-496c-acb7-11749a58676e",
+     "headline": "Pahoa High & Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:1bd51c0b-cac0-4bc2-884e-d9ece44388ca",
+     "headline": "Montessori Country School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:2d00de43-2068-44f2-8e3e-66fab933a8c8",
+     "headline": "Montessori Education Center of Hawaii is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7200d7e3-3828-4ad3-9cd7-62c9cf02aa1a",
+     "headline": "Parker School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:3193ce54-fcf2-48c7-8d3a-0d9bf64668b3",
+     "headline": "Saint Joseph Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7ddb00b7-157f-45ea-8945-0d3376e2248e",
+     "headline": "Saint Joseph High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:b690e8b7-28a4-4fee-ae28-2dd4fa2ac365",
+     "headline": "Waiakea Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:053bf33d-c2ed-4b09-8452-6acab6c4ee90",
+     "headline": "Keaau Middle School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:a8575bb8-262e-4d5b-a0a4-f9e06cbcdc93",
+     "headline": "Kealakehe Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:f6a39247-e3dc-4db8-a32f-c4642a860fbd",
+     "headline": "Kealakehe High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:60ae4c75-3237-46c9-83b6-3643740551fd",
+     "headline": "Kealakehe Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:46c1c932-c3c1-4277-abd8-a45f037b512e",
+     "headline": "Keaukaha Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:71f672db-3b72-4f23-993c-bfe34f46558a",
+     "headline": "Keonepoko Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:2677a54d-0c20-4b8d-8745-bd43b334235f",
+     "headline": "Kohala Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7bc6a0e9-2d87-43a8-acd2-aa2f798b657c",
+     "headline": "Kohala High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:d12dc482-61a2-41c4-ae27-ae2a6ccc00fb",
+     "headline": "Kohala Middle School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:1169d500-9ae5-4aef-a21f-180952f4c2f6",
+     "headline": "Kohala Adventist School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:03c89fb8-45cb-4d92-a338-941a729694a8",
+     "headline": "Kona Adventist Christian School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:8fd69e58-6206-4f79-a6e9-fdd2dafb7a95",
+     "headline": "Kona Pacific Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:0ea36305-c2e8-4110-a2b5-2586c65d05a4",
+     "headline": "Konawaena Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:e967446b-968e-4642-bec5-6cd243b15dc1",
+     "headline": "Konawaena Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:f5eae131-e857-4e78-8bd0-70ae9866c90d",
+     "headline": "Kua O Ka La New Century Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7ba8dca2-c1e7-4254-8072-adf9cebf6995",
+     "headline": "Kuleana Education Academy is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:15a1fd4d-1a35-48cf-9f53-e14f00a156ad",
+     "headline": "Laupahoehoe Community Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:8c55d19b-4af9-405e-b79d-d597314c3b5f",
+     "headline": "Waiakea High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:a0b90e2d-254a-4cf2-ae00-5cab1394d288",
+     "headline": "Waiakea Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:e79d0185-7254-45b9-85ed-15a88261c82c",
+     "headline": "Waiakeawaena Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:83e8573c-27b7-4711-acb8-218d455fcb85",
+     "headline": "Waikoloa Elementary & Middle School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:54d0cf06-4103-4fc8-a7fa-101acf34939e",
+     "headline": "Waimea Country School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:fe3bf162-c04a-49e9-be04-6b4f941018fa",
+     "headline": "Waimea Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:28b4e4ee-74bb-4db6-ba9e-34d147a9fb10",
+     "headline": "Kamehameha Schools Hawaii Middle School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:e3eaa979-1394-476f-b1bf-952265f9b28a",
+     "headline": "Kanu O Ka Aina Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:5463ed47-d4c6-4232-91ef-171189e5b796",
+     "headline": "Kau High & Pahala Elementary is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:492469e9-8e16-4937-bd0e-231b2f7348ad",
+     "headline": "Kaumana Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:3708eef1-5400-4899-b161-e598a7124ac5",
+     "headline": "Ke Ana Laahana Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:e68ca3fd-b3db-4dc6-932d-1e4952436d8f",
+     "headline": "Ke Kula O Ehunuikaimalino is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:1eedefdd-6ab1-4cdd-803d-2204eae8dc4d",
+     "headline": "Ke Kula O Nawahiokalaniopuu Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:49f5aec4-ab4f-4964-806c-d4a24d258a1d",
+     "headline": "Keaau Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:b3bd4b96-b351-4992-9e30-0f11acde001e",
+     "headline": "Keaau High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:55c2901e-7e50-4d51-b2c0-083aeec1e20a",
+     "headline": "Kamehameha Preschool - Pahoa is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c32da204-1f20-4ac2-87ab-8c3d8a594982",
+     "headline": "Kamehameha Preschool - Piihonua is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:89b30155-f066-4b8f-8a7e-d26bc8c62798",
+     "headline": "Kamehameha Preschool - Waianuenue is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:eddbcfbe-66dd-4a95-864b-2e33bcddf26e",
+     "headline": "Kamehameha Preschool - Waimea is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:8b5f2d64-6603-4723-9921-c91d6c7c428c",
+     "headline": "Kamehameha Schools Hawaii High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:a19d53c9-6bc7-4fd2-bdd7-360464a10890",
+     "headline": "Kamehameha Schools Hawaii Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:11790463-ab1f-45a0-9abc-b0dd9781eb78",
+     "headline": "Kamehameha Preschool - Honaunau is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c01e423a-15a1-4509-b245-8984098d6df1",
+     "headline": "Kamehameha Preschool - Kailua-Kona is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:ad13fb45-78be-445e-bb28-407f76c38404",
+     "headline": "Kamehameha Preschool - Kailua-Kona is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:f5225338-e3cb-4a40-8104-ea4805d008d0",
+     "headline": "Kamehameha Preschool - Keaau is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:9de1c4c7-9f46-4ee3-bbc5-ce68829ea637",
+     "headline": "Kamehameha Preschool - Keaukaha is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:61da5e3f-76f4-4e04-933c-c558944c99de",
+     "headline": "Kamehameha Preschool - Kohala is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:6c7a0357-d3d8-4793-be63-09ef2b9af80d",
+     "headline": "Hookena Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7f762e23-000a-4dbe-9c91-49c5bef1d796",
+     "headline": "Innovations Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:cbe9af0a-a097-4523-bbf1-c68bc6c62b12",
+     "headline": "International Christian Schools - Kona is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:2f9ccf3a-b4db-4db3-bd1f-f3b3ba27ff31",
+     "headline": "Ka Umeke Kaeo Public Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:15d9fc19-3f59-4d54-9ea1-e68308addddc",
+     "headline": "Kahakai Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7fcfdf90-e190-4138-8fa5-62af3fa8e4be",
+     "headline": "Kamehameha Preschool - Hamakua is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:5cc61a94-d9e9-4deb-a6a6-a73f79b19605",
+     "headline": "Kamehameha Preschool - Hilo is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:240bbbc6-0c57-47d5-b20b-953a3664e5e4",
+     "headline": "Waimea Middle Public Conversion Charter School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:49c79378-9bc3-4d59-8805-a9fc3cbbddb8",
+     "headline": "West Hawaii Explorations Public Charter School is closed until Saturday 5:45 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:6f1d97be-c6d3-4f71-b876-abc9548c3290",
+     "headline": "Hawaii Community College is closed until Saturday 5:45 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:0c55607e-a11b-4b7f-aa21-378018344977",
+     "headline": "International Christian Schools is closed until Saturday 5:44 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c1ae4949-d5a2-4bd6-895d-089dabc076a4",
+     "headline": "Ko Education Center is closed until Saturday 5:44 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c1b1b97e-80ad-4938-b7f8-620964174936",
+     "headline": "University of Washington - MEDEX is closed until Saturday 5:44 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:0da6cbe3-4aaf-4375-b804-34ff0690fa4d",
+     "headline": "University of Hawaii at Hilo is closed until Saturday 5:44 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:3cf4c21e-2974-4e47-b921-4dedfda59824",
+     "headline": "University of the Nations is closed until Saturday 5:44 PM",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:1ae9520a-1cd4-4a5c-a772-63158ac0cc78",
+     "headline": "Hawaii Community College - Palamanui is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:7ff2a96c-f7cf-4c80-8ee3-cb86aa69cc17",
+     "headline": "Hawaii Montessori Schools - Kamuela Campus is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:816cc2a2-7df1-430f-9c8c-bd110f59c8da",
+     "headline": "Hawaii Montessori Schools - Kona Campus is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:4612cbb0-f679-45af-b110-7bc22dc5188b",
+     "headline": "Hawaii Preparatory Academy - Upper School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:8c01d192-74bf-43fe-96dc-1034bb339f6e",
+     "headline": "Hawaii Preparatory Academy: Lower and Middle Schools is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:2474e9b4-e7dd-4689-bd1b-6a3d21e501fc",
+     "headline": "Hawaii Technology Academy is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:6b821a25-0db3-4121-a3dc-68dfccd6eaab",
+     "headline": "Hilo High School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:d34d4462-1961-4c2d-9156-0595c5dc750a",
+     "headline": "Hilo Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:adf9c447-c0dc-460f-9e0d-fad458a42d5f",
+     "headline": "Hilo Union Elementary is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:f6cfad89-5d1a-44e7-80a7-715aa1af3672",
+     "headline": "Honokaa Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:4b231e1d-433c-4488-b0dd-5ec7ac9ec56e",
+     "headline": "Honokaa High & Intermediate School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:ad21f410-f8aa-4324-b4ce-a526027e04af",
+     "headline": "Hawaii Community College is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:6f1a6954-3ba6-44ae-bd96-e61519616040",
+     "headline": "Hawaii Community College - Nursing Laboratory Resource Center (NLRC) is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:c06ee3dd-e8a0-4cc7-b30a-4f3ae76086a2",
+     "headline": "Honaunau Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:b586846c-dc3f-44bc-8d27-aad212cbba9d",
+     "headline": "Naalehu Elementary School is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    },
+    {
+     "key": "hccda:schools:37426eb6-4cde-46b4-8e28-d1c063391e8d",
+     "headline": "Volcano School of Arts and Sciences is closed",
+     "href": "https://www.arcgis.com/apps/dashboards/5865229bcba74020992b372ef18b6f17"
+    }
+   ]
+  },
+  {
+   "key": "hidws:https://www.hawaiidws.org/?p=21454",
+   "headline": "Water could go out on Hawaiʻi Island",
+   "action": "Fill containers now, before any outage.",
+   "level": 2,
+   "type": "outage",
+   "href": "https://www.hawaiidws.org/water-service-could-be-interrupted-by-approaching-storm/",
+   "members": [
+    {
+     "key": "hidws:https://www.hawaiidws.org/?p=21454",
+     "headline": "Water could go out on Hawaiʻi Island",
+     "href": "https://www.hawaiidws.org/water-service-could-be-interrupted-by-approaching-storm/"
+    }
+   ]
+  },
+  {
+   "key": "nws:urn:oid:2.49.0.1.840.0.27c93ef1b29bda3e04166629795fe71aa61e2ea6.001.1",
+   "headline": "Heavy rain could flood roads on Hawaiʻi Island",
+   "action": "Do not drive through water on the road.",
+   "level": 2,
+   "type": "advisory",
+   "href": "/weather/",
+   "members": [
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.27c93ef1b29bda3e04166629795fe71aa61e2ea6.001.1",
+     "headline": "Heavy rain could flood roads on Hawaiʻi Island",
+     "href": "/weather/"
+    }
+   ]
+  }
+ ],
+ "storm": {
+  "label": "Storm",
+  "name": "Tropical Storm Nolo",
+  "text": "Tropical Storm Nolo: strong winds could start Fri 7 PM. Finish getting ready before then.",
+  "level": 3,
+  "storm": {
+   "advNum": 14,
+   "cls": "TS",
+   "forecast": [
+    {
+     "at": 1790251200000,
+     "gustKt": 60,
+     "hour": 9,
+     "lat": 14.8,
+     "lon": -156,
+     "radii": {
+      "34": [
+       50,
+       30,
+       20,
+       70
+      ],
+      "50": [
+       20,
+       0,
+       0,
+       0
+      ]
+     },
+     "windKt": 50
+    },
+    {
+     "at": 1790294400000,
+     "gustKt": 75,
+     "hour": 21,
+     "lat": 15.4,
+     "lon": -155.8,
+     "radii": {
+      "34": [
+       80,
+       60,
+       60,
+       100
+      ],
+      "50": [
+       20,
+       10,
+       0,
+       0
+      ]
+     },
+     "windKt": 60
+    },
+    {
+     "at": 1790337600000,
+     "gustKt": 85,
+     "hour": 33,
+     "lat": 16.2,
+     "lon": -155.3,
+     "radii": {
+      "34": [
+       100,
+       80,
+       70,
+       120
+      ],
+      "50": [
+       30,
+       20,
+       20,
+       20
+      ],
+      "64": [
+       15,
+       0,
+       0,
+       0
+      ]
+     },
+     "windKt": 70
+    },
+    {
+     "at": 1790380800000,
+     "gustKt": 100,
+     "hour": 45,
+     "lat": 17.1,
+     "lon": -155,
+     "radii": {
+      "34": [
+       110,
+       80,
+       70,
+       140
+      ],
+      "50": [
+       40,
+       40,
+       30,
+       30
+      ],
+      "64": [
+       20,
+       20,
+       10,
+       20
+      ]
+     },
+     "windKt": 80
+    },
+    {
+     "at": 1790424000000,
+     "gustKt": 110,
+     "hour": 57,
+     "lat": 17.5,
+     "lon": -155.1,
+     "radii": {
+      "34": [
+       130,
+       70,
+       70,
+       150
+      ],
+      "50": [
+       50,
+       50,
+       30,
+       40
+      ],
+      "64": [
+       25,
+       25,
+       15,
+       20
+      ]
+     },
+     "windKt": 90
+    },
+    {
+     "at": 1790467200000,
+     "gustKt": 120,
+     "hour": 69,
+     "lat": 17.4,
+     "lon": -156.2,
+     "radii": {
+      "34": [
+       140,
+       80,
+       80,
+       150
+      ],
+      "50": [
+       50,
+       50,
+       40,
+       40
+      ],
+      "64": [
+       30,
+       30,
+       20,
+       25
+      ]
+     },
+     "windKt": 100
+    },
+    {
+     "at": 1790553600000,
+     "gustKt": 130,
+     "hour": 93,
+     "lat": 17.5,
+     "lon": -158.6,
+     "outlook": true,
+     "radii": {
+      "34": [
+       160,
+       80,
+       80,
+       110
+      ],
+      "50": [
+       60,
+       50,
+       40,
+       50
+      ]
+     },
+     "windKt": 105
+    },
+    {
+     "at": 1790640000000,
+     "gustKt": 120,
+     "hour": 117,
+     "lat": 18.9,
+     "lon": -162.1,
+     "outlook": true,
+     "radii": {
+      "34": [
+       110,
+       90,
+       60,
+       90
+      ],
+      "50": [
+       60,
+       50,
+       40,
+       50
+      ]
+     },
+     "windKt": 100
+    }
+   ],
+   "gustKt": 50,
+   "headline": "Tropical storm Nolo holding steady and is expected to turn northward tonight",
+   "id": "ep152026",
+   "issuedAt": 1790218800000,
+   "lat": 14.7,
+   "links": {
+    "cone": "https://www.nhc.noaa.gov/storm_graphics/api/EP152026_013Aadv_CONE.kmz",
+    "discussion": "https://www.nhc.noaa.gov/text/HFOTCDCP2.shtml",
+    "forecast": "https://www.nhc.noaa.gov/text/HFOTCMCP2.shtml",
+    "graphics": "https://www.nhc.noaa.gov/graphics_cp2.shtml",
+    "public": "https://www.nhc.noaa.gov/text/HFOTCPCP2.shtml"
+   },
+   "lon": -155.9,
+   "moveDirDeg": 285,
+   "moveKt": 5,
+   "name": "Nolo",
+   "nextAdvisoryAt": 1790240400000,
+   "pressureMb": 1002,
+   "radii": {
+    "34": [
+     50,
+     0,
+     0,
+     70
+    ]
+   },
+   "warnings": [
+    "A Hurricane Watch is in effect for — Hawaii County"
+   ],
+   "windKt": 40,
+   "track": [
+    {
+     "at": 1789333200000,
+     "lat": 17.2,
+     "lon": -117.2,
+     "windKt": 30,
+     "adv": 1,
+     "cls": "TD"
+    },
+    {
+     "at": 1789354800000,
+     "lat": 17,
+     "lon": -118.3,
+     "windKt": 30,
+     "adv": 2,
+     "cls": "TD"
+    },
+    {
+     "at": 1789376400000,
+     "lat": 16.5,
+     "lon": -118.9,
+     "windKt": 30,
+     "adv": 3,
+     "cls": "TD"
+    },
+    {
+     "at": 1789398000000,
+     "lat": 16.3,
+     "lon": -119.7,
+     "windKt": 30,
+     "adv": 4,
+     "cls": "TD"
+    },
+    {
+     "at": 1789419600000,
+     "lat": 16.9,
+     "lon": -120.5,
+     "windKt": 30,
+     "adv": 5,
+     "cls": "TD"
+    },
+    {
+     "at": 1789441200000,
+     "lat": 16.5,
+     "lon": -121.6,
+     "windKt": 30,
+     "adv": 6,
+     "cls": "TD"
+    },
+    {
+     "at": 1789462800000,
+     "lat": 16.1,
+     "lon": -122.6,
+     "windKt": 30,
+     "adv": 7,
+     "cls": "TD"
+    },
+    {
+     "at": 1789484400000,
+     "lat": 16.1,
+     "lon": -123.9,
+     "windKt": 30,
+     "adv": 8,
+     "cls": "TD"
+    },
+    {
+     "at": 1789506000000,
+     "lat": 15.7,
+     "lon": -125,
+     "windKt": 25,
+     "adv": 9,
+     "cls": "TD"
+    },
+    {
+     "at": 1789527600000,
+     "lat": 15.5,
+     "lon": -125.8,
+     "windKt": 25,
+     "adv": 10,
+     "cls": "EX"
+    },
+    {
+     "at": 1790154000000,
+     "lat": 14,
+     "lon": -153.7,
+     "windKt": 30,
+     "adv": 11,
+     "cls": "TD"
+    },
+    {
+     "at": 1790175600000,
+     "lat": 14.5,
+     "lon": -154.4,
+     "windKt": 30,
+     "adv": 12,
+     "cls": "TD"
+    },
+    {
+     "at": 1790197200000,
+     "lat": 14.5,
+     "lon": -155.3,
+     "windKt": 35,
+     "adv": 13,
+     "cls": "TS"
+    },
+    {
+     "at": 1790218800000,
+     "lat": 14.7,
+     "lon": -155.9,
+     "windKt": 40,
+     "adv": 14,
+     "cls": "TS"
+    }
+   ]
+  },
+  "place": {
+   "lat": 19.6,
+   "lon": -155.5,
+   "label": "Hawaiʻi Island"
+  }
+ },
+ "weather": {
+  "town": "Hilo",
+  "temp": 75,
+  "code": 4,
+  "night": true,
+  "cond": "Overcast",
+  "feels": 75,
+  "hi": 80,
+  "lo": 73,
+  "windMph": 0,
+  "rh": 100,
+  "sunrise": "6:10 AM",
+  "sunset": "6:17 PM",
+  "later": "Overcast right now. Thunderstorms throughout the day."
+ },
+ "chips": [
+  {
+   "id": "weather",
+   "label": "Weather"
+  },
+  {
+   "id": "roads",
+   "label": "Roads"
+  },
+  {
+   "id": "storms",
+   "label": "Storms"
+  },
+  {
+   "id": "quakes",
+   "label": "Quakes"
+  },
+  {
+   "id": "volcano",
+   "label": "Volcano"
+  },
+  {
+   "id": "reports",
+   "label": "Reports"
+  }
+ ],
+ "bands": [
+  {
+   "key": "today",
+   "label": "Also happening today",
+   "rows": [
+    {
+     "key": "hccda:roads:21a5c982-5d61-4410-94e9-857754c4bd39",
+     "topic": "roads",
+     "headline": "Mamalahoa Highway closed both ways in Hamakua, Ookala.",
+     "sub": "No way around listed yet.",
+     "source": "Hawaiʻi County Civil Defense",
+     "at": 1790224932000,
+     "when": "6:42 PM",
+     "level": 2,
+     "href": "/traffic/",
+     "mark": {
+      "kind": "path",
+      "path": [
+       [
+        20.0117,
+        -155.2856
+       ],
+       [
+        20.0108,
+        -155.2856
+       ],
+       [
+        20.0093,
+        -155.2859
+       ],
+       [
+        20.0093,
+        -155.2861
+       ],
+       [
+        20.0106,
+        -155.2874
+       ],
+       [
+        20.0103,
+        -155.2887
+       ],
+       [
+        20.0107,
+        -155.2891
+       ],
+       [
+        20.0108,
+        -155.2898
+       ],
+       [
+        20.0107,
+        -155.2901
+       ]
+      ]
+     }
+    },
+    {
+     "key": "hiema:https://dod.hawaii.gov/hiema/?p=17119",
+     "topic": "reports",
+     "headline": "Governor Green Issues Third Proclamation Relating to September 2026 Tropical Cyclones.",
+     "sub": "",
+     "source": "the state emergency agency",
+     "at": 1790128524000,
+     "when": "Tue 3:55 PM",
+     "level": 2,
+     "href": "https://dod.hawaii.gov/hiema/governor-green-issues-third-proclamation-relating-to-september-2026-tropical-cyclones/"
+    },
+    {
+     "key": "hpd:https://www.hawaiipolice.gov/?p=121463",
+     "topic": "reports",
+     "headline": "(Update) Police Identify Man Killed In August Ocean View Traffic Collision.",
+     "sub": "",
+     "source": "Hawaiʻi Police",
+     "at": 1790114078000,
+     "when": "Tue 11:54 AM",
+     "level": 2,
+     "href": "https://www.hawaiipolice.gov/update-police-identify-man-killed-in-august-ocean-view-traffic-collision/"
+    },
+    {
+     "key": "hpd:https://www.hawaiipolice.gov/?p=121442",
+     "topic": "reports",
+     "headline": "(Update)Man Charged with Multiple Offenses Following Firearm Incident in Hilo.",
+     "sub": "",
+     "source": "Hawaiʻi Police",
+     "at": 1790014897000,
+     "when": "Mon 8:21 AM",
+     "level": 2,
+     "href": "https://www.hawaiipolice.gov/updateman-charged-with-multiple-offenses-following-firearm-incident-in-hilo/"
+    },
+    {
+     "key": "hccda:roads:b1d33765-156a-484a-8c8b-51ab40385ecf",
+     "topic": "roads",
+     "headline": "Wood Valley Road down to one lane in Kau.",
+     "sub": "No way around listed yet.",
+     "source": "Hawaiʻi County Civil Defense",
+     "at": 1787196911000,
+     "when": "Wed 5:35 PM",
+     "level": 2,
+     "href": "/traffic/",
+     "mark": {
+      "kind": "path",
+      "path": [
+       [
+        19.2074,
+        -155.4772
+       ],
+       [
+        19.212,
+        -155.4781
+       ],
+       [
+        19.2197,
+        -155.4772
+       ],
+       [
+        19.2292,
+        -155.4794
+       ],
+       [
+        19.2351,
+        -155.4791
+       ],
+       [
+        19.2425,
+        -155.4766
+       ],
+       [
+        19.2484,
+        -155.4738
+       ],
+       [
+        19.2532,
+        -155.4716
+       ],
+       [
+        19.2552,
+        -155.4701
+       ],
+       [
+        19.2629,
+        -155.4662
+       ],
+       [
+        19.2637,
+        -155.4664
+       ],
+       [
+        19.2658,
+        -155.4673
+       ],
+       [
+        19.2671,
+        -155.4684
+       ],
+       [
+        19.2699,
+        -155.4726
+       ]
+      ]
+     }
+    },
+    {
+     "key": "hccda:roads:3ba2fb7c-0edd-4a8d-99a8-a83a546ffc63",
+     "topic": "roads",
+     "headline": "Kaalaiki Road closed both ways in Kau, from Mamalahoa Highway 11 intersection.",
+     "sub": "No way around listed yet.",
+     "source": "Hawaiʻi County Civil Defense",
+     "at": 1786911648000,
+     "when": "Sun 10:20 AM",
+     "level": 2,
+     "href": "/traffic/",
+     "mark": {
+      "kind": "path",
+      "path": [
+       [
+        19.0607,
+        -155.5863
+       ],
+       [
+        19.0616,
+        -155.5864
+       ]
+      ]
+     }
+    },
+    {
+     "key": "nws:urn:oid:2.49.0.1.840.0.214f4304af2df727f967351abb3f9d3e14deabf3.001.1",
+     "topic": "storms",
+     "headline": "Storm update on Hawaiʻi Island.",
+     "sub": "",
+     "source": "the National Weather Service",
+     "at": 1790218860000,
+     "when": "5:01 PM",
+     "level": 1,
+     "href": "/storms/"
+    },
+    {
+     "key": "usgs:hv75042947",
+     "topic": "quakes",
+     "headline": "Weak shaking near Hawaii.",
+     "sub": "No tsunami expected. Aftershocks are normal.",
+     "source": "the USGS",
+     "at": 1790208312580,
+     "when": "2:05 PM",
+     "level": 1,
+     "href": "/quakes/",
+     "mark": {
+      "kind": "dot",
+      "lat": 19.3303333333333,
+      "lon": -155.827666666667
+     }
+    },
+    {
+     "key": "hvo:332010",
+     "topic": "volcano",
+     "headline": "Kīlauea is active.",
+     "sub": "Check the Volcano page for where and what it means.",
+     "source": "the USGS Hawaiian Volcano Observatory",
+     "at": 1787167220000,
+     "when": "Wed 9:20 AM",
+     "level": 1,
+     "href": "/volcano/"
+    },
+    {
+     "key": "usgs:hv75042652",
+     "topic": "quakes",
+     "headline": "Small quake near Pāhala.",
+     "sub": "",
+     "source": "the USGS",
+     "at": 1790170060440,
+     "when": "3:27 AM",
+     "level": 0,
+     "href": "/quakes/",
+     "mark": {
+      "kind": "dot",
+      "lat": 19.1621666666667,
+      "lon": -155.484833333333
+     }
+    },
+    {
+     "key": "usgs:hv75041332",
+     "topic": "quakes",
+     "headline": "Small quake near Pāhala.",
+     "sub": "",
+     "source": "the USGS",
+     "at": 1790017093210,
+     "when": "Mon 8:58 AM",
+     "level": 0,
+     "href": "/quakes/",
+     "mark": {
+      "kind": "dot",
+      "lat": 19.1803333333333,
+      "lon": -155.508166666667
+     }
+    }
+   ],
+   "folded": {
+    "reports": 8,
+    "roads": 8,
+    "quakes": 1
+   }
+  }
+ ]
+}

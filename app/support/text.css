@@ -1,0 +1,20 @@
+/* The text pages (/support /privacy /guidelines /mod) and the first-run screens.
+   Everything is the shared language; only what it cannot say lives here. */
+
+/* A link inside a sentence: the tap colour, and a 44px hit box (12px above and below, pulled back
+   out of the flow with negative margins so the line does not grow). */
+.pg-text .cs-body a { display: inline-block; padding: 12px 0; margin: -12px 0; font-weight: 700; color: var(--sea); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, var(--sea) 45%, transparent); }
+.pg-text .cs-body strong { font-weight: 700; color: var(--ink); }
+/* Bulleted promises stay bullets. */
+.pg-text ul.cs-body { padding-left: 1.25rem; list-style: disc; }
+.pg-text ul.cs-body li + li { margin-top: 6px; }
+/* Notice ships its own top margin for prose pages; in the stack the gap is the rhythm. */
+.pg-text > .cs-card { margin-top: 0; }
+/* A card head with a count on the right (/mod). */
+.pg-text .tx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* ── first run: one white card per screen ── */
+.cs-onboard .ob-pic { display: flex; justify-content: center; padding: 20px 0; }
+.cs-onboard .ob-ctl { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.cs-onboard .ob-ctl .cs-btn-quiet { justify-content: center; }
+.cs-onboard .ob-dots { display: flex; align-items: center; gap: 6px; }

@@ -8,7 +8,7 @@ export default function MockChrome({ style, children }: { style: StyleId | "choo
       <div className="mock-bar">
         <span>Mock</span>
         <nav aria-label="Style">
-          {STYLES.map((s) => (
+          {STYLES.filter((s) => s.id.startsWith("pastel")).map((s) => (
             <Link key={s.id} href={s.href} aria-current={style === s.id ? "page" : undefined}>{s.label}</Link>
           ))}
         </nav>

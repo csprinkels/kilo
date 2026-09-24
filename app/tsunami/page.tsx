@@ -3,7 +3,6 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import PageShell from "@/components/PageShell";
 import EmptyState from "@/components/EmptyState";
-import OfficialWording from "@/components/OfficialWording";
 import { usePageFilter } from "@/components/PageFilter";
 import type { Tsunami, TsunamiLevel } from "@/lib/pages";
 import { useJson, useStoredIsland } from "@/lib/data";
@@ -13,6 +12,7 @@ import { zoneAt, type ZoneCollection } from "@/lib/geo";
 import { distanceNm, nmToMi } from "@/lib/storm";
 import { SOURCE_NAME, fmtUntil } from "@/lib/plain";
 import { APP_NAME, fmtClock, islandName } from "@/lib/brand";
+import "./tsunami.css";
 
 // The title is the level in plain words; an information statement is shown exactly like "none".
 const TITLE: Record<TsunamiLevel, string> = {
@@ -118,24 +118,22 @@ export default function TsunamiPage() {
       sentence={d && !warning ? sentenceFor(level, d.status.expires, now) : undefined}
       fetchedAt={d ? t?.fetchedAt : undefined} gen={d?.upd} offline={t?.offline} source={SOURCE}
     >
-      <div className="mt-s6 flex flex-col gap-s3">
+      <div className="cs-stack pg-tsunami">
         {d && warning && (
-          <section role="alert" aria-label="Tsunami warning" className="ts-alert">
-            <div className="ts-alert-hd">
-              <span className="cs-ictile cs-ictile--onbrick"><Icon name="siren-fill" size={21} /></span>
-              <p className="ts-alert-kicker">Act now</p>
+          <section role="alert" aria-label="Tsunami warning" className="cs-card cs-hero cs-hero--danger">
+            <div className="cs-tophead">
+              <span className="cs-ictile cs-ictile--danger"><Icon name="siren-fill" size={18} /></span>
+              <span className="cs-pill cs-pill--danger">Act now</span>
             </div>
-            <h2 className="ts-shout">Tsunami warning</h2>
-            <p className="ts-act">{WARNING_ACTION}</p>
-            <div className="ts-alert-rule" />
-            <p className="ts-alert-meta num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>
+            <h2 className="cs-display cs-display--hero">Tsunami warning</h2>
+            <p className="cs-body cs-body--hero">{WARNING_ACTION}</p>
+            <p className="cs-source num">{until ? `In effect ${until}. ` : ""}From {SOURCE}{d.status.issued ? `, ${fmtClock(d.status.issued, now)}` : ""}.</p>
           </section>
         )}
 
         {t && !d && (
-          <section className="cs-card ts-flush">
-            <EmptyState kind="error" title="Can't load right now.">Try again when you have signal. In an emergency call 911.</EmptyState>
-            <button type="button" onClick={() => window.dispatchEvent(new Event("online"))} className="cs-cta mt-s3">Try again</button>
+          <section className="cs-card">
+            <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
           </section>
         )}
 
@@ -147,73 +145,100 @@ export default function TsunamiPage() {
             alert, when "am I in the zone" is the whole reason someone opened this page. */}
         {show("zone", !!sirenLine || alerting) && (
         <section className="cs-card t-tsunami">
-          <div className="cs-heroline">
-            <span className="cs-ictile"><Icon name="map-pin" size={21} /></span>
-            <h2 className="cs-display cs-display--card">Am I in an evacuation zone?</h2>
+          <div className="cs-tophead">
+            <span className="cs-ictile cs-ictile--lg"><Icon name="map-pin" size={20} /></span>
+            <div className="cs-tophead-t">
+              <span className="cs-label">Evacuation zones</span>
+              <h2 className="cs-display cs-display--card">Am I in an evacuation zone?</h2>
+            </div>
           </div>
           <p className="cs-body">Tap to check your spot on the state evacuation map. {APP_NAME} does not save your location.</p>
-          <button type="button" onClick={lookup} disabled={busy} className="cs-cta cs-wide cs-wide--big mt-s4">{busy ? "Checking…" : "Check where I am"}</button>
-          {result && (
-            <div role="status" className={`ts-answer${"error" in result || result.zone != null || result.edge ? "" : " ts-answer--safe"}`}>
-              <p className="ts-verdict">{"error" in result ? result.error : (result.zone != null && ZONE_TEXT[result.zone]) || SAFE_TEXT}</p>
-              {!("error" in result) && result.edge && <p className="ts-caveat">You are right at the edge of the zone, so treat it as inside.</p>}
-            </div>
-          )}
+          <button type="button" onClick={lookup} disabled={busy} className="cs-btn-ink cs-wide cs-wide--big mt-s4">{busy ? "Checking…" : "Check where I am"}</button>
+          {result && (() => {
+            const flag = "error" in result || result.zone != null || result.edge;
+            return (
+              <div role="status" className="cs-well ts-answer">
+                <div className="cs-lead">
+                  <span className={`cs-ictile${flag ? " cs-ictile--warn" : ""}`}><Icon name={flag ? "warning-fill" : "check-circle"} size={18} /></span>
+                  <div className="cs-lead-t">
+                    <p className="cs-lead-h">{"error" in result ? result.error : (result.zone != null && ZONE_TEXT[result.zone]) || SAFE_TEXT}</p>
+                    {!("error" in result) && result.edge && <p className="cs-lead-p">You are right at the edge of the zone, so treat it as inside.</p>}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           {sirenLine && (
-            <p className="ts-siren"><Icon name="warning" size={17} /><span>{sirenLine}</span></p>
+            <p className="cs-note"><Icon name="warning" size={18} /><span>{sirenLine}</span></p>
           )}
 
           {/* The written answer above is exact and needs no signal. This is the part it cannot do:
               show where the line falls two doors over. Zones and coastline are already on the phone,
               so it draws offline; only the streets need a network. */}
-          {zones && (
-            <>
-              <div className="cs-rule" />
-              {showMap ? (
-                <ZoneMap island={zoneIsland} zones={zones} you={pos} label={`Evacuation zones on ${islandName(zoneIsland)}`} />
-              ) : (
-                <button type="button" className="cs-row ts-mapbtn" onClick={() => setShowMap(true)}>
-                  <span className="cs-ictile"><Icon name="map-pin" size={21} className="cs-ic" /></span>
-                  <span className="cs-rowmain">
-                    <span className="cs-rowname">See the zones on a map</span>
-                    <span className="cs-rowsub">Push in to find your street. Works with no signal.</span>
-                  </span>
-                  <Icon name="caret-right" size={16} className="cs-ic" />
-                </button>
-              )}
-            </>
-          )}
+          {zones && (showMap ? (
+            <ZoneMap island={zoneIsland} zones={zones} you={pos} label={`Evacuation zones on ${islandName(zoneIsland)}`} />
+          ) : (
+            <button type="button" className="cs-row cs-row--mid ts-mapbtn" onClick={() => setShowMap(true)}>
+              <span className="cs-ictile"><Icon name="map-pin" size={18} /></span>
+              <span className="cs-rowmain">
+                <span className="cs-rowname">See the zones on a map</span>
+                <span className="cs-rowsub">Push in to find your street. Works with no signal.</span>
+              </span>
+              <Icon name="caret-right" size={16} />
+            </button>
+          ))}
 
           <div className="cs-rule" />
-          <a className="cs-link ts-link" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="caret-right" size={16} /></a>
+          <a className="cs-btn-quiet" href={map.url} target="_blank" rel="noreferrer">{map.label} <Icon name="arrow-square-out" size={16} /></a>
         </section>
         )}
 
         {/* At watch or worse these stop being reference and become the instructions. */}
         {show("steps", alerting) && (
         <section className="cs-card t-tsunami">
-          <div className="cs-heroline">
-            <span className="cs-ictile"><Icon name="lightbulb-filament-fill" size={21} /></span>
-            <h2 className="cs-display cs-display--card">What to do</h2>
+          <div className="cs-tophead">
+            <span className="cs-ictile cs-ictile--lg"><Icon name="lightbulb-filament-fill" size={20} /></span>
+            <div className="cs-tophead-t">
+              <span className="cs-label">Tsunami</span>
+              <h2 className="cs-display cs-display--card">What to do</h2>
+            </div>
           </div>
           <ol className="ts-steps">
             {WHAT_TO_DO.map((s, i) => (
               <li key={s} className="cs-row">
-                <span className="cs-num" aria-hidden="true">{i + 1}</span>
+                <span className="cs-ictile ts-stepn" aria-hidden="true">{i + 1}</span>
                 <p>{s}</p>
               </li>
             ))}
           </ol>
-          <div className="cs-rule" />
-          <p className="cs-meta">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
+          <div className="cs-foot">
+            <p className="cs-foot-note">Evacuation orders come from Civil Defense. {APP_NAME} only shows information.</p>
+            <a className="cs-btn-ink" href={map.url} target="_blank" rel="noreferrer">Evacuation map</a>
+          </div>
         </section>
         )}
 
+        {/* In their words, always visible, never behind a tap. */}
         {d && show("official", alerting) && (
-          <section className="cs-card ts-flush ts-official">
-            <OfficialWording title={d.status.event || "No tsunami message in effect"} body={[d.status.headline, d.status.issued ? `Issued ${fmtClock(d.status.issued, now)}` : ""].filter(Boolean).join("\n")}>
-              <a className="cs-link ts-link mt-s2" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="caret-right" size={16} /></a>
-            </OfficialWording>
+          <section className="cs-card t-tsunami">
+            <div className="cs-tophead">
+              <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone-fill" size={20} /></span>
+              <div className="cs-tophead-t">
+                <span className="cs-label">Official wording</span>
+                <h2 className="cs-display cs-display--card">{d.status.event || "No tsunami message in effect"}</h2>
+              </div>
+            </div>
+            <ul className="ts-steps">
+              {d.status.headline && (
+                <li className="cs-row"><p className="whitespace-pre-line">{d.status.headline}</p></li>
+              )}
+              {d.status.issued && (
+                <li className="cs-row"><p>Issued {fmtClock(d.status.issued, now)}</p></li>
+              )}
+              <li className="cs-row cs-row--mid">
+                <a className="cs-btn-quiet" href={d.status.url || "https://www.tsunami.gov/"} target="_blank" rel="noreferrer">Read it at tsunami.gov <Icon name="arrow-square-out" size={16} /></a>
+              </li>
+            </ul>
           </section>
         )}
       </div>

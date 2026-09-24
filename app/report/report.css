@@ -1,0 +1,65 @@
+/* /report — only what the shared system has no shape for: a text field, a picker tile, a checkbox.
+   Every card, head, note, button and footer bar on the page is the shared .cs-* set. */
+
+/* ── fields: the well's look (surface-2, hairline, 10px) on a 48px input ── */
+.rp-page .rp-label{
+  display:block; margin:14px 0 8px;
+  font-size:14.5px; font-weight:700; line-height:1.35; color:var(--ink);
+}
+.rp-page .rp-field{
+  box-sizing:border-box; display:block; width:100%;
+  min-height:48px; padding:0 14px;
+  font-family:inherit; font-size:15.5px; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--hairline); border-radius:10px;
+}
+.rp-page .rp-field::placeholder{ color:var(--mute); }
+.rp-page .rp-field:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+.rp-page .rp-area{ padding:11px 14px; line-height:1.45; resize:none; }
+.rp-page .rp-select{ appearance:none; -webkit-appearance:none; padding-right:40px; }
+.rp-page .rp-selwrap{ position:relative; display:block; }
+.rp-page .rp-caret{ position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--mute); }
+/* the district the line already gave away: a quiet confirmation, never a warning */
+.rp-page .rp-guess{ display:flex; align-items:center; gap:8px; margin:8px 0 0; font-size:13.5px; font-weight:600; line-height:1.4; color:var(--ink-2); }
+.rp-page .rp-guess svg{ flex:0 0 auto; color:var(--ok); }
+
+/* ── the what-did-you-see picker: rounded-rect tiles, the lit one ink-filled like a chip ── */
+.rp-page .rp-tiles{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
+.rp-page .rp-tile{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  min-height:88px; padding:12px 8px;
+  border:1px solid var(--hairline); border-radius:10px;
+  background:var(--card); color:var(--ink);
+  font-family:inherit; font-size:13.5px; font-weight:700; line-height:1.25; text-align:center;
+  cursor:pointer;
+}
+/* the catch-all tile is last and takes a wide row of its own, not a lonely half */
+.rp-page .rp-tile--wide{ grid-column:1 / -1; flex-direction:row; min-height:56px; gap:11px; }
+.rp-page .rp-tile--on{ background:var(--ink); border-color:var(--ink); color:var(--brand-ink); }
+.rp-page .rp-tile:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+.rp-page .rp-tilelbl{ display:inline-flex; align-items:center; gap:5px; }
+
+/* ── consent ── */
+.rp-page .rp-check{
+  display:flex; align-items:flex-start; gap:11px; width:100%; min-height:44px;
+  margin:12px 0 0; padding:0; border:0; background:none; text-align:left;
+  font-family:inherit; cursor:pointer;
+}
+.rp-page .rp-check:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; border-radius:10px; }
+.rp-page .rp-box{
+  width:26px; height:26px; flex:0 0 auto; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--mute); border-radius:8px;
+  color:transparent;   /* the tick is drawn, unseen, until it is checked */
+}
+.rp-page .rp-box--on{ background:var(--ink); border-color:var(--ink); color:var(--brand-ink); }
+.rp-page .rp-checktxt{ font-size:15px; line-height:1.4; color:var(--ink); }
+
+/* ── what went wrong, in the danger ink, above the footer bar ── */
+.rp-page .rp-bad{
+  display:flex; align-items:flex-start; gap:9px; margin:14px 0 0;
+  font-size:14.5px; font-weight:700; line-height:1.45; color:var(--danger);
+}
+.rp-page .rp-bad svg{ flex:0 0 auto; margin-top:1px; }
+/* the footer bar's dark button carries a long "Checking…" label on narrow phones: let it drop a line */
+/* the count pill rides the right end of the topic head, as on Now's feed head */
+.rp-page .cs-tophead .rp-count{ margin-left:auto; }

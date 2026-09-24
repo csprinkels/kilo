@@ -7,6 +7,7 @@ import { TOWNS } from "@/lib/towns";
 import { APP_NAME, islandName } from "@/lib/brand";
 import { enablePush, pushStatus, type PushStatus } from "@/lib/push";
 import { track } from "@/lib/stat";
+import "@/app/support/text.css";
 
 type IslandId = Exclude<Island, "state">;
 type Step = "welcome" | "island" | "town" | "location" | "warnings" | "done";
@@ -61,19 +62,19 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
   const at = order.indexOf(step);
 
   return (
-    <main className="relative z-[1] mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-s7 pt-s7">
+    <main className="cs-onboard relative z-[1] mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pb-s7 pt-s7">
       {/* progress: one dot per screen, the current one long */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-1.5" aria-hidden>{order.map((s, i) => <span key={s} className={`h-1.5 rounded-full transition-all ${i === at ? "w-6 bg-brand" : i < at ? "w-1.5 bg-brand/50" : "w-1.5 bg-line"}`} />)}</div>
+        <div className="ob-dots" aria-hidden>{order.map((s, i) => <span key={s} className={`cs-pip transition-all ${i === at ? "cs-pip--lg cs-pip--ok" : i < at ? "cs-pip--ok opacity-50" : "cs-pip--none"}`} />)}</div>
         {step !== "welcome" && step !== "done" && island && (
-          <button className="inline-flex min-h-11 items-center px-2 text-small font-semibold text-ink-2" onClick={finish}>Skip</button>
+          <button className="cs-btn-quiet" onClick={finish}>Skip</button>
         )}
       </div>
 
       <div className="flex flex-1 flex-col justify-center py-s6">
         {step === "welcome" && (
           <Screen picture={<ConditionIcon code={2} size={144} />} title={APP_NAME} text="What is happening on your island, in plain words: weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report. Free, no ads, no account.">
-            <button className="btn btn-primary btn-big" onClick={() => setStep("island")}>Get started</button>
+            <button className="cs-btn-ink cs-wide cs-wide--big" onClick={() => setStep("island")}>Get started</button>
           </Screen>
         )}
 
@@ -95,7 +96,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
                 <button key={t.id} onClick={() => setTown(t.id)} className={`btn btn-big justify-start px-s5 text-left ${town === t.id ? "chip-active" : ""}`}>{t.name}</button>
               ))}
             </div>
-            <button className="btn btn-primary btn-big mt-s4" onClick={() => setStep("location")}>Next</button>
+            <button className="cs-btn-ink cs-wide cs-wide--big mt-s2" onClick={() => setStep("location")}>Next</button>
           </Screen>
         )}
 
@@ -103,23 +104,23 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
           <Screen picture={<TopicIcon topic="tsunami" size={120} />} title="Where you are" text="Kilo can check whether the spot you are standing on is in a tsunami evacuation zone, and which closed roads are near you. The check happens on your phone. Your location is never saved or sent anywhere.">
             {/* "Continue", not "Allow": App Review rejected 1.0.0 under 5.1.1(iv) because the button into a permission
                 prompt used the system prompt's own word. Apple named "Continue" and "Next" as the words to use instead. */}
-            <button className="btn btn-primary btn-big" disabled={busy} onClick={askLocation}><Icon name="crosshair" size={20} /> {busy ? "Asking your phone…" : "Continue"}</button>
-            <button className="btn btn-big mt-s2" onClick={() => setStep(canAskPush ? "warnings" : "done")}>Not now</button>
-            {note && <p className="mt-s3 text-body text-ink-2">{note}</p>}
+            <button className="cs-btn-ink cs-wide cs-wide--big" disabled={busy} onClick={askLocation}><Icon name="crosshair" size={20} /> {busy ? "Asking your phone…" : "Continue"}</button>
+            <button className="cs-btn-quiet" onClick={() => setStep(canAskPush ? "warnings" : "done")}>Not now</button>
+            {note && <p className="cs-body">{note}</p>}
           </Screen>
         )}
 
         {step === "warnings" && (
           <Screen picture={<TopicIcon topic="alert" size={120} />} title="Warnings on this phone" text={`Shelter openings, evacuations and warnings for ${island ? islandName(island) : "your island"} as notifications. The whole message is in the notification, so you can read it with no signal.`}>
-            <button className="btn btn-primary btn-big" disabled={busy} onClick={() => void askPush()}><Icon name="bell" size={20} /> {busy ? "One moment…" : "Turn on warnings"}</button>
-            <button className="btn btn-big mt-s2" onClick={() => setStep("done")}>Not now</button>
-            {note && <p className="mt-s3 text-body text-ink-2">{note}</p>}
+            <button className="cs-btn-ink cs-wide cs-wide--big" disabled={busy} onClick={() => void askPush()}><Icon name="bell" size={20} /> {busy ? "One moment…" : "Turn on warnings"}</button>
+            <button className="cs-btn-quiet" onClick={() => setStep("done")}>Not now</button>
+            {note && <p className="cs-body">{note}</p>}
           </Screen>
         )}
 
         {step === "done" && (
           <Screen picture={<TopicIcon topic="neighbors" size={120} />} title="You are set" text={`${APP_NAME} checks every few minutes and says when something changes. It is not an emergency service — if someone is hurt or in danger, call 911.`}>
-            <button className="btn btn-primary btn-big" onClick={finish}>Open {APP_NAME}</button>
+            <button className="cs-btn-ink cs-wide cs-wide--big" onClick={finish}>Open {APP_NAME}</button>
           </Screen>
         )}
       </div>
@@ -130,11 +131,11 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
 /** One screen: picture → heading → one paragraph → the control. */
 function Screen({ picture, title, text, children }: { picture: React.ReactNode; title: string; text: string; children: React.ReactNode }) {
   return (
-    <section className="fade-up">
-      <div className="flex justify-center">{picture}</div>
-      <h1 className="h-display mt-s6 text-center">{title}</h1>
-      <p className="mx-auto mt-s3 max-w-[34rem] text-center text-body text-ink-2">{text}</p>
-      <div className="mt-s6">{children}</div>
+    <section className="cs-card fade-up">
+      <div className="cs-well ob-pic">{picture}</div>
+      <h1 className="cs-display cs-display--hero">{title}</h1>
+      <p className="cs-body">{text}</p>
+      <div className="ob-ctl">{children}</div>
     </section>
   );
 }

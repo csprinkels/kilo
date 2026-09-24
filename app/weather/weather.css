@@ -1,0 +1,31 @@
+/* /weather — only what the shared system cannot say. Everything else on the route is .cs-*. */
+
+/* The storm line: one card that is one tap, tile · label + sentence · caret. */
+.pg-weather .wx-storm{ display:block; }
+.pg-weather .wx-storm .cs-tophead-t{ flex:1 1 auto; }
+.pg-weather .wx-storm-text{ font-size:15px; font-weight:700; line-height:1.35; color:var(--ink); }
+.pg-weather .wx-storm-go{ flex:0 0 auto; color:var(--mute); }
+
+/* RadarMap brings its own top margin; the stack already spaces it. */
+.pg-weather .wx-radar-wrap > *{ margin-top:0; }
+
+/* The hourly and tide strips bleed to the card's edges; the card pads 14px now, not 18. */
+.pg-weather .wx-strip,.pg-weather .wx-metrics{ margin-left:calc(var(--cs-pad) * -1); margin-right:calc(var(--cs-pad) * -1); }
+.pg-weather .wx-metrics-row{ padding:0 var(--cs-pad); }
+
+/* ── Shared pieces this route needs said differently (reported as sharedGaps; the real fix is in
+      components/HourlyChart, RadarMap and globals, which a page agent may not touch) ── */
+/* HourlyChart's metric switcher: the same 44px white rounded-rect chip as the page's filter row. */
+.pg-weather .wx-metrics-row{ gap:8px; }
+.pg-weather .wx-metric{
+  display:inline-flex; align-items:center; min-height:44px; padding:0 16px;
+  border:1px solid var(--hairline); border-radius:10px; background:var(--card);
+  font-size:14.5px; font-weight:700; color:var(--ink-2);
+}
+.pg-weather .wx-metric[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:var(--brand-ink); }
+/* Leaflet's zoom control: a white hairline 10px rounded-rect, 44px buttons, no 2px dark frame. */
+.pg-weather .wx-radar .leaflet-bar{ border:1px solid var(--hairline); border-radius:10px; overflow:hidden; background:var(--card); box-shadow:none; }
+.pg-weather .wx-radar .leaflet-bar a{ width:2.75rem; height:2.75rem; line-height:2.75rem; border-radius:0; border-bottom-color:var(--hairline); }
+.pg-weather .wx-radar .leaflet-bar a:last-child{ border-bottom:0; }
+/* DailyRows' temperature bar: the app's one meter shape is the 4px-cornered segment (.cs-seg). */
+.pg-weather .wx-bar,.pg-weather .wx-bar i{ border-radius:4px; }

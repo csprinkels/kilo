@@ -1,0 +1,182 @@
+/* Pastel — the synthesis. Every rule lives under .mock-pastel. Colours are Kilo tokens from app/globals.css;
+   dark fills are var(--ink) with var(--brand-ink) text so the dark scheme inverts on its own. */
+
+.mock-pastel {
+  --mock-bg: var(--bg);
+  --mock-ink: var(--ink);
+  --mock-muted: var(--mute);
+  --mock-line: var(--hairline);
+  --pz-r: 20px;
+  --pz-r-in: 14px;
+  --pz-r-pill: 10px;   /* every former pill is a rounded rectangle */
+  --pz-white: color-mix(in srgb, var(--card) 88%, transparent);
+  --pz-dots: 1px dotted color-mix(in srgb, var(--mute) 45%, transparent);
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--bg);
+}
+@media (prefers-color-scheme: dark) {
+  .mock-root.mock-pastel { --pz-white: color-mix(in srgb, var(--card) 70%, transparent); }
+}
+.mock-pastel .mock-phone { padding: 0.75rem 1rem 7rem; }
+.mock-pastel .pz { display: flex; flex-direction: column; gap: 12px; }
+.mock-pastel p, .mock-pastel h1, .mock-pastel h2, .mock-pastel ul, .mock-pastel ol { margin: 0; padding: 0; }
+.mock-pastel ul, .mock-pastel ol { list-style: none; }
+.mock-pastel a { color: inherit; text-decoration: none; }
+.mock-pastel summary { list-style: none; cursor: pointer; }
+.mock-pastel summary::-webkit-details-marker { display: none; }
+.mock-pastel button { font: inherit; cursor: pointer; }
+
+/* ── shared: white card, icon tiles, pills, dark pill button, recessed footer bar ── */
+.mock-pastel .pz-card { border-radius: var(--pz-r); background: var(--card); border: 1px solid var(--hairline); box-shadow: var(--card-shadow); overflow: hidden; }
+.mock-pastel .pz-tile {
+  display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: 10px; background: var(--pz-white); color: var(--topic-ink, var(--ink-2));
+}
+.mock-pastel .pz-tile--lg { width: 40px; height: 40px; border-radius: 12px; }
+.mock-pastel .pz-tile--brick { background: var(--danger-bg); color: var(--danger); }
+.mock-pastel .pz-tile--amber { background: var(--warn-bg); color: var(--warn); }
+.mock-pastel .pz-tile--ink { background: var(--tint); color: var(--ink); }
+.mock-pastel .pz-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.mock-pastel .pz-pill {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 0 10px; border-radius: var(--pz-r-pill);
+  background: var(--pz-white); font-size: 12.5px; font-weight: 700; line-height: 1; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.mock-pastel .pz-pill--danger { background: var(--danger); color: var(--danger-ink); }
+.mock-pastel .pz-pill--brick { background: var(--danger-bg); color: var(--danger); }
+.mock-pastel .pz-pill--warn { color: var(--warn); }
+.mock-pastel .pz-pill--ink { background: var(--ink); color: var(--brand-ink); min-width: 28px; justify-content: center; padding: 0 9px; }
+.mock-pastel .pz-go { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; min-height: 28px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.mock-pastel .pz-btn-ink {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border: 0; border-radius: var(--pz-r-pill);
+  background: var(--ink); color: var(--brand-ink); font-size: 15px; font-weight: 800; white-space: nowrap;
+}
+.mock-pastel .pz-btn-quiet { min-height: 44px; padding: 0 4px; border: 0; background: none; font-size: 14.5px; font-weight: 700; color: var(--sea); }
+.mock-pastel .pz-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 10px 10px 16px;
+  background: var(--surface-2); border-top: 1px solid var(--hairline);
+}
+.mock-pastel .pz-foot-note { font-size: 13.5px; font-weight: 600; color: var(--mute); font-variant-numeric: tabular-nums; }
+.mock-pastel .pz-foot-note--r { flex: 1 1 auto; text-align: right; font-size: 12.5px; }
+.mock-pastel .pz-away { margin-left: 4px; vertical-align: -2px; color: var(--mute); }
+.mock-pastel .pz-label { margin: 0; }
+
+/* ── top bar + freshness ── */
+.mock-pastel .pz-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: var(--ink); }
+.mock-pastel .pz-island {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 12px 0 10px;
+  border-radius: var(--pz-r-pill); background: var(--card); border: 1px solid var(--hairline); font-size: 13.5px; font-weight: 700; color: var(--ink-2);
+}
+.mock-pastel .pz-fresh { display: flex; align-items: center; gap: 8px; margin-top: -6px; font-size: 13px; font-weight: 600; color: var(--mute); font-variant-numeric: tabular-nums; }
+.mock-pastel .pz-fresh-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--ok); }
+
+/* ── hero + pins ── */
+.mock-pastel .pz-hero { padding: 16px; border-radius: var(--pz-r); background: var(--hero-warn); box-shadow: 0 6px 22px rgb(120 88 40 / .16); }
+.mock-pastel .pz-hero-h { font-size: 27px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: var(--ink); }
+.mock-pastel .pz-hero-sub { margin-top: 8px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.mock-pastel .pz-hero .pz-pills { margin-top: 12px; }
+.mock-pastel .pz-pins { margin-top: 12px; padding: 2px 12px; background: var(--card); border: 0; box-shadow: 0 1px 2px rgb(80 60 40 / .06); }
+.mock-pastel .pz-pin { display: block; border-top: 1px solid var(--hairline); color: var(--ink); }
+.mock-pastel .pz-pin:first-child { border-top: 0; }
+.mock-pastel .pz-pin > summary, .mock-pastel a.pz-pin { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 10px 0; cursor: pointer; list-style: none; }
+.mock-pastel .pz-pin > summary::-webkit-details-marker { display: none; }
+.mock-pastel .pz-tile--danger { background: var(--danger); color: var(--danger-ink); }
+.mock-pastel .pz-tile--warn { background: var(--warn-bg); color: var(--warn); }
+.mock-pastel .pz-pin-main { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }
+.mock-pastel .pz-pin-h { font-size: 15.5px; font-weight: 800; line-height: 1.3; color: var(--ink); }
+.mock-pastel .pz-pin-a { font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
+.mock-pastel .pz-pin-more { display: inline-flex; align-items: center; gap: 3px; margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--sea); }
+.mock-pastel .pz-pin--group[open] .pz-pin-more svg { transform: rotate(180deg); }
+.mock-pastel .pz-pin-go { flex: 0 0 auto; margin-top: 12px; color: var(--mute); }
+.mock-pastel .pz-pin-list { margin: 0 0 8px 44px; padding: 0; border-top: 1px dashed var(--line); max-height: 220px; overflow: auto; }
+.mock-pastel .pz-pin-list li a { display: block; min-height: 40px; padding: 9px 0; border-bottom: 1px dashed var(--hairline); font-size: 14px; line-height: 1.4; color: var(--ink-2); }
+.mock-pastel .pz-pin-list li:last-child a { border-bottom: 0; }
+
+/* ── island status: the overview card ── */
+.mock-pastel .pz-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 4px 16px; border-top: var(--pz-dots); }
+.mock-pastel .pz-grid p { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 40px; font-size: 15px; line-height: 1.2; color: var(--ink-2); }
+.mock-pastel .pz-grid p:nth-child(even) { padding-left: 14px; border-left: var(--pz-dots); }
+.mock-pastel .pz-grid p svg { color: var(--mute); flex: 0 0 auto; }
+.mock-pastel .pz-grid b { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mock-pastel .pz-grid span { font-size: 13.5px; line-height: 1.15; color: var(--mute); }
+
+/* ── ʻIo ask ── */
+.mock-pastel .pz-ask { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px 0 16px; border-radius: var(--pz-r-pill); background: var(--card); border: 1px solid var(--hairline); color: var(--mute); }
+.mock-pastel .pz-ask input { flex: 1; min-width: 0; min-height: 46px; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15.5px; font-weight: 600; color: var(--ink); }
+.mock-pastel .pz-ask input::placeholder { color: var(--mute); }
+.mock-pastel .pz-ask input::-webkit-search-decoration { display: none; }
+
+/* ── filter chips: plain pills, one ink-filled ── */
+.mock-pastel .pz-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -1rem; padding: 0 1rem; }
+.mock-pastel .pz-chips::-webkit-scrollbar { display: none; }
+.mock-pastel .pz-chip {
+  display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; padding: 0 16px; border-radius: var(--pz-r-pill);
+  border: 1px solid var(--hairline); background: var(--card); font-size: 14px; font-weight: 700; color: var(--ink-2);
+}
+.mock-pastel .pz-chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--brand-ink); }
+
+/* ── filled topic cards (storm, weather) with a white inner sub-card ── */
+.mock-pastel .pz-topic { display: block; padding: 14px; border-radius: var(--pz-r); background: var(--topic); color: var(--ink); }
+.mock-pastel .pz-topic-head { display: flex; align-items: center; gap: 12px; }
+.mock-pastel .pz-topic-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mock-pastel .pz-h2 { font-size: 21px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: var(--ink); }
+.mock-pastel .pz-topic-text { margin-top: 12px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.mock-pastel .pz-inner { display: block; border-radius: var(--pz-r-in); background: var(--pz-white); overflow: hidden; }
+.mock-pastel .pz-figure { margin-top: 12px; line-height: 0; position: relative; z-index: 0; }
+.mock-pastel .pz-figure > svg { display: block; width: 100%; height: auto; }
+.mock-pastel .pz-wx { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px 14px; }
+.mock-pastel .pz-wx-t { display: flex; flex-direction: column; min-width: 0; }
+.mock-pastel .pz-temp { font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mock-pastel .pz-wx-cond { margin-top: 4px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.mock-pastel .pz-wx-pic { flex: 0 0 auto; width: 64px; height: 64px; }
+
+/* ── the timeline ── */
+.mock-pastel .pz-tl-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; }
+.mock-pastel .pz-tl-list { display: flex; flex-direction: column; border-top: 1px solid var(--hairline); }
+.mock-pastel .pz-tl-row { padding: 7px 0; border-bottom: 1px solid var(--hairline); }
+.mock-pastel .pz-tl-quiet { padding: 0; }
+.mock-pastel .pz-more { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 6px; font-size: 14px; font-weight: 700; color: var(--sea); }
+
+/* an event chip: tinted; the ones with a sub-line hold a white inner item */
+.mock-pastel .pz-ev { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 10px 11px; border-radius: 16px; background: var(--topic); color: var(--ink); }
+.mock-pastel .pz-ev-main { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; }
+.mock-pastel .pz-ev-hl { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.mock-pastel .pz-ev-when { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--mute); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mock-pastel .pz-ev-h { flex: 1 1 auto; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+.mock-pastel .pz-ev-sub { font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.mock-pastel .pz-ev-meta { margin-top: 1px; font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--ink-2); }
+.mock-pastel .pz-thumb { display: inline-flex; flex: 0 0 auto; width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--hairline); }
+.mock-pastel .pz-thumb svg { display: block; width: 100%; height: 100%; }
+
+/* ── warnings on this phone ── */
+.mock-pastel .pz-push-head { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px 14px; }
+.mock-pastel .pz-push-head h2 { font-size: 16px; font-weight: 800; line-height: 1.3; color: var(--ink); }
+.mock-pastel .pz-push-head p { margin-top: 3px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+
+/* ── settings row + footer ── */
+.mock-pastel .pz-settings { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border-radius: var(--pz-r); background: var(--card); border: 1px solid var(--hairline); color: var(--ink); }
+.mock-pastel .pz-settings-t { flex: 1; font-size: 15px; font-weight: 700; }
+.mock-pastel .pz-footer { padding: 2px 6px 0; font-size: 12.5px; line-height: 1.45; color: var(--mute); text-align: center; }
+
+/* ── tab dock ── */
+.mock-pastel .pz-dock {
+  position: fixed; left: 50%; bottom: 12px; z-index: 30; transform: translateX(-50%);
+  display: flex; width: calc(100% - 2rem); max-width: 26rem; padding: 6px;
+  border-radius: var(--pz-r-pill); background: var(--card); border: 1px solid var(--hairline); box-shadow: 0 8px 28px rgb(80 60 40 / .16);
+}
+.mock-pastel .pz-dock-tab { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; border-radius: var(--pz-r-pill); font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.mock-pastel .pz-dock-tab.is-on { background: var(--ink); color: var(--brand-ink); }
+
+
+/* ── accent pass: white cards, the topic hue only on the tile, the label and one edge ── */
+.mock-pastel .pz-topic { background: var(--card); border: 1px solid var(--hairline); box-shadow: var(--card-shadow); }
+.mock-pastel .pz-topic .pz-tile, .mock-pastel .pz-ev .pz-tile { background: var(--topic); color: var(--topic-ink); }
+.mock-pastel .pz-topic .pz-label { color: var(--topic-ink); }
+.mock-pastel .pz-inner { background: var(--surface-2); border: 1px solid var(--hairline); }
+.mock-pastel .pz-ev { background: var(--card); border: 1px solid var(--hairline); }
+
+/* the storm card carries the stat grid and the footer bar: pull them out to the card edge */
+.mock-pastel .pz-topic > .pz-grid { margin: 12px -14px 0; }
+.mock-pastel .pz-topic > .pz-foot { margin: 0 -14px -14px; }
+.mock-pastel .pz-inner.pz-pins { background: var(--card); border: 0; }

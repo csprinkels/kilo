@@ -2,10 +2,12 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import PageShell from "@/components/PageShell";
 import { Notice } from "@/components/AlertBlock";
 import { API_URL } from "@/lib/data";
 import { enablePush, pushStatus, type PushStatus } from "@/lib/push";
 import { fmtClock } from "@/lib/brand";
+import "../support/text.css";
 
 type Row = { id: string; type: string; text: string; locText: string; island: string; district: string; status: "pending" | "live"; holdReason?: string; createdAt: number; expiresAt: number; confirms: number; flags: number };
 const WHY: Record<string, string> = { review: "“Something else” reports are always read first", plate: "mentions a license plate", name: "mentions a person by name", flagged: "neighbors flagged it", link: "has a link", phone: "has a phone number" };
@@ -71,67 +73,82 @@ export default function ModPage() {
 
   if (!key) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-s7">
-        <h1 className="h-display">Moderation</h1>
-        <p className="mt-s3 text-body text-ink-2">This page needs the moderator link. Open it from the link you were given.</p>
-        <Link href="/" className="btn mt-s5">Back to Kilo</Link>
-      </main>
+      <PageShell title="Moderation">
+        <div className="cs-stack pg-text">
+          <section className="cs-card">
+            <div className="cs-lead">
+              <span className="cs-ictile cs-ictile--ink"><Icon name="warning" size={18} /></span>
+              <div className="cs-lead-t">
+                <p className="cs-lead-h">This page needs the moderator link.</p>
+                <p className="cs-lead-p">Open it from the link you were given.</p>
+                <Link href="/" className="cs-btn-ink mt-s3">Back to Kilo</Link>
+              </div>
+            </div>
+          </section>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-s7">
-      <h1 className="h-display">Neighbor reports to read</h1>
-      <p className="mt-s2 text-body text-ink-2">Show puts a report on the Reports page for six hours. Hide takes it down for good. Nothing here is automatic.</p>
+    <PageShell title="Neighbor reports to read" sentence="Show puts a report on the Reports page for six hours. Hide takes it down for good. Nothing here is automatic." fetchedAt={now || undefined} gen={now}>
+      <div className="cs-stack pg-text">
+        {err && <Notice title={err} icon="warning" />}
 
-      {err && <Notice title={err} icon="warning" />}
+        <section className="cs-card">
+          <div className="cs-actions cs-flat">
+            <button className="btn" onClick={() => void load()}><Icon name="check-circle" size={18} /> Refresh</button>
+            {push === "on"
+              ? <span className="cs-meta">You get a notification when something is held.</span>
+              : push === "off" || push === null
+                ? <button className="btn" onClick={() => void enablePush("mod", 4).then(setPush)}><Icon name="bell" size={18} /> Notify me when something is held</button>
+                : <span className="cs-meta">{push === "needs-install" ? "Add Kilo to your Home Screen to get notifications here." : push === "denied" ? "Notifications are off for Kilo in your phone's settings." : "This phone cannot show notifications."}</span>}
+          </div>
+        </section>
 
-      <div className="mt-s4 flex flex-wrap items-center gap-s3">
-        <button className="btn" onClick={() => void load()}><Icon name="check-circle" size={18} /> Refresh</button>
-        {push === "on"
-          ? <span className="text-small text-ink-2">You get a notification when something is held.</span>
-          : push === "off" || push === null
-            ? <button className="btn" onClick={() => void enablePush("mod", 4).then(setPush)}><Icon name="bell" size={18} /> Notify me when something is held</button>
-            : <span className="text-small text-ink-2">{push === "needs-install" ? "Add Kilo to your Home Screen to get notifications here." : push === "denied" ? "Notifications are off for Kilo in your phone's settings." : "This phone cannot show notifications."}</span>}
+        <section className="cs-card">
+          <div className="tx-head"><h2 className="cs-display cs-display--card">Waiting</h2>{data && <span className="cs-pill cs-pill--ink">{data.pending.length}</span>}</div>
+          {!data ? <p className="cs-body">Loading…</p>
+            : data.pending.length === 0 ? <p className="cs-body">Nothing waiting.</p>
+            : <ul className="cs-rows">{data.pending.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>}
+        </section>
+
+        <section className="cs-card">
+          <div className="tx-head"><h2 className="cs-display cs-display--card">Live in the last day</h2>{data && <span className="cs-pill cs-pill--ink">{data.live.length}</span>}</div>
+          {data && (data.live.length === 0 ? <p className="cs-body">Nothing went live today.</p>
+            : <ul className="cs-rows">{data.live.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>)}
+        </section>
+
+        {stats && Object.keys(stats.totals).length > 0 && (
+          <section className="cs-card">
+            <h2 className="cs-display cs-display--card">What people use</h2>
+            <p className="cs-meta">Since {stats.since}</p>
+            <ul className="m-0 mt-s2 list-none p-0">
+              {Object.entries(stats.totals).sort((a, b) => b[1] - a[1]).map(([event, count]) => (
+                <li key={event} className="cs-row cs-row--mid">
+                  <span className="cs-rowmain cs-rowname">{STAT_LABEL(event)}</span>
+                  <span className="cs-rowend cs-rowname num">{count.toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <p className="cs-footer">A shown report appears on the Reports page within about two minutes. Hidden reports are gone for good; the neighbor is not told.</p>
       </div>
-
-      <h2 className="now-label mt-s6">Waiting{data ? ` · ${data.pending.length}` : ""}</h2>
-      {!data ? <p className="mt-s3 text-body text-ink-2">Loading…</p>
-        : data.pending.length === 0 ? <p className="mt-s3 text-body text-ink-2">Nothing waiting.</p>
-        : <ul className="list mt-s2">{data.pending.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>}
-
-      <h2 className="now-label mt-s6">Live in the last day{data ? ` · ${data.live.length}` : ""}</h2>
-      {data && (data.live.length === 0 ? <p className="mt-s3 text-body text-ink-2">Nothing went live today.</p>
-        : <ul className="list mt-s2">{data.live.map((r) => <ModRow key={r.id} r={r} now={now} busy={busy === r.id} onAct={act} />)}</ul>)}
-
-      {stats && Object.keys(stats.totals).length > 0 && (
-        <>
-          <h2 className="now-label mt-s6">What people use · since {stats.since}</h2>
-          <ul className="list mt-s2">
-            {Object.entries(stats.totals).sort((a, b) => b[1] - a[1]).map(([event, count]) => (
-              <li key={event} className="flex items-baseline justify-between py-s2">
-                <span className="text-body text-ink">{STAT_LABEL(event)}</span>
-                <span className="num text-body font-semibold text-ink-2">{count.toLocaleString()}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      <p className="mt-s7 text-small text-ink-2">A shown report appears on the Reports page within about two minutes. Hidden reports are gone for good; the neighbor is not told.</p>
-    </main>
+    </PageShell>
   );
 }
 
 function ModRow({ r, now, busy, onAct }: { r: Row; now: number; busy: boolean; onAct: (id: string, a: "show" | "hide") => void }) {
   return (
     <li className="py-s3">
-      <p className="text-small text-ink-2 num">{TYPE[r.type] ?? r.type} · {r.locText || r.district}{r.district && r.locText ? ` · ${r.district}` : ""} · {fmtClock(r.createdAt, now)}</p>
-      <p className="mt-0.5 text-body text-ink">{r.text || <span className="text-ink-2">(no text)</span>}</p>
-      {r.status === "pending" && r.holdReason && <p className="mt-0.5 text-small text-warn">Held: {WHY[r.holdReason] ?? r.holdReason}.</p>}
-      {r.status === "live" && (r.confirms || r.flags) ? <p className="mt-0.5 text-small text-ink-2 num">{r.confirms} still there · {r.flags} flagged</p> : null}
-      <div className="mt-s2 flex gap-s2">
-        {r.status === "pending" && <button className="btn btn-primary" disabled={busy} onClick={() => onAct(r.id, "show")}><Icon name="check" size={18} /> Show</button>}
+      <p className="cs-meta num">{TYPE[r.type] ?? r.type} · {r.locText || r.district}{r.district && r.locText ? ` · ${r.district}` : ""} · {fmtClock(r.createdAt, now)}</p>
+      <p className="cs-body cs-flat text-ink">{r.text || <span className="text-ink-2">(no text)</span>}</p>
+      {r.status === "pending" && r.holdReason && <p className="cs-meta cs-warn">Held: {WHY[r.holdReason] ?? r.holdReason}.</p>}
+      {r.status === "live" && (r.confirms || r.flags) ? <p className="cs-meta num">{r.confirms} still there · {r.flags} flagged</p> : null}
+      <div className="cs-actions">
+        {r.status === "pending" && <button className="cs-btn-ink" disabled={busy} onClick={() => onAct(r.id, "show")}><Icon name="check" size={18} /> Show</button>}
         <button className="btn" disabled={busy} onClick={() => onAct(r.id, "hide")}><Icon name="x" size={18} /> Hide</button>
       </div>
     </li>

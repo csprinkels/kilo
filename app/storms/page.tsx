@@ -7,6 +7,7 @@ import StormTracker from "@/components/StormTracker";
 import { ISLAND_POINTS, bearingDeg, distanceNm, nmToMi, type StormsSnapshot } from "@/lib/storm";
 import { dirWord, rankStorms, stormName } from "@/lib/plain";
 import { useJson, useStoredIsland } from "@/lib/data";
+import "./storms.css";
 
 const SOURCE = "the Central Pacific Hurricane Center";
 
@@ -26,8 +27,8 @@ export default function StormsPage() {
   if (snap && !snap.data) {
     return (
       <PageShell {...shell} fetchedAt={undefined} title="Storms">
-        <div className="st-stack mt-s5">
-          <section className="cs-card st-flush">
+        <div className="cs-stack pg-storms">
+          <section className="cs-card">
             {/* useJson refetches on the window "online" event, so this is a retry without a page reload. */}
             <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
           </section>
@@ -40,7 +41,7 @@ export default function StormsPage() {
   if (!shown) {
     return (
       <PageShell {...shell} title="Storms">
-        <div className="st-stack mt-s5">
+        <div className="cs-stack pg-storms">
           <section className="cs-card cs-hero">
             {snap ? (
               <div className="cs-heroline">
@@ -58,10 +59,10 @@ export default function StormsPage() {
 
   return (
     <PageShell {...shell} title={stormName(shown)}>
-      <div className="st-stack mt-s5">
+      <div className="cs-stack pg-storms">
         <StormTracker key={shown.id} storm={shown} island={island} />
         {others.length > 0 && (
-          <section className="cs-card t-storms st-flush">
+          <section className="cs-card t-storms">
             {others.map((s) => (
               <button key={s.id} type="button" className="cs-row cs-row--mid st-row" onClick={() => { setPick(s.id); window.scrollTo({ top: 0 }); }}>
                 <span className="cs-rowmain">

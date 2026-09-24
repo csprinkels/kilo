@@ -1,0 +1,33 @@
+/* /quakes — what the shared .cs-* set cannot say. Scoped to the card stack. */
+
+/* Notice ships its own top margin for pages that stack it under prose; here the stack gap is the rhythm. */
+.pg-quakes > .cs-card { margin-top: 0; }
+
+/* DotMap keeps its caption inside the figure; .cs-figure zeroes line-height for the
+   picture, so the caption takes its own back and sits on a hairline inside the well. */
+.pg-quakes .qk-frame > figcaption {
+  padding: 0.7rem 0.85rem 0.75rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--mute);
+}
+
+/* The list's own zeroing — .cs-row draws every row. */
+.pg-quakes .qk-list { list-style: none; margin: 6px 0 0; padding: 0; }
+
+/* Magnitude as a dot, on the same "bigger dot, bigger quake" idea as the map.
+   The size is set per row in the JSX; the lane keeps them on one centre line. */
+.pg-quakes .qk-mark { width: 30px; flex: 0 0 auto; display: flex; justify-content: center; }
+.pg-quakes .qk-bullet { display: block; border-radius: 9999px; background: var(--ink); }
+
+/* The row's magnitude: the bold value at the row end, in the body face (never Amatic on a number). */
+.pg-quakes .qk-mag {
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}

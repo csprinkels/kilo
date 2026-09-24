@@ -1,0 +1,10 @@
+/* /sources — Settings and about. Everything is the shared language; only what it cannot say lives here. */
+/* Notice ships its own top margin for the pages that stack it under prose; in the card stack the gap is the rhythm. */
+.pg-sources > .cs-card{ margin-top:0; }
+/* The one line on this page that earns the brick. */
+.pg-sources .sr-911{ font-weight:700; color:var(--danger); }
+/* A row that is a link: the tap colour and a 44px target (.cs-row pads to 40px on its own). */
+.pg-sources .sr-go{ min-height:2.75rem; color:var(--ink); text-decoration:none; }
+.pg-sources .sr-go:hover .cs-rowname{ color:var(--sea); }
+/* PageShell ends every page on a "Settings and about" row; here that row would link the page to itself. */
+.pg-sources ~ .cs-settings{ display:none; }

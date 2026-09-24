@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import Icon, { type IconName } from "@/components/Icon";
-import PageShell, { H2 } from "@/components/PageShell";
+import PageShell from "@/components/PageShell";
 import { NeighborRow } from "@/components/ItemRow";
 import { Notice } from "@/components/AlertBlock";
 import EmptyState from "@/components/EmptyState";
@@ -14,6 +14,7 @@ import { track } from "@/lib/stat";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import type { Island } from "@/lib/types";
 import { fmtClock } from "@/lib/brand";
+import "./report.css";
 
 const TURNSTILE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
 type TurnstileApi = { render: (el: HTMLElement, opts: Record<string, unknown>) => string; reset: (id?: string) => void };
@@ -49,11 +50,24 @@ const isType = (s: string | null): s is ReportType => !!s && s in REPORT_TYPES;
 /** The chip-shaped way out of a card, to the rules. */
 function RulesChip({ children }: { children: React.ReactNode }) {
   return (
-    <p className="cs-chiprow rp-chiprow">
+    <p className="cs-chiprow">
       <Link href="/guidelines/" className="cs-chip cs-chip--link">
         {children}<Icon name="caret-right" size={14} />
       </Link>
     </p>
+  );
+}
+
+/** A step's topic head: the accent tile, the Amatic step word, the question. */
+function Head({ label, icon, children }: { label: string; icon: IconName; children: React.ReactNode }) {
+  return (
+    <div className="cs-tophead">
+      <span className="cs-ictile cs-ictile--lg"><Icon name={`${icon}-fill`} size={20} /></span>
+      <div className="cs-tophead-t">
+        <span className="cs-label">{label}</span>
+        <h2 className="cs-display cs-display--card">{children}</h2>
+      </div>
+    </div>
   );
 }
 
@@ -83,22 +97,31 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
         {open ? (
           <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
         ) : (
-          <>
-            <button className="cs-cta cs-wide cs-wide--big mt-s5" onClick={() => setWriting(true)}>
-              <Icon name="note-pencil" size={20} />Report something
+          <div className="cs-stack">
+            <button className="cs-settings t-reports" onClick={() => setWriting(true)}>
+              <span className="cs-ictile"><Icon name="note-pencil" size={18} /></span>
+              <span className="cs-settings-t">Seen something? Report it to your neighbors</span>
+              <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
             </button>
-            <H2>Reported near you</H2>
-            {!snap?.data ? (
-              offline || snapFailed
-                ? <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
-                : <p className="cs-card t-reports rp-quiet mt-s3">Loading what neighbors reported…</p>
-            ) : posts.length === 0 ? (
-              <section className="cs-card cs-hero t-reports mt-s3"><p className="cs-display cs-display--hero">Nothing reported today.</p></section>
-            ) : (
-              <section className="cs-card t-reports mt-s3"><ul className="rp-feed">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul></section>
-            )}
-            <RulesChip>Rules for reports</RulesChip>
-          </>
+            <section className="cs-card t-reports">
+              <div className="cs-tophead">
+                <span className="cs-ictile cs-ictile--lg"><Icon name="users-three-fill" size={20} /></span>
+                <div className="cs-tophead-t"><p className="cs-label">Neighbors</p><h2 className="cs-display cs-display--card">Reported near you</h2></div>
+                {posts.length > 0 && <span className="cs-pill cs-pill--ink rp-count">{posts.length}</span>}
+              </div>
+              {!snap?.data ? (
+                offline || snapFailed
+                  ? <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
+                  : <p className="cs-body">Loading what neighbors reported…</p>
+              ) : posts.length === 0 ? (
+                <EmptyState title="Nothing reported today." icon="users-three">Neighbor reports show here for six hours.</EmptyState>
+              ) : (
+                <ul className="cs-rows">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
+              )}
+              <div className="cs-rule" />
+              <Link href="/guidelines/" className="cs-more"><span>Rules for reports</span><Icon name="caret-right" size={14} /></Link>
+            </section>
+          </div>
         )}
       </div>
     </PageShell>
@@ -194,14 +217,14 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
       : r.merged ? "Someone already reported this. We added your “me too”."
       : `Posted to ${district}. Neighbors see it marked “not checked”. It clears by itself around ${fmtClock(r.expiresAt, result.at)}.`;
     return (
-      <section className={`cs-card cs-hero mt-s6${r.status === "pending" ? " cs-hero--amber" : ""}`}>
+      <section className="cs-card cs-hero cs-hero--warn mt-s6">
         <h2 className="cs-display cs-display--hero">
           {r.status === "pending" ? "Saved for a person to read" : r.merged ? "Already reported" : "Posted"}
         </h2>
         <p className="cs-body cs-body--hero max-w-[36rem]">{line}</p>
-        <div className="rp-stack">
-          <button className="cs-cta cs-wide" onClick={onClose}>Back to Reports</button>
-          <button className="cs-ghost cs-wide" onClick={again}>Report another</button>
+        <div className="cs-actions">
+          <button className="cs-btn-ink" onClick={onClose}>Back to Reports</button>
+          <button className="cs-btn-quiet" onClick={again}>Report another</button>
         </div>
       </section>
     );
@@ -211,16 +234,16 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
     <form className="mt-s2" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <Notice title="Hurt or in danger? Call 911 first.">This tells neighbors. It does not call for help.</Notice>
 
-      <div className="rp-cards mt-s3">
-        <section className="cs-card">
-          <h2 className="cs-display cs-display--card rp-cardh">What did you see?</h2>
+      <div className="cs-stack">
+        <section className="cs-card t-reports">
+          <Head label="Step 1" icon="megaphone">What did you see?</Head>
           <div className="rp-tiles">
             {REPORT_TYPE_KEYS.map((k) => {
               const t = TILE[k], on = d.type === k;
               return (
                 <button key={k} type="button" onClick={() => setD({ ...d, type: k })} aria-pressed={on}
                   className={`rp-tile${on ? " rp-tile--on" : ""}${k === "other" ? " rp-tile--wide" : ""}`}>
-                  <Icon name={`${t.icon}-fill`} size={28} />
+                  <span className="cs-ictile"><Icon name={`${t.icon}-fill`} size={18} /></span>
                   <span className="rp-tilelbl">{on && <Icon name="check" size={15} aria-hidden />}{t.label}</span>
                 </button>
               );
@@ -228,8 +251,8 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
           </div>
         </section>
 
-        <section className="cs-card">
-          <h2 className="cs-display cs-display--card rp-cardh">Where?</h2>
+        <section className="cs-card t-reports">
+          <Head label="Step 2" icon="map-pin">Where?</Head>
           <label htmlFor="where" className="rp-label">Near which road or town?</label>
           <input id="where" value={d.locText} maxLength={LOC_MAX} onChange={(e) => setD({ ...d, locText: e.target.value })}
             placeholder="Highway 130 by the Pāhoa post office" autoComplete="off" className="rp-field" />
@@ -248,8 +271,8 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
           )}
         </section>
 
-        <section className="cs-card">
-          <h2 className="cs-display cs-display--card rp-cardh">Anything else?</h2>
+        <section className="cs-card t-reports">
+          <Head label="Step 3" icon="note-pencil">Anything else?</Head>
           <label htmlFor="more" className="rp-label">What you saw, not who you think did it.</label>
           <textarea id="more" value={d.text} maxLength={TEXT_MAX} rows={4} onChange={(e) => setD({ ...d, text: e.target.value })}
             placeholder={d.type ? REPORT_TYPES[d.type].hint : undefined} className="rp-field rp-area" />
@@ -258,12 +281,12 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
             : d.type && HELD_BY_DEFAULT.includes(d.type) && <p className="cs-note"><Icon name="flag" size={18} /><span>A person reads &ldquo;Something else&rdquo; reports before they show.</span></p>}
         </section>
 
-        <section className="cs-card">
+        <section className="cs-card t-reports">
+          <Head label="Step 4" icon="check-circle">Post it</Head>
           <button type="button" role="checkbox" aria-checked={d.agreed} onClick={() => setD({ ...d, agreed: !d.agreed })} className="rp-check">
             <span className={`rp-box${d.agreed ? " rp-box--on" : ""}`} aria-hidden><Icon name="check" size={16} /></span>
             <span className="rp-checktxt">This is not an emergency and I am 18 or older.</span>
           </button>
-          <div className="cs-rule" />
           <RulesChip>Neighbor rules</RulesChip>
 
           {TURNSTILE_KEY && (
@@ -281,9 +304,9 @@ function ReportForm({ preset, onClose }: { preset?: ReportType; onClose: () => v
 
           {tried && problem && <p className="rp-bad" role="alert"><Icon name="warning-fill" size={18} />{problem}</p>}
           {result && !result.r.ok && <p className="rp-bad" role="alert"><Icon name="wifi-slash" size={18} />{result.r.error}</p>}
-          <div className="rp-stack">
-            <button type="submit" disabled={busy || checking} className="cs-cta cs-wide">{checking ? (tsFailed ? "Verification unavailable" : "Checking you are a person…") : busy ? "Sending…" : "Post to neighbors"}</button>
-            <button type="button" className="cs-ghost cs-wide" onClick={onClose}>Back to Reports</button>
+          <div className="cs-foot">
+            <button type="button" className="cs-btn-quiet" onClick={onClose}>Back to Reports</button>
+            <button type="submit" disabled={busy || checking} className="cs-btn-ink">{checking ? (tsFailed ? "Verification unavailable" : "Checking you are a person…") : busy ? "Sending…" : "Post to neighbors"}</button>
           </div>
         </section>
       </div>

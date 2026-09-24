@@ -1,0 +1,30 @@
+/* Weather mock: everything shared comes from ../pastel/pastel.css via the inner .mock-pastel wrapper. */
+.mock-pastel-weather .mock-phone { padding: 0.75rem 1rem 7rem; }
+
+/* the town row under the freshness line */
+.mock-pastel-weather .pw-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+
+/* the reading: a bigger temperature and picture than the Now card, high/low under the sky word */
+.mock-pastel-weather .pw-wx { margin-top: 0; padding: 16px 18px; }
+.mock-pastel-weather .pw-temp { font-size: 64px; }
+.mock-pastel-weather .pw-hilo { margin-top: 6px; font-size: 13.5px; font-weight: 700; color: var(--mute); font-variant-numeric: tabular-nums; }
+.mock-pastel-weather .pw-pic { width: 96px; height: 96px; }
+.mock-pastel-weather .pz-btn-ink svg { margin-right: 6px; }
+
+/* the storm line: one row, tile and sentence and a caret */
+.mock-pastel-weather .pw-storm { display: flex; align-items: center; gap: 12px; }
+.mock-pastel-weather .pw-storm-t { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 2px; }
+.mock-pastel-weather .pw-storm-text { font-size: 15px; font-weight: 700; line-height: 1.35; color: var(--ink); }
+.mock-pastel-weather .pw-storm-go { flex: 0 0 auto; color: var(--mute); }
+
+/* the app's own charts sit in the card's inner well */
+.mock-pastel-weather .pw-chart, .mock-pastel-weather .pw-days { margin-top: 12px; }
+
+/* the agency's full text: rows on hairlines under a small head */
+.mock-pastel-weather .pw-full { padding: 14px 16px 4px; }
+.mock-pastel-weather .pw-full-head { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; }
+.mock-pastel-weather .pw-full-row { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--hairline); color: var(--ink); }
+.mock-pastel-weather .pw-full-t { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 15px; font-weight: 800; line-height: 1.3; }
+.mock-pastel-weather .pw-zones { background: var(--tint); color: var(--ink); }
+.mock-pastel-weather .pw-full-b { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.mock-pastel-weather .pw-full-m { font-size: 12.5px; font-weight: 600; color: var(--mute); }

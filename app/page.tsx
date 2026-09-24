@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
-import Icon from "@/components/Icon";
-import AlertsCard from "@/components/AlertsCard";
+import Icon, { type IconName } from "@/components/Icon";
+import AlertsCard, { useAlertsDismissed } from "@/components/AlertsCard";
 import Freshness from "@/components/Freshness";
 import SectionNav from "@/components/SectionNav";
 import TopBar from "@/components/TopBar";
@@ -11,20 +11,21 @@ import StormMap from "@/components/StormMap";
 import ConditionIcon from "@/components/ConditionIcon";
 import Onboarding from "@/components/Onboarding";
 import Ask from "@/components/Ask";
+import { ICON } from "@/components/ItemRow";
 import type { DigestItem, Island, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
-import { ISLAND_POINTS } from "@/lib/storm";
+import { ISLAND_POINTS, ktToMph, outlookFor } from "@/lib/storm";
 import type { Quakes, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { usePageFilter } from "@/components/PageFilter";
-import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib/summary";
+import { condWord, conditionCode, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
 import { nowStory, topicRows } from "@/lib/now";
 import { buildFeed, dropSuperseded, foldPins, foldRuns, hrefOf, type FeedRow as FeedRowT } from "@/lib/feed";
 import MiniMap from "@/components/MiniMap";
-import { fmtTime, islandName } from "@/lib/brand";
+import { fmtDayTime, fmtTime, islandName } from "@/lib/brand";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
@@ -63,6 +64,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const gen = Math.max(ess?.data?.gen ?? 0, snap?.data?.gen ?? 0);
   const offline = !!ess?.offline && (snap?.offline ?? true);  // no cache at all: snap is null, not offline
   const loaded = !!(snap?.data || ess?.data);
+  const [alertsDismissed] = useAlertsDismissed();
 
   const items = useMemo(() => {
     // The agencies reissue rather than edit, so the same warning arrives twice under a new id.
@@ -119,6 +121,13 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const pinRows = foldPins(items.filter((i) => i !== headlineItem && i !== mainStormItem), plain, island, now);
   const bands = buildFeed({ items, plain, now, storms: stormLines, island });
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
+  // The hero's foot counts the pins by level: what is a warning, what is only a heads up.
+  const pinWarnings = pinRows.filter((g) => g.level >= 3).length, pinHeadsUp = pinRows.filter((g) => g.level === 2).length;
+  // The storm card's facts: when the wind arrives here, the watch word the zones carry, the latest advisory.
+  const outlook = mainStorm ? outlookFor(mainStorm.s, place) : undefined;
+  const windsFrom = outlook?.hurricaneWindsFrom ?? outlook?.tsWindsFrom;
+  // The watch word is the highest watch or warning the zones carry — never a statement.
+  const watch = official.filter((i) => i.type === "storm" && /\b(Watch|Warning)\b/.test(i.fields?.event ?? "")).sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level)[0]?.fields?.event;
 
   /*
    * Now is the longest page in the app, and on a busy day the thing you opened it for is somewhere
@@ -133,37 +142,55 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   if (weatherCard) present.add("weather");
   const { bar: chips, show } = usePageFilter(CHIP_ORDER.filter((t) => present.has(t)).map((t) => ({ id: t, label: CHIP_LABEL[t] })), { label: "Filter the feed", clearOn: story.title });
 
-
   return (
-    <main className="hm relative z-[1] min-h-dvh w-full">
-      <div className="mx-auto w-full max-w-2xl px-5 pb-32 md:pb-20">
+    <main className="relative z-[1] min-h-dvh w-full">
+      <div className="mx-auto w-full max-w-2xl px-4 pb-32 md:pb-20">
         <TopBar island={island} onIsland={setIsland} />
         <SectionNav />
         <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
 
-        <div className="hm-col">
+        <div className="cs-stack">
           {loaded && (
-            /* The page's one emphasised block: amber ground only when the day has something to act on. */
-            <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`}>
+            /* The page's one raised ground: the warm hero only when the day has something to act on. */
+            <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`} aria-label="What matters now">
               <h1 className="cs-display cs-display--hero">{story.title}</h1>
               {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
               {pinRows.length > 0 && (
-                <div className="fd-pin-rows">
-                  {pinRows.map((g) => {
-                    const lone = g.items.length === 1 ? g.items[0] : undefined;
-                    const body = <><p className="fd-pin-head">{g.headline}{g.headline.endsWith(".") ? "" : "."}{lone && awayMark(lone)}</p>{g.action && <p className="fd-pin-sub">{g.action}</p>}</>;
-                    if (lone) return <PinLink key={g.key} item={lone} className="fd-pin-row">{body}</PinLink>;
-                    // Several of one kind, said once. The names are behind a native disclosure: no script, works offline.
-                    return (
-                      <details key={g.key} className="fd-pin-row">
-                        <summary>{body}<span className="fd-pin-more">See the list <Icon name="caret-down" size={14} className="cs-ic" /></span></summary>
-                        <ul className="fd-pin-list">
-                          {g.items.map((i) => <li key={i.key}><PinLink item={i}>{plain.get(i.key)!.headline}{awayMark(i)}</PinLink></li>)}
-                        </ul>
-                      </details>
-                    );
-                  })}
-                </div>
+                <>
+                  {/* Everything to act on today, as rows in one white block. */}
+                  <div className="cs-pins">
+                    {pinRows.map((g) => {
+                      const lone = g.items.length === 1 ? g.items[0] : undefined;
+                      const body = (
+                        <>
+                          <span className={`cs-ictile ${g.level >= 3 ? "cs-ictile--danger" : "cs-ictile--warn"}`}><Icon name={pinGlyph(g.items[0])} size={18} /></span>
+                          <span className="cs-pin-main">
+                            <span className="cs-pin-h">{g.headline}{lone && awayMark(lone)}</span>
+                            {g.action && <span className="cs-pin-a">{g.action}</span>}
+                            {!lone && <span className="cs-pin-more">See the list <Icon name="caret-down" size={13} /></span>}
+                          </span>
+                          {lone && <Icon name="caret-right" size={16} className="cs-pin-go" />}
+                        </>
+                      );
+                      if (lone) return <PinLink key={g.key} item={lone} className="cs-pin">{body}</PinLink>;
+                      // Several of one kind, said once. The names are behind a native disclosure: no script, works offline.
+                      return (
+                        <details key={g.key} className="cs-pin">
+                          <summary>{body}</summary>
+                          <ul className="cs-pin-list">
+                            {g.items.map((i) => <li key={i.key}><PinLink item={i}>{plain.get(i.key)!.headline}{awayMark(i)}</PinLink></li>)}
+                          </ul>
+                        </details>
+                      );
+                    })}
+                  </div>
+                  {(pinWarnings > 0 || pinHeadsUp > 0) && (
+                    <div className="cs-pills">
+                      {pinWarnings > 0 && <span className="cs-pill cs-pill--danger"><Icon name="siren" size={13} />{pinWarnings} {pinWarnings === 1 ? "warning" : "warnings"}</span>}
+                      {pinHeadsUp > 0 && <span className="cs-pill cs-pill--warn"><Icon name="warning" size={13} />{pinHeadsUp} heads up</span>}
+                    </div>
+                  )}
+                </>
               )}
             </section>
           )}
@@ -172,35 +199,44 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
           {loaded && chips}
 
           {approaching && mainStorm && (
-            <Link href="/storms/" className="cs-card cs-hero cs-hero--amber" aria-label={mainStorm.text}>
-              <div className="cs-heroline">
-                <span className="cs-ictile cs-ictile--amber"><Icon name="wind" size={21} className="cs-ic" /></span>
-                <div className="hm-heromain">
-                  <p className="cs-label">{/\b(Sat|Sun)\b/.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</p>
+            <section className="cs-card t-storms" aria-label={mainStorm.text}>
+              <div className="cs-tophead">
+                <span className="cs-ictile cs-ictile--lg"><Icon name="wind" size={20} /></span>
+                <span className="cs-tophead-t">
+                  <span className="cs-label">{/\b(Sat|Sun)\b/.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</span>
                   {/* non-breaking hyphen: never "Two-" / "C" */}
-                  <h2 className="cs-display cs-display--hero">{stormName(mainStorm.s).replace(/-/g, "\u2011")}</h2>
-                </div>
+                  <h2 className="cs-display cs-display--card">{stormName(mainStorm.s).replace(/-/g, "‑")}</h2>
+                </span>
               </div>
-              <p className="cs-body cs-body--hero">{mainStorm.text}</p>
-              {mainStorm.level >= 3 && <p className="cs-note"><Icon name="warning" size={18} />Finish getting ready. Follow Civil Defense.</p>}
-              <div className="cs-figure hm-figure"><StormMap storm={mainStorm.s} place={place} compact /></div>
-            </Link>
+              <p className="cs-body">{mainStorm.text}</p>
+              <div className="cs-figure"><StormMap storm={mainStorm.s} place={place} compact /></div>
+              <div className="cs-grid2">
+                {windsFrom && <p><Icon name="warning" size={18} /><b>{fmtDayTime(windsFrom)}</b><span>{outlook?.hurricaneWindsFrom ? "damaging winds from" : "winds could start"}</span></p>}
+                <p><Icon name="wind" size={18} /><b>{Math.round(ktToMph(mainStorm.s.windKt) / 5) * 5} mph</b><span>at storm center</span></p>
+                {watch && <p><Icon name="siren" size={18} /><b>{watch}</b></p>}
+                <p><Icon name="warning-fill" size={18} /><b>Advisory {mainStorm.s.advNum}</b><span>latest</span></p>
+              </div>
+              <div className="cs-foot">
+                <span className="cs-foot-note">{stormName(mainStorm.s)}</span>
+                <Link href="/storms/" className="cs-btn-ink">Storm page</Link>
+              </div>
+            </section>
           )}
 
           {!weatherCard
-            ? <p className="cs-card cs-body hm-flat">Weather loads when the signal is better.</p>
+            ? <p className="cs-card cs-body cs-flat">Weather loads when the signal is better.</p>
             : show("weather") && <WeatherNow island={island} />}
 
           {/* Weak signal: the 1.5 KB essentials arrived but the 30 KB snapshot has not. Show the
               headlines we do have rather than an empty page — this is the path the app exists for. */}
           {headlinesOnly.length > 0 && (
             <section className="cs-card" aria-label="Just in">
-              <p className="cs-label fd-band">Just in</p>
+              <p className="cs-label">Just in</p>
               {headlinesOnly.map((a) => (
-                <div key={a.h} className="fd-row">
-                  <span className="fd-main">
-                    <span className="fd-head">{a.title}</span>
-                    <span className="fd-sub">Details load when the signal is better.</span>
+                <div key={a.h} className="cs-row">
+                  <span className="cs-rowmain">
+                    <span className="cs-rowname">{a.title}</span>
+                    <span className="cs-rowsub">Details load when the signal is better.</span>
                   </span>
                 </div>
               ))}
@@ -211,34 +247,42 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
             const { rows, folded } = foldRuns(b.rows.filter((r) => show(r.topic)));
             if (!rows.length) return null;
             return (
-              <section key={b.key} className="cs-card" aria-label={b.label}>
-                <p className="cs-label fd-band">{b.label}</p>
-                {rows.map((r) => <FeedRow key={r.key} row={r} island={island} focus={r.key === focusKey} />)}
-                {Object.entries(folded).map(([topic, n]) => (
-                  <Link key={topic} href={HREF[topic] ?? "/"} className={`fd-more t-${topic}`}>
-                    <span>{n} more {MORE_WORD[topic] ?? "of these"}</span>
-                    <Icon name="caret-right" size={15} className="cs-ic" />
-                  </Link>
-                ))}
+              <section key={b.key} aria-label={b.label}>
+                <div className="cs-feedhead">
+                  <p className="cs-label">{b.label}</p>
+                  <span className="cs-pill cs-pill--ink">{rows.length}</span>
+                </div>
+                <ol className="cs-feed">
+                  {rows.map((r) => <li key={r.key}><FeedRow row={r} island={island} focus={r.key === focusKey} /></li>)}
+                  {Object.entries(folded).map(([topic, n]) => (
+                    <li key={topic} className="cs-feed-quiet">
+                      <Link href={HREF[topic] ?? "/"} className="cs-more">
+                        <span>{n} more {MORE_WORD[topic]?.[n === 1 ? 0 : 1] ?? "of these"}</span>
+                        <Icon name="caret-right" size={14} />
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
               </section>
             );
           })}
 
-          {!loaded && !offline && <p className="cs-body hm-flat">Loading what is happening around {islandName(island)}…</p>}
+          {!loaded && !offline && <p className="cs-body cs-flat">Loading what is happening around {islandName(island)}…</p>}
           {/* Home was the one data page with no offline state: with nothing cached it sat on "Loading…" for ever. */}
           {!loaded && offline && (
-            <section className="cs-card mt-s3"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
+            <section className="cs-card"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
           )}
 
-          <div className="cs-card"><AlertsCard island={island} compact /></div>
-        </div>
+          {/* "Not now" hides the block on this phone; the card goes with it rather than staying as an empty white box. */}
+          {!alertsDismissed && <div className="cs-card"><AlertsCard island={island} compact /></div>}
 
-        <Link href="/sources/" className="row mt-s5 border-t border-line text-small font-semibold text-ink-2">
-          <Icon name="gear" size={18} /> <span className="flex-1">Settings and about</span> <Icon name="caret-right" size={16} />
-        </Link>
-        <footer className="cs-footer mt-s4">
-          Free. No ads. No account. Not an emergency service — call 911.
-        </footer>
+          <Link href="/sources/" className="cs-settings">
+            <span className="cs-ictile cs-ictile--ink"><Icon name="gear" size={18} /></span>
+            <span className="cs-settings-t">Settings and about</span>
+            <Icon name="caret-right" size={16} className="cs-ic" />
+          </Link>
+          <footer className="cs-footer">Free. No ads. No account. Not an emergency service — call 911.</footer>
+        </div>
       </div>
     </main>
   );
@@ -250,7 +294,9 @@ function PinLink({ item, className, children }: { item: Item; className?: string
   return <Link href={href} {...(away ? { target: "_blank", rel: "noreferrer" } : {})} id={`item-${hashOf(item.key)}`} className={className}>{children}</Link>;
 }
 /** The off-app mark, on the end of the line it leaves from. */
-const awayMark = (item: Item) => hrefOf(item).startsWith("http") ? <Icon name="arrow-square-out" size={13} className="fd-pin-away" aria-hidden /> : null;
+const awayMark = (item: Item) => hrefOf(item).startsWith("http") ? <Icon name="arrow-square-out" size={13} className="cs-away" aria-hidden /> : null;
+/** The pin's glyph: the row's own kind, a warning triangle for a watch, a drop for a water outage. */
+const pinGlyph = (i: Item): IconName => i.type === "advisory" ? "warning" : i.type === "outage" && i.fields?.kind ? "drop" : ICON[i.type] ?? "warning";
 
 /** Where a folded run sends you, and what to call the things it folded. */
 const HREF: Record<string, string> = {
@@ -263,15 +309,20 @@ const CHIP_LABEL: Record<string, string> = {
   weather: "Weather", roads: "Roads", storms: "Storms", quakes: "Quakes",
   volcano: "Volcano", tsunami: "Ocean", reports: "Reports",
 };
-const MORE_WORD: Record<string, string> = {
-  roads: "road closures", storms: "storms", quakes: "earthquakes",
-  volcano: "volcano notices", tsunami: "ocean notices", weather: "weather notices", reports: "notices",
+/** [one, many] for the folded "N more …" rows. */
+const MORE_WORD: Record<string, [string, string]> = {
+  roads: ["road closure", "road closures"], storms: ["storm", "storms"], quakes: ["earthquake", "earthquakes"],
+  volcano: ["volcano notice", "volcano notices"], tsunami: ["ocean notice", "ocean notices"], weather: ["weather notice", "weather notices"], reports: ["notice", "notices"],
+};
+/** The feed entry's tile says the topic, the way the card's .t-* hue does. */
+const TOPIC_ICON: Record<string, IconName> = {
+  roads: "car", storms: "wind", quakes: "pulse", volcano: "mountains", tsunami: "waves", weather: "cloud-sun", reports: "megaphone",
 };
 
 /**
- * One row of the feed: the sentence, then who said it and when, and a picture of where —
- * but only when the thing has a real position. A notice has no map, and inventing one
- * would say the app knows something it does not.
+ * One entry of the feed: the tile, the sentence with its clock time on the same line, what to do,
+ * who said it — and a picture of where, but only when the thing has a real position. A notice has
+ * no map, and inventing one would say the app knows something it does not.
  */
 function FeedRow({ row, island, focus }: { row: FeedRowT; island: Exclude<Island, "state">; focus?: boolean }) {
   useFocusScroll(row.key, focus);
@@ -279,53 +330,64 @@ function FeedRow({ row, island, focus }: { row: FeedRowT; island: Exclude<Island
   // a new tab — a full navigation inside the app would replace the app with the agency's website.
   const away = row.href.startsWith("http");
   return (
-    <Link href={row.href} {...(away ? { target: "_blank", rel: "noreferrer" } : {})} id={`item-${hashOf(row.key)}`} className={`fd-row t-${row.topic}`}>
-      <span className="fd-main">
-        <span className="fd-head">{row.headline}</span>
-        {row.sub && <span className="fd-sub">{row.sub}</span>}
-        <span className="fd-meta"><span className="fd-dot" />{[row.source, row.when].filter(Boolean).join(" \u00b7 ")}{away && <Icon name="arrow-square-out" size={13} className="ml-1 inline align-[-1px]" aria-hidden />}</span>
+    <Link href={row.href} {...(away ? { target: "_blank", rel: "noreferrer" } : {})} id={`item-${hashOf(row.key)}`} className={`cs-entry t-${row.topic}`}>
+      <span className="cs-ictile"><Icon name={TOPIC_ICON[row.topic] ?? "bell"} size={18} /></span>
+      <span className="cs-entry-main">
+        <span className="cs-entry-hl"><span className="cs-entry-h">{row.headline}</span><span className="cs-entry-when">{row.when}</span></span>
+        {row.sub && <span className="cs-entry-sub">{row.sub}</span>}
+        <span className="cs-entry-meta">{row.source}{away && <Icon name="arrow-square-out" size={12} className="cs-away" aria-hidden />}</span>
       </span>
-      {row.mark && <span className="fd-thumb"><MiniMap island={island} mark={row.mark} /></span>}
+      {row.mark && <span className="cs-entry-thumb"><MiniMap island={island} mark={row.mark} size={52} /></span>}
     </Link>
   );
 }
 
-/** Weather as an ordinary card — never the page hero, never a tinted wash. */
+/** Weather as an ordinary topic card: the reading in the inner well, the sentence, the stat grid, and a foot that leads to the page. */
 function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const w = useJson<Weather>(`v1/${island}/weather.json`);
   const townId = useSyncExternalStore(() => () => {}, () => localStorage.getItem("town"), () => null);
   const town = w?.data?.towns.find((t) => t.id === townId) ?? w?.data?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
-  if (!w) return <p className="cs-card cs-body hm-flat">Loading the weather…</p>;
-  if (!town?.hourly) return <p className="cs-card cs-body hm-flat">Weather is not available right now.</p>;
+  if (!w) return <p className="cs-card cs-body cs-flat">Loading the weather…</p>;
+  if (!town?.hourly) return <p className="cs-card cs-body cs-flat">Weather is not available right now.</p>;
   const h = town.hourly;
   const obsFresh = town.obs && w.fetchedAt - town.obs.at < 2 * 3_600_000;
   const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0], night = !!h.n[0];
   const temp = (obsFresh ? town.obs?.f : undefined) ?? h.t[0];
-  const fl = obsFresh && town.obs?.f != null && town.obs.rh != null ? feelsLike(town.obs.f, town.obs.rh) : undefined;
+  // Wind and humidity are the station's own reading; a reading two hours old is dropped rather than shown as now.
+  const mph = obsFresh ? town.obs?.wMph : undefined, rh = obsFresh ? town.obs?.rh : undefined;
   const hi = town.fc.find((p) => p.day)?.t, lo = town.fc.find((p) => !p.day)?.t;
   const d0 = Math.floor((w.fetchedAt - 10 * 3_600_000) / 86_400_000) * 86_400_000 + 10 * 3_600_000;
   const sun = meta ? sunTimes(d0, meta.lat, meta.lon) : undefined;
-  const nextSun = sun ? (sun.rise > w.fetchedAt ? { k: "Sunrise", at: sun.rise } : sun.set > w.fetchedAt ? { k: "Sunset", at: sun.set } : undefined) : undefined;
   const tempLabel = temp != null ? `${temp}°` : "—";
+  // High and low come from the forecast, so the grid always has its first row; a station reading is a cell only when it is real.
+  const cells: React.ReactNode[] = [];
+  if (hi != null) cells.push(<p key="hi"><Icon name="cloud-sun" size={18} /><b>{hi}°</b><span>high today</span></p>);
+  if (lo != null) cells.push(<p key="lo"><Icon name="drop" size={18} /><b>{lo}°</b><span>low tonight</span></p>);
+  if (rh != null) cells.push(<p key="rh"><Icon name="drop-fill" size={18} /><b>{rh}%</b><span>humidity</span></p>);
+  if (mph != null) cells.push(<p key="wind"><Icon name="wind" size={18} /><b>{mph ? `${mph} mph` : "Calm"}</b><span>wind</span></p>);
   return (
-    <Link href="/weather/" className="cs-card t-weather" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
-      <p className="cs-label">Weather in {town.name}</p>
-      <div className="cs-wx-row">
-        <div className="min-w-0">
-          <p className="cs-bignum cs-bignum--lg">{tempLabel}</p>
-          <p className="cs-wx-now">
-            {condWord(code)}
-            {fl != null && Math.abs(fl - (temp ?? fl)) >= 3 ? `. Feels like ${fl}°` : ""}
-            {hi != null && lo != null ? `. High ${hi}°, low ${lo}°` : ""}.
-          </p>
-        </div>
-        <ConditionIcon code={code} night={night} size={72} className="cs-wx-ic" />
+    <section className="cs-card t-weather" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
+      <div className="cs-tophead">
+        <span className="cs-ictile cs-ictile--lg"><Icon name="cloud-sun" size={20} /></span>
+        <span className="cs-tophead-t">
+          <span className="cs-label">Weather</span>
+          <h2 className="cs-display cs-display--card">{town.name}</h2>
+        </span>
       </div>
-      <p className="cs-wx-later">
-        {nowAndLater(obsFresh ? code : undefined, h)}
-        {nextSun ? ` ${nextSun.k} at ${fmtTime(nextSun.at)}.` : ""}
-      </p>
-    </Link>
+      <div className="cs-well cs-wx">
+        <span className="cs-wx-t">
+          <span className="cs-temp">{tempLabel}</span>
+          <span className="cs-wx-cond">{condWord(code)}</span>
+        </span>
+        <ConditionIcon code={code} night={night} size={64} className="cs-wx-pic" />
+      </div>
+      <p className="cs-body">{nowAndLater(obsFresh ? code : undefined, h)}</p>
+      {cells.length > 0 && <div className="cs-grid2">{cells}</div>}
+      <div className="cs-foot">
+        <span className="cs-foot-note">{sun ? `Sunrise ${fmtTime(sun.rise)} · Sunset ${fmtTime(sun.set)}` : condWord(code)}</span>
+        <Link href="/weather/" className="cs-btn-ink">Weather page</Link>
+      </div>
+    </section>
   );
 }

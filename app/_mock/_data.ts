@@ -42,6 +42,8 @@ export const STYLES = [
   { id: "sky", href: "/mock/sky/", label: "Sky", line: "Quiet page. Weather sits in a soft sky wash." },
   { id: "mango", href: "/mock/mango/", label: "Mango", line: "Big type, no icons. Color only when something is wrong." },
   { id: "sticker", href: "/mock/sticker/", label: "Sticker", line: "Swiss list. One round weather badge." },
+  { id: "pastel", href: "/mock/pastel/", label: "Now", line: "Inspo pass — Now. White cards, accent tiles, stat grids with a footer bar." },
+  { id: "pastel-weather", href: "/mock/pastel-weather/", label: "Weather", line: "Inspo pass — Weather." },
 ] as const;
 
 export type StyleId = (typeof STYLES)[number]["id"];

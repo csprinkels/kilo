@@ -1,0 +1,16 @@
+/* /traffic — what the shared .cs-* set cannot say for the Roads page. Everything else on the
+   page is the shared card, topic head, well, rows, note, buttons and one-row cards. */
+
+/* the map's key: two swatches the shared set has no shape for — the dashed orange lane the map
+   draws, and the dashed ring it uses when a report is only good to the neighborhood. "Blue dot:
+   you" wears the map's own blue, not the brand's. */
+.pg-traffic .tr-swatch--lane { background: repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 8px); }
+.pg-traffic .tr-swatch--approx { width: 11px; height: 11px; background: none; border: 1.5px dashed var(--danger); }
+.pg-traffic .tr-swatch--you { background: var(--map-you); }
+
+/* the district a run of rows belongs to (a Hawaiian name, so Nunito, never the Amatic label) */
+.pg-traffic .tr-dist { margin: 14px 0 -4px; font-weight: 700; }
+
+/* the folded "Show N more" row sits on the last row's hairline */
+.pg-traffic .tr-more { margin-top: 4px; border-top: 1px solid var(--hairline); }
+
