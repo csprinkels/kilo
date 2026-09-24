@@ -22,7 +22,7 @@ import { condWord, conditionCode, feelsLike, nowAndLater, sunTimes } from "@/lib
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
 import { nowStory, topicRows } from "@/lib/now";
-import { buildFeed, dropSuperseded, foldRuns, pinned, type FeedRow as FeedRowT } from "@/lib/feed";
+import { buildFeed, dropSuperseded, foldPins, foldRuns, hrefOf, type FeedRow as FeedRowT } from "@/lib/feed";
 import MiniMap from "@/components/MiniMap";
 import { fmtTime, islandName } from "@/lib/brand";
 
@@ -114,9 +114,9 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   const askCtx = { items, plain, storms: stormsSnap?.data ? stormLines.map((x) => ({ name: x.s.name, short: x.short, s: x.s })) : undefined };
   /* The feed: everything that is not pinned, banded by how much it should change what you do.
      A topic summary is not a row — Lowell and Karina are two rows, not one "Storms" card. */
-  const pinAll = pinned(items, plain);
   const headlineItem = lead ?? (nextPlain ? headsUp[0] : undefined);
-  const pinRows = pinAll.filter((i) => i !== headlineItem && i !== mainStormItem);
+  // A kind said once: the hero already carries the headline item, so a group it led drops it.
+  const pinRows = foldPins(items.filter((i) => i !== headlineItem && i !== mainStormItem), plain, island, now);
   const bands = buildFeed({ items, plain, now, storms: stormLines, island });
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
 
@@ -149,13 +149,18 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
               {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
               {pinRows.length > 0 && (
                 <div className="fd-pin-rows">
-                  {pinRows.map((i) => {
-                    const p = plain.get(i.key)!;
+                  {pinRows.map((g) => {
+                    const lone = g.items.length === 1 ? g.items[0] : undefined;
+                    const body = <><p className="fd-pin-head">{g.headline}{g.headline.endsWith(".") ? "" : "."}{lone && awayMark(lone)}</p>{g.action && <p className="fd-pin-sub">{g.action}</p>}</>;
+                    if (lone) return <PinLink key={g.key} item={lone} className="fd-pin-row">{body}</PinLink>;
+                    // Several of one kind, said once. The names are behind a native disclosure: no script, works offline.
                     return (
-                      <div key={i.key} id={`item-${hashOf(i.key)}`} className="fd-pin-row">
-                        <p className="fd-pin-head">{p.headline}{p.headline.endsWith(".") ? "" : "."}</p>
-                        {p.action && <p className="fd-pin-sub">{p.action}</p>}
-                      </div>
+                      <details key={g.key} className="fd-pin-row">
+                        <summary>{body}<span className="fd-pin-more">See the list <Icon name="caret-down" size={14} className="cs-ic" /></span></summary>
+                        <ul className="fd-pin-list">
+                          {g.items.map((i) => <li key={i.key}><PinLink item={i}>{plain.get(i.key)!.headline}{awayMark(i)}</PinLink></li>)}
+                        </ul>
+                      </details>
                     );
                   })}
                 </div>
@@ -238,6 +243,14 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
     </main>
   );
 }
+
+/** A pinned thing is a tap away from its own page, or the agency's post when the app has none. */
+function PinLink({ item, className, children }: { item: Item; className?: string; children: React.ReactNode }) {
+  const href = hrefOf(item), away = href.startsWith("http");
+  return <Link href={href} {...(away ? { target: "_blank", rel: "noreferrer" } : {})} id={`item-${hashOf(item.key)}`} className={className}>{children}</Link>;
+}
+/** The off-app mark, on the end of the line it leaves from. */
+const awayMark = (item: Item) => hrefOf(item).startsWith("http") ? <Icon name="arrow-square-out" size={13} className="fd-pin-away" aria-hidden /> : null;
 
 /** Where a folded run sends you, and what to call the things it folded. */
 const HREF: Record<string, string> = {

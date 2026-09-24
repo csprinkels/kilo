@@ -6,7 +6,7 @@
 //   feed    — everything else, worst first, newest inside that.
 // A topic summary is not a feed row: Lowell and Karina are two rows, not a "Storms" card.
 import type { Island, Item, ItemType } from "./types.ts";
-import type { Level, Plain, StormLine } from "./plain.ts";
+import { plainAlert, type Level, type Plain, type StormLine } from "./plain.ts";
 import type { LatLon } from "./roads.ts";
 import { fmtClock } from "./brand.ts";
 
@@ -82,6 +82,17 @@ export const markOf = (i: Item): Mark | undefined =>
   : i.lat != null && i.lon != null ? { kind: "dot", lat: i.lat, lon: i.lon }
   : undefined;
 
+/**
+ * Where a tap on an item lands. A notice has no page of its own: "reports" is the neighbors' page,
+ * which never lists an agency release, so the row used to land somewhere the thing you tapped was
+ * not. The agency's own post is where it can be read, so that is where the row goes. A shelter is
+ * the same: no page here lists them, and Civil Defense's dashboard has the address and the hours.
+ */
+export const hrefOf = (i: Item): string => {
+  const topic = TOPIC_OF[i.type] ?? "reports";
+  return ((topic === "reports" || i.type === "shelter") ? i.srcUrl : "") || HREF_OF[topic] || "/";
+};
+
 /** One official item as a row. `sub` is the action when there is one, else the agency's own line. */
 function rowOf(i: Item, p: Plain, now: number): FeedRow {
   const topic = TOPIC_OF[i.type] ?? "reports";
@@ -93,10 +104,7 @@ function rowOf(i: Item, p: Plain, now: number): FeedRow {
     at: i.issuedAt,
     when: fmtClock(i.issuedAt, now),
     level: p.level,
-    // A notice has no page of its own: "reports" is the neighbors' page, which never lists an
-    // agency release, so the row used to land somewhere the thing you tapped was not. The
-    // agency's own post is where it can be read, so that is where the row goes.
-    href: (topic === "reports" ? i.srcUrl : "") || HREF_OF[topic] || "/",
+    href: hrefOf(i),
     mark: markOf(i),
   };
 }
@@ -160,4 +168,37 @@ export function pinned(items: Item[], plain: Map<string, Plain>): Item[] {
   return items
     .filter((i) => i.tier !== "community" && isPinned(i, plain.get(i.key)))
     .sort((a, b) => (plain.get(b.key)!.level - plain.get(a.key)!.level) || (b.issuedAt - a.issuedAt));
+}
+
+/** One row of the pinned block: a single hazard, or several of one kind said once. */
+export type PinGroup = { key: string; headline: string; action: string; level: Level; items: Item[] };
+
+/**
+ * The pinned block, with runs of one kind folded into a row each. A Hurricane Watch arrives as
+ * one item per forecast zone, a storm day opens four shelters and closes forty schools, and each
+ * of them used to be its own row: sixty rows of "X is closed. Keep kids home." above the fold.
+ * Same event, same instruction — say it once, and keep the names behind the row.
+ */
+export function foldPins(items: Item[], plain: Map<string, Plain>, island: Exclude<Island, "state">, now: number): PinGroup[] {
+  const groups = new Map<string, Item[]>();
+  for (const i of pinned(items, plain)) {
+    const p = plain.get(i.key)!;
+    const key =
+      i.type === "school" ? "school"
+      : i.type === "shelter" ? `shelter|${p.word ?? ""}`
+      : (i.type === "advisory" || i.type === "storm" || i.type === "hazard") && i.fields?.event ? `${i.type}|${i.fields.event}`
+      : i.key;
+    groups.set(key, [...(groups.get(key) ?? []), i]);
+  }
+  return [...groups].map(([key, run]) => {
+    const lead = run[0], p = plain.get(lead.key)!;
+    if (run.length === 1) return { key: lead.key, headline: p.headline, action: p.action, level: p.level, items: run };
+    const n = run.length;
+    const headline =
+      lead.type === "school" ? `${n} schools are closed`
+      : lead.type === "shelter" ? `${n} shelters are ${(p.word ?? "open").split(" ").pop()}`
+      // the same template the zone rows use, with the whole island as the place
+      : plainAlert({ ...lead, districts: [], fields: { event: lead.fields!.event } }, now, island).headline;
+    return { key, headline, action: p.action, level: p.level, items: run };
+  });
 }

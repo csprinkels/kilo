@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildFeed, foldRuns, pinned, RUN_LIMIT, type FeedRow } from "../lib/feed.ts";
+import { buildFeed, foldPins, foldRuns, hrefOf, pinned, RUN_LIMIT, type FeedRow } from "../lib/feed.ts";
 import type { Plain } from "../lib/plain.ts";
 import type { Item } from "../lib/types.ts";
 
@@ -92,4 +92,31 @@ test("a notice row goes to the agency's own post; nothing else leaves the app", 
   assert.equal(href("n"), "https://dod.hawaii.gov/hiema/news-release/", "the release is the only place it can be read");
   assert.equal(href("n2"), "/report/");
   assert.equal(href("r"), "/traffic/", "roads have a page of their own: stay in the app");
+});
+
+test("the pin says one kind once: zones of a watch, open shelters and closed schools fold to a row each", () => {
+  const items = [
+    ...["Kohala", "Kona", "Kau"].map((z) => item({ key: `w-${z}`, type: "advisory", sev: 3, fields: { event: "Hurricane Watch", areaDesc: z } })),
+    item({ key: "s1", type: "shelter", sev: 3, title: "Shelter open: Keaau Armory" }),
+    item({ key: "s2", type: "shelter", sev: 3, title: "Shelter open: Naalehu Community Center" }),
+    item({ key: "k1", type: "school" }), item({ key: "k2", type: "school" }), item({ key: "k3", type: "school" }),
+    item({ key: "t", type: "tsunami", sev: 4 }),
+  ];
+  const plain = new Map<string, Plain>([
+    ["w-Kohala", P("Hurricane possible in Kohala", 3, "Get ready now.")], ["w-Kona", P("Hurricane possible in Kona", 3, "Get ready now.")], ["w-Kau", P("Hurricane possible in Kau", 3, "Get ready now.")],
+    ["s1", { ...P("Keaau Armory is open", 3, "Bring medicine."), word: "Shelter open" }], ["s2", { ...P("Naalehu Community Center is open", 3, "Bring medicine."), word: "Shelter open" }],
+    ["k1", P("A is closed", 2, "Keep kids home.")], ["k2", P("B is closed", 2, "Keep kids home.")], ["k3", P("C is closed", 2, "Keep kids home.")],
+    ["t", P("Tsunami warning", 4, "Leave the evacuation zone now.")],
+  ]);
+  const rows = foldPins(items, plain, "hawaii", now);
+  assert.deepEqual(rows.map((r) => [r.headline, r.items.length]), [
+    ["Tsunami warning", 1],
+    ["Hurricane possible on Hawaiʻi Island", 3],
+    ["2 shelters are open", 2],
+    ["3 schools are closed", 3],
+  ], "worst first; a lone hazard keeps its own words");
+  assert.equal(rows[1].action, "Get ready now.", "the group carries the instruction its members share");
+  assert.equal(rows[3].level, 2);
+  assert.equal(hrefOf(items[0]), "/weather/", "a watch reads in full on the Weather page");
+  assert.equal(hrefOf(item({ key: "s", type: "shelter", srcUrl: "https://arcgis.example/dash" })), "https://arcgis.example/dash", "no page here lists shelters: Civil Defense's dashboard does");
 });
