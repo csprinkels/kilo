@@ -1906,6 +1906,17 @@ body {
 .fd-pin-row + .fd-pin-row{ margin-top:10px; padding-top:10px; border-top:1px solid color-mix(in srgb, var(--warn) 28%, transparent); }
 .fd-pin-head{ display:block; margin:0; font-size:15.5px; font-weight:700; line-height:1.35; color:var(--ink); }
 .fd-pin-sub{ display:block; margin:2px 0 0; font-size:13.5px; line-height:1.4; color:var(--ink-2); }
+/* a folded kind: the summary is the row, the names sit behind it */
+.fd-pin-row > summary{ list-style:none; cursor:pointer; }
+.fd-pin-row > summary::-webkit-details-marker{ display:none; }
+.fd-pin-more{ display:inline-flex; align-items:center; gap:4px; margin-top:6px; font-size:13px; font-weight:700; color:var(--topic-ink, var(--sea)); }
+.fd-pin-row[open] .fd-pin-more .cs-ic{ transform:rotate(180deg); }
+.fd-pin-list{ margin:8px 0 0; padding:0 0 0 1.1em; font-size:13.5px; line-height:1.5; color:var(--ink-2); }
+/* a pinned row is a tap target: whole row, no link styling, the off-app mark on the end */
+a.fd-pin-row{ display:block; color:inherit; text-decoration:none; }
+.fd-pin-list a{ color:var(--topic-ink, var(--sea)); font-weight:600; text-decoration:none; }
+.fd-pin-list li + li{ margin-top:4px; }
+.fd-pin-away{ display:inline; margin-left:4px; vertical-align:-1px; }
 
 /* ʻIo, always under the pin: one field, the mascot on the end */
 .fd-ask{ display:flex; align-items:center; gap:11px; box-sizing:border-box; width:100%; min-height:52px;
