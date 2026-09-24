@@ -1,7 +1,9 @@
 "use client";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon, { type IconName } from "@/components/Icon";
+import AskSheet from "@/components/AskSheet";
 
 /** Four destinations. Storms, earthquakes, the volcano and tsunami are rows on Now, so Now stays lit on those pages. */
 const TABS: { href: string; label: string; icon: IconName; also: string[] }[] = [
@@ -14,6 +16,10 @@ const isOn = (path: string, t: (typeof TABS)[number]) => path === t.href || t.al
 
 export default function SectionNav() {
   const path = usePathname();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [asking, setAsking] = useState(false);
+  const open = () => { setAsking(true); dialog.current?.showModal(); };
+  const close = () => dialog.current?.close();
   return (
     <>
       {/* wide screens: the same four, as a segmented row under the top bar, on the wordmark's left edge */}
@@ -40,12 +46,17 @@ export default function SectionNav() {
           })}
         </ul>
         {/* ʻIo, detached: on Now it drops you into the field; elsewhere it takes you there. */}
-        <Link href="/#ask" aria-label="Ask Kilo" className="cs-dock-ask"
-          onClick={(e) => { if (path === "/") { e.preventDefault(); const el = document.getElementById("ask"); el?.scrollIntoView({ block: "center" }); el?.focus(); } }}>
+        <button type="button" aria-label="Ask Kilo" aria-haspopup="dialog" className="cs-dock-ask" onClick={open}>
           <Icon name="magnifying-glass" size={26} px />
-        </Link>
+        </button>
         </div>
       </nav>
+      {/* ʻIo as a sheet: native <dialog> gives the focus trap, Escape and the backdrop. A tap on the
+          backdrop lands on the dialog itself, which closes it. Unmounted on close, so it starts fresh. */}
+      <dialog ref={dialog} className="cs-dialog" aria-label="Ask Kilo"
+        onClose={() => setAsking(false)} onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
+        {asking && <AskSheet onClose={close} />}
+      </dialog>
     </>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import ItemRow from "@/components/ItemRow";
@@ -23,18 +23,16 @@ type IslandId = Exclude<Island, "state">;
  * actually typed — the Now page must not pay for a search nobody used.
  * One white field with the question mark; the answer arrives as a card under it.
  */
-export default function Ask({ island, ctx, now }: { island: IslandId; ctx: Ctx; now: number }) {
+export default function Ask({ island, ctx, now, inputId = "ask", autoFocus }: { island: IslandId; ctx: Ctx; now: number; inputId?: string; autoFocus?: boolean }) {
   const [q, setQ] = useState("");
   const asked = q.trim();
-  // Arrived from the dock's ʻIo button on another page: land in the field, ready to type.
-  useEffect(() => { if (window.location.hash === "#ask") document.getElementById("ask")?.focus(); }, []);
   return (
     <section className="cs-askwrap" aria-label="Ask Kilo">
-      <label htmlFor="ask" className="cs-ask">
+      <label htmlFor={inputId} className="cs-ask">
         <Icon name="question" size={20} />
         <span className="sr-only">Ask about {island === "hawaii" ? "Hawaiʻi Island" : "your island"}</span>
         <input
-          id="ask" type="search" value={q} autoComplete="off"
+          id={inputId} type="search" value={q} autoComplete="off" autoFocus={autoFocus}
           enterKeyHint="search" placeholder="Is Saddle Road open?"
           onChange={(e) => setQ(e.target.value)}
         />
