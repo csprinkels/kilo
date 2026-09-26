@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=block">
+<style>
+  /* Measured from the Sep 7 set (design/appstore). iPhone 1320x2868, iPad 2064x2752.
+     iPad sy 467->497, hTop 150->170 (100px headline-to-screen gap, like iPhone): pushes the iPadOS windowed-apps resize handle (raw y>=2690, bottom-right) below the crop line. */
+  html,body{margin:0;padding:0;overflow:hidden}
+  body{width:var(--W);height:var(--H);background:var(--bg);position:relative}
+  h1{position:absolute;left:0;right:0;top:var(--hTop);margin:0;text-align:center;
+     font:800 var(--fs)/var(--lh) Nunito,sans-serif;letter-spacing:var(--ls);color:var(--ink)}
+  .screen{position:absolute;left:var(--sx);top:var(--sy);width:var(--sw);box-sizing:border-box;
+     border:1px solid #e3ded7;border-radius:var(--r);overflow:hidden;background:#f4f1eb;
+     box-shadow:0 4px 14px rgba(70,50,36,.15),0 30px 90px rgba(70,50,36,.27)}
+  .screen img{display:block;width:100%;height:auto}
+</style></head>
+<body>
+<h1 id="h"></h1>
+<div class="screen"><img id="shot" alt=""></div>
+<script>
+const q=new URLSearchParams(location.search), dev=q.get('d'), name=q.get('n');
+const DEV={
+  iphone:{W:1320,H:2868,fs:'92px',lh:'103px',ls:'-0.02em',hTop:'170px',sx:'115px',sy:'468px',sw:'1090px',r:'59px'},
+  ipad:  {W:2064,H:2752,fs:'104px',lh:'116px',ls:'-0.02em',hTop:'150px',sx:'167px',sy:'467px',sw:'1730px',r:'53px'}
+}[dev];
+const S={
+  '1-now':    ['Everything happening','on your island.','#e6dcc9','#4a3a2a'],
+  '2-weather':['The weather,','in plain words.','#c8dfef','#1d547c'],
+  '3-roads':  ['Know what’s closed','before you go.','#f1e9c5','#7d6a1c'],
+  '4-tsunami':['Know your zone','before the siren.','#cce8eb','#256e74'],
+  '5-storms': ['Watch the storm’s path,','hour by hour.','#d5ccea','#3d2673']
+}[name];
+const st=document.body.style;
+for (const k in DEV) st.setProperty('--'+k, typeof DEV[k]==='number'? DEV[k]+'px' : DEV[k]);
+for (const k of ['fs','lh','ls','hTop','sx','sy','sw','r']) if (q.get(k)) st.setProperty('--'+k,q.get(k));
+st.setProperty('--bg',S[2]); st.setProperty('--ink',S[3]);
+document.getElementById('h').innerHTML=S[0]+'<br>'+S[1];
+document.getElementById('shot').src='../raw/'+dev+'/'+name+'.png';
+</script>
+</body></html>

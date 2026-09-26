@@ -31,8 +31,8 @@ around them because the app now looks different.
 ## 3. Screenshots — must be retaken
 The sets in `iphone-6.9/` and `ipad-13/` were captured on Sep 23, **before** the redesign, so they
 no longer match the app. Apple rejects screenshots that do not reflect the build (2.3.3).
-- [ ] iPhone 6.9": Now, Weather, Roads, Tsunami (same four, new look). Replace `iphone-6.9/*`.
-- [ ] iPad 13": the same four. Replace `ipad-13/*`.
+- [x] iPhone 6.9": Now, Weather, Roads, Tsunami, Storms — retaken 2026-09-26 from the real app (`tools/capture.sh`, framed by `tools/template.html`).
+- [x] iPad 13": the same five, retaken 2026-09-26.
 - [ ] Upload both sets in App Store Connect for the new version.
 
 ## 4. Screen recording for App Review

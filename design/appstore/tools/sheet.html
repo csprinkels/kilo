@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  /* Matches design/appstore/contact-sheet.png: 2200x1180, #2a2a2a, 16px pad, 520px-tall thumbs, 14px gaps. */
+  html,body{margin:0;overflow:hidden}
+  body{width:2200px;height:1180px;background:#2a2a2a;padding:16px;box-sizing:border-box;
+       font:var(--lw,600) var(--lf,13px) -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#bbb}
+  .row{display:flex;gap:14px;margin-bottom:var(--rg,31px)}
+  figure{margin:0;text-align:center}
+  img{display:block;height:520px}
+  figcaption{margin-top:var(--cm,5px);line-height:18px}
+</style></head><body>
+<script>
+const q=new URLSearchParams(location.search);
+for (const k of ['lf','lw','cm','rg']) if (q.get(k)) document.body.style.setProperty('--'+k,q.get(k));
+const names=['1-now','2-weather','3-roads','4-tsunami','5-storms'];
+for (const [dir,label] of [['iphone-6.9','iPhone 6.9"'],['ipad-13','iPad 13"']]) {
+  const row=document.createElement('div'); row.className='row';
+  for (const n of names) row.insertAdjacentHTML('beforeend',`<figure><img src="${q.get('src')||'../framed'}/${dir}/${n}.png"><figcaption>${label} · ${n}</figcaption></figure>`);
+  document.body.appendChild(row);
+}
+</script></body></html>
