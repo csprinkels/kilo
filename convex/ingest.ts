@@ -88,7 +88,9 @@ export const commit = internalMutation({
         seen.add(item.key);
         const row = await ctx.db.query("items").withIndex("by_key", (q) => q.eq("key", item.key)).unique();
         if (!row) { await ctx.db.insert("items", { ...item, active: true }); fresh.add(item.key); }
-        else if (row.hash !== item.hash || !row.active) { await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true }); if (!row.active) fresh.add(item.key); }
+        // Islands are outside the content hash, so a fix to how an alert is placed (a zone re-tagged from one
+        // island to another) would otherwise never reach a row that is already stored. No push is sent for it.
+        else if (row.hash !== item.hash || !row.active || [...row.islands].sort().join() !== [...item.islands].sort().join()) { await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true }); if (!row.active) fresh.add(item.key); }
         else await ctx.db.patch(row._id, { lastConfirmedAt: now, expiresAt: item.expiresAt });
       }
       for (const row of existing) if (!seen.has(row.key)) await ctx.db.patch(row._id, { active: false });
