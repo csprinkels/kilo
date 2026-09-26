@@ -272,3 +272,13 @@ test("road closures: a location that says nothing new is left off", () => {
   assert.equal(p("Saddle Road"), p(""), "repeating the road name adds nothing");
   assert.equal(p("x".repeat(80)), p(""), "a paragraph is not a headline");
 });
+
+test("a single forecast zone reads as a side of the island, never a bare compass word", async () => {
+  const { placeOf } = await import("../lib/plain.ts");
+  const at = (areaDesc: string, event = "Tropical Storm Warning") => placeOf({ key: "k", type: "advisory", source: "nws", tier: "official", sev: 3, islands: ["hawaii"], districts: [], title: "", body: "", srcUrl: "", issuedAt: 0, lastConfirmedAt: 0, hash: "", fields: { event, areaDesc } } as never, "hawaii");
+  assert.equal(at("Big Island North"), "on the north side");
+  assert.equal(at("Big Island Southeast"), "on the southeast side");
+  assert.equal(at("Big Island North", "High Surf Advisory"), "on the north shore");
+  assert.equal(at("Big Island Interior"), "in the interior");
+  assert.equal(at("Kona"), "in Kona");
+});

@@ -81,7 +81,18 @@ export function zonesOf(item: Item, island?: Island): string[] {
 export function placeOf(item: Item, island?: Island): string {
   if (item.districts[0]) return `in ${item.districts[0]}`;
   const area = item.fields?.areaDesc?.trim();
-  if (area && !/[;,]/.test(area) && area.length <= 30 && !/^(Oahu|Maui|Kauai|Hawaii|Niihau|Molokai|Lanai)$/i.test(area)) return `${/summit|mountain|slope|shore|coast|side|windward|leeward/i.test(area) ? "on" : "in"} ${area.replace(/^Big Island /, "")}`;
+  if (area && !/[;,]/.test(area) && area.length <= 30 && !/^(Oahu|Maui|Kauai|Hawaii|Niihau|Molokai|Lanai)$/i.test(area)) {
+    const zone = area.replace(/^Big Island /, "");
+    // A bare forecast-zone word ("Big Island North") is not a place anyone says: "in North" read like a typo
+    // on the Now headline and in notifications. Say it the way the multi-zone path below does.
+    if (/^(north|south|east|west|northeast|northwest|southeast|southwest|windward|leeward)$/i.test(zone)) {
+      const surf = /surf|swell|wave|rip current/i.test(item.fields?.event ?? item.title);
+      return `on the ${zone.toLowerCase()} ${surf ? "shore" : "side"}`;
+    }
+    if (/^interior$/i.test(zone)) return "in the interior";
+    if (/^summit$/i.test(zone)) return "on the summits";
+    return `${/summit|mountain|slope|shore|coast|side|windward|leeward/i.test(area) ? "on" : "in"} ${zone}`;
+  }
 
   // A multi-zone alert: name the parts of this island it covers. Three or fewer, or the list
   // stops being a sentence and starts being a table.
