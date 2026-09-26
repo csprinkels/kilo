@@ -1,4 +1,5 @@
 import { clip, hashOf, type Island, type Item } from "../../lib/types.ts";
+import { ZONES } from "../../lib/plain.ts";
 
 export const NWS_URL = "https://api.weather.gov/alerts/active?area=HI";
 
@@ -29,11 +30,24 @@ type Feature = {
   };
 };
 
+/**
+ * Which islands an alert is for. The zone names are the truth: NWS tags the "South Haleakala" zone,
+ * which is on Maui, with Hawaiʻi County's SAME code, and a Maui watch landed on the Big Island's Now
+ * page and lock screens. So when every zone in areaDesc is one we know, the zones decide; the county
+ * codes are the fallback for any alert whose zones we cannot place.
+ */
+function islandsOf(p: Feature["properties"]): Island[] {
+  const zones = p.areaDesc.split(";").map((z) => z.trim()).filter(Boolean);
+  const fromZones = zones.map((z) => (Object.keys(ZONES) as Exclude<Island, "state">[]).find((i) => ZONES[i].test(z)));
+  if (zones.length && fromZones.every(Boolean)) return [...new Set(fromZones as Island[])];
+  return [...new Set((p.geocode?.SAME ?? []).map((c) => SAME_ISLAND[c]).filter(Boolean))];
+}
+
 export function parseNws(json: { features: Feature[] }, now = Date.now()): Item[] {
   const out: Item[] = [];
   for (const { properties: p } of json.features ?? []) {
     if (p.status !== "Actual" || p.messageType === "Cancel") continue;
-    const islands = [...new Set((p.geocode?.SAME ?? []).map((c) => SAME_ISLAND[c]).filter(Boolean))];
+    const islands = islandsOf(p);
     const sev = EVENT_SEV[p.event] ?? NWS_SEV[p.severity] ?? 1;
     const title = clip(`${p.event}: ${p.areaDesc}`, 120);
     const body = clip([p.headline, p.description, p.instruction].filter(Boolean).join("\n\n"), 600);

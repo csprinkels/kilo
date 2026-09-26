@@ -289,3 +289,16 @@ test("tides: the stored window can start hours before now, and the chart's slice
   assert.equal(t.t0 + skip * 3_600_000, nowHour, "the slice starts exactly at the current hour");
   assert.ok(t.h.length - skip >= 24, "and still has most of a day left to draw");
 });
+
+test("an NWS zone decides its island over the county code: South Haleakala is Maui", async () => {
+  const { parseNws } = await import("../convex/parsers/nws.ts");
+  const f = (areaDesc: string, SAME: string[]) => ({ properties: { id: areaDesc, event: "Tropical Storm Watch", areaDesc, severity: "Severe", status: "Actual", messageType: "Alert", sent: "2026-09-26T00:00:00Z", effective: "2026-09-26T00:00:00Z", expires: "2026-09-27T00:00:00Z", geocode: { SAME } } });
+  const [maui, both, odd] = parseNws({ features: [
+    f("South Haleakala", ["015001"]),
+    f("Kona; Windward Haleakala", ["015001", "015009"]),
+    f("Somewhere New", ["015001"]),
+  ] } as never);
+  assert.deepEqual(maui.islands, ["maui"], "the zone is on Maui whatever the county code says");
+  assert.deepEqual(both.islands.sort(), ["hawaii", "maui"]);
+  assert.deepEqual(odd.islands, ["hawaii"], "an unknown zone falls back to the county code");
+});

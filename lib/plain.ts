@@ -48,9 +48,9 @@ export function shakingWord(mag: number): string {
 export const shakingVerb = (mag: number) => (mag < 3.5 ? "was barely felt" : mag < 4.5 ? "shook lightly" : mag < 5.5 ? "shook" : "shook hard");
 
 /** The NWS forecast zones on each island, as they are spelled in a CAP areaDesc. */
-const ZONES: Record<Exclude<Island, "state">, RegExp> = {
+export const ZONES: Record<Exclude<Island, "state">, RegExp> = {
   hawaii: /^(Big Island |Kona$|Kohala$|South Big Island$)/i,
-  maui: /^(Maui |Windward Haleakala$|Leeward Haleakala$|Haleakala Summit$|Kipahulu$|Molokai |Lanai |Kahoolawe$)/i,
+  maui: /^(Maui |Windward Haleakala$|Leeward Haleakala$|South Haleakala$|Haleakala Summit$|Kipahulu$|Molokai |Lanai |Kahoolawe$)/i,
   oahu: /^(Oahu |Waianae Coast$|Koolau |Olomana$|East Honolulu$|Honolulu Metro$|Ewa Plain$|Central Oahu$|Waianae Mountains$)/i,
   kauai: /^(Kauai |Niihau$)/i,
 };
