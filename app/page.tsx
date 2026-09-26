@@ -7,7 +7,7 @@ import AlertsCard, { useAlertsDismissed } from "@/components/AlertsCard";
 import Freshness from "@/components/Freshness";
 import SectionNav from "@/components/SectionNav";
 import TopBar from "@/components/TopBar";
-import StormMap from "@/components/StormMap";
+import StormTimeline from "@/components/StormTimeline";
 import ConditionIcon from "@/components/ConditionIcon";
 import Onboarding from "@/components/Onboarding";
 import Ask from "@/components/Ask";
@@ -209,7 +209,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                 </span>
               </div>
               <p className="cs-body">{mainStorm.text}</p>
-              <div className="cs-figure"><StormMap storm={mainStorm.s} place={place} compact /></div>
+              <StormTimeline storm={mainStorm.s} place={place} compact />
               <div className="cs-grid2">
                 {windsFrom && <p><Icon name="warning" size={18} /><b>{fmtDayTime(windsFrom)}</b><span>{outlook?.hurricaneWindsFrom ? "damaging winds from" : "winds could start"}</span></p>}
                 <p><Icon name="wind" size={18} /><b>{Math.round(ktToMph(mainStorm.s.windKt) / 5) * 5} mph</b><span>at storm center</span></p>

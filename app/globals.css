@@ -1145,3 +1145,34 @@ button.cs-settings{ width:100%; font-family:inherit; text-align:left; cursor:poi
 .ask-figure{ margin-top:12px; }
 .ask-mark{ display:flex; justify-content:center; margin-top:12px; }
 .ask-mark svg{ border:1px solid var(--hairline); border-radius:14px; background:var(--map-water); }
+
+/* ── the storm timeline (StormTimeline: Storms page and the Now storm card) ──
+   A readout line, then a play button and a scrubber on one row. The track to the left of "Now" is
+   the past (solid ink), to the right the forecast (tint); the thumb is a dot, like every map mark. */
+.stl-read{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:12px; }
+.stl-when{ font-size:15px; font-weight:800; color:var(--ink); }
+.stl-what{ flex:1 1 100%; font-size:13.5px; color:var(--ink-2); }
+.stl-bar{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+.stl-play{
+  display:grid; place-items:center; flex:0 0 auto; width:44px; height:44px; border:0; border-radius:10px;
+  background:var(--ink); color:var(--brand-ink); cursor:pointer;
+}
+.stl-track{ position:relative; flex:1 1 auto; min-width:0; padding:10px 0 18px; }
+.stl-track input{
+  -webkit-appearance:none; appearance:none; display:block; width:100%; height:6px; margin:0; border-radius:3px;
+  background:linear-gradient(to right, var(--ink) 0 var(--stl-now), var(--tint) var(--stl-now) 100%);
+  box-shadow:inset 0 0 0 1px var(--hairline); cursor:pointer;
+}
+.stl-track input::-webkit-slider-thumb{
+  -webkit-appearance:none; width:26px; height:26px; border-radius:9999px;
+  background:var(--card); border:2px solid var(--ink); box-shadow:0 2px 6px rgb(80 60 40 / .25);
+}
+.stl-track input::-moz-range-thumb{ width:22px; height:22px; border-radius:9999px; background:var(--card); border:2px solid var(--ink); }
+.stl-tick{
+  position:absolute; bottom:0; transform:translateX(-50%); font-size:11px; font-weight:800; line-height:1;
+  letter-spacing:.02em; color:var(--mute); white-space:nowrap; pointer-events:none;
+}
+.stl-tick::before{ content:""; position:absolute; left:50%; bottom:14px; width:2px; height:10px; margin-left:-1px; border-radius:1px; background:currentColor; }
+.stl-tick--now{ color:var(--ink); }
+.stl-tick--winds{ color:var(--warn); }
+.stl-now{ flex:0 0 auto; }

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { conePolygon, type Storm } from "@/lib/storm";
+import { conePolygon, windField, type Storm, type TimelinePoint } from "@/lib/storm";
 
 type Coast = { type: "MultiPolygon"; coordinates: [number, number][][][] };
 let coastCache: Coast | null = null;
@@ -10,6 +10,8 @@ type Props = {
   place?: { lat: number; lon: number; label: string };
   compact?: boolean;
   className?: string;
+  /** The timeline's hour: drawn as the storm's dot there, with its gale-wind field when the forecast has one. */
+  cursor?: TimelinePoint;
 };
 
 type Pt = { hour: number; at: number; lat: number; lon: number; windKt: number; outlook?: boolean };
@@ -28,7 +30,7 @@ function windColor(kt: number) {
 }
 
 /** Ocean, sand islands, a path that is the story, dots that get hotter as the wind does. */
-export default function StormMap({ storm, place, className }: Props) {
+export default function StormMap({ storm, place, className, cursor }: Props) {
   const [coast, setCoast] = useState<Coast | null>(coastCache);
   useEffect(() => {
     if (coastCache) return;
@@ -55,6 +57,8 @@ export default function StormMap({ storm, place, className }: Props) {
     const lastHour = inWindow[inWindow.length - 1].hour;
     for (const [lon, lat] of conePolygon(points.filter((p) => p.hour <= lastHour))) eat(lon, lat);
     if (place) eat(place.lon, place.lat);
+    // The timeline scrubs two days back, so those positions frame the picture too, or its dot leaves the map.
+    for (const t of storm.track) if (t.at >= storm.issuedAt - 48 * 3_600_000) eat(t.lon, t.lat);
     const padLon = (maxLon - minLon) * 0.08 + 0.5, padLat = (maxLat - minLat) * 0.12 + 0.5;
     minLon -= padLon; maxLon += padLon; minLat -= padLat; maxLat += padLat;
     const kx = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
@@ -62,7 +66,7 @@ export default function StormMap({ storm, place, className }: Props) {
     const ox = (W - (maxLon - minLon) * kx * s) / 2, oy = (H - (maxLat - minLat) * s) / 2;
     const f = (lon: number, lat: number): [number, number] => [ox + (lon - minLon) * kx * s, oy + (maxLat - lat) * s];
     return { f, nmPerPx: 60 / s };
-  }, [points, place, H]);
+  }, [points, place, storm, H]);
 
   const { f } = proj;
   const path = (coords: [number, number][]) => coords.map(([lon, lat], i) => `${i ? "L" : "M"}${f(lon, lat).map((n) => n.toFixed(1)).join(",")}`).join(" ") + "Z";
@@ -129,6 +133,23 @@ export default function StormMap({ storm, place, className }: Props) {
             </g>
           );
         })}
+
+        {cursor && (() => {
+          const [x, y] = f(cursor.lon, cursor.lat);
+          const field = cursor.r34 ? windField(cursor, cursor.r34) : [];
+          const c = windColor(cursor.windKt);
+          // Past three days the dot fades: the Hurricane Center's own outlook points are less certain.
+          const o = cursor.outlook ? 0.55 : 1;
+          return (
+            <g aria-hidden>
+              {field.length > 2 && <path d={path(field)} fill={c} fillOpacity={0.16 * o} stroke={c} strokeOpacity={0.6 * o} strokeWidth={1.5} />}
+              {/* 800 SVG units draw ~360px wide on a phone: these are sized to read at that width */}
+              <circle cx={x} cy={y} r={24} fill="var(--map-mark-halo)" opacity={0.9 * o} />
+              <circle cx={x} cy={y} r={17} fill={c} opacity={o} />
+              <circle cx={x} cy={y} r={6} fill="var(--map-mark-halo)" opacity={o} />
+            </g>
+          );
+        })()}
 
         {/* The scale belongs on the map. scalePx is in SVG units; below the map it was being
             used as a percentage of a text span, which is what made it collide with its label. */}

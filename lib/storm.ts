@@ -174,3 +174,54 @@ export function outlookFor(storm: Storm, place: { lat: number; lon: number }): O
   const movingAway = path.length > 1 && closest.hour === 0;
   return { closest, tsWindsFrom: tsFrom, tsWindsUntil: tsUntil, hurricaneWindsFrom: huFrom, movingAway };
 }
+
+// ---------- the scrubbable timeline ----------
+/** One hour of the storm's life: where it was or is forecast to be, how strong, and how wide its gale winds reach. */
+export type TimelinePoint = {
+  at: number; lat: number; lon: number; windKt: number;
+  r34?: Quadrants;        // tropical-storm-force wind radii, nm per quadrant; the forecast has them, the past track does not
+  kind: "past" | "now" | "forecast";
+  outlook?: boolean;      // day 4–5: the Hurricane Center's own less-certain points
+};
+
+/**
+ * Past advisories filled in hour by hour, then "now", then the forecast hour by hour: one list a slider
+ * can walk from the first advisory to five days out. The past is where it actually was; the forecast
+ * is the center's best line, which the map always shows inside its cone.
+ */
+export function stormTimeline(storm: Storm): TimelinePoint[] {
+  // Two days of history: a storm's full past can run 2,500 miles east of the map, and a slider that
+  // spends most of its length moving a dot nobody can see is worse than one that starts closer.
+  const from = storm.issuedAt - PAST_MS;
+  const all = storm.track.filter((t) => t.adv < storm.advNum && t.at < storm.issuedAt).sort((a, b) => a.at - b.at);
+  const firstIn = all.findIndex((t) => t.at >= from);
+  const past = firstIn < 0 ? all.slice(-1) : all.slice(Math.max(0, firstIn - 1));
+  const out: TimelinePoint[] = [];
+  const anchors = [...past.map((t) => ({ at: t.at, lat: t.lat, lon: t.lon, windKt: t.windKt })), { at: storm.issuedAt, lat: storm.lat, lon: storm.lon, windKt: storm.windKt }];
+  for (let i = 1; i < anchors.length; i++) {
+    const a = anchors[i - 1], b = anchors[i];
+    for (let at = a.at; at < b.at; at += HOUR_MS) {
+      if (at < from) continue;
+      const t = (at - a.at) / (b.at - a.at);
+      out.push({ at, lat: lerp(a.lat, b.lat, t), lon: lerp(a.lon, b.lon, t), windKt: lerp(a.windKt, b.windKt, t), kind: "past" });
+    }
+  }
+  for (const p of hourlyPath(storm)) {
+    out.push({ at: p.at, lat: p.lat, lon: p.lon, windKt: p.windKt, r34: p.radii[34], kind: p.hour === 0 ? "now" : "forecast", outlook: p.outlook });
+  }
+  return out;
+}
+const HOUR_MS = 3_600_000;
+const PAST_MS = 48 * HOUR_MS;
+
+/** The gale-wind field as a closed outline, [lon, lat] like conePolygon, from the four quadrant radii. */
+export function windField(p: { lat: number; lon: number }, r: Quadrants): [number, number][] {
+  const out: [number, number][] = [];
+  for (let b = 0; b < 360; b += 10) {
+    const nm = r[quadrantIndex(b + 5)];
+    if (!nm) continue;
+    const [la, lo] = destination(p.lat, p.lon, b, nm);
+    out.push([lo, la]);
+  }
+  return out;
+}

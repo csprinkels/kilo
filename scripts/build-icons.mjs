@@ -16,10 +16,12 @@ const NAMES = [
   "thermometer", "sun-horizon",
   // the detached ʻIo button on the dock
   "magnifying-glass",
+  // the storm timeline: play and pause the track
+  "play", "pause",
 ];
 // These also get a "<name>-fill" twin: outline is the default, fill marks the active tab and icons inside a tinted tile.
 const BOTH = new Set(["house", "cloud-sun", "car", "users-three", "traffic-cone", "traffic-signal", "tent", "student",
-  "mountains", "waves", "wind", "pulse", "siren", "warning", "megaphone", "lightning-slash", "drop", "first-aid", "paw-print", "lightbulb-filament", "question"]);
+  "mountains", "waves", "wind", "pulse", "siren", "warning", "megaphone", "lightning-slash", "drop", "first-aid", "paw-print", "lightbulb-filament", "question", "play", "pause"]);
 
 /** Phosphor ships `<svg viewBox="0 0 256 256">` with one <rect fill="none"> spacer and the drawing after it. Keep the drawing. */
 function body(file) {

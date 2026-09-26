@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Icon from "@/components/Icon";
-import StormMap from "./StormMap";
+import StormTimeline from "./StormTimeline";
 import OfficialWording from "./OfficialWording";
 import type { Island } from "@/lib/types";
 import { ISLAND_POINTS, bearingDeg, categoryOf, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "@/lib/storm";
@@ -60,8 +60,7 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
             <span className={warn.level >= 4 ? "cs-danger" : undefined}>A {warn.kind} is out for <span className="cs-haw">{place.label}</span>.</span>
           </p>
         )}
-        <div className="cs-figure"><StormMap storm={storm} place={place} /></div>
-        <p className="cs-figcap">The shaded shape is where the center will probably go, about 2 times out of 3. Wind and rain reach far outside it.</p>
+        <StormTimeline storm={storm} place={place} />
         <div className="cs-grid2">
           <p><Icon name="wind" size={18} /><b>{round5(ktToMph(storm.windKt))} mph</b><span>at storm center</span></p>
           {storm.moveKt != null && storm.moveDirDeg != null && <p><Icon name="navigation-arrow" size={18} /><b>{ktToMph(storm.moveKt)} mph</b><span>moving {dirWord(storm.moveDirDeg)}</span></p>}
