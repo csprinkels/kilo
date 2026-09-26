@@ -3,7 +3,8 @@ import webpush from "web-push";
 import { internalAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { DIGEST_BUDGET, buildDigest, type Digest, type Island, type Snapshot } from "../lib/types.ts";
+import { DIGEST_BUDGET, buildDigest, hashOf, type Digest, type Island, type Snapshot } from "../lib/types.ts";
+import { pushText } from "../lib/notify.ts";
 import { apnsReady, fcmReady, sendApns, sendFcm } from "./nativePush";
 
 const MIN_GAP_MS = 10 * 60_000; // per island; sev-4 bypasses
@@ -16,7 +17,7 @@ function vapid() {
 }
 
 type Sub = { endpoint: string; p256dh: string; auth: string; kind?: string };
-type Note = { title: string; body: string; navigate: string; tag: string; webPayload: string; urgency: "high" | "normal" };
+type Note = { title: string; body: string; navigate: string; tag: string; collapse?: string; webPayload: string; urgency: "high" | "normal" };
 
 /** Send one notification to every row — web via web-push, apns/fcm via nativePush — then log + prune dead rows once. */
 async function fanOut(ctx: ActionCtx, subs: Sub[], { island, trigger, ...n }: Note & { island: string; trigger: string }) {
@@ -39,7 +40,7 @@ async function fanOut(ctx: ActionCtx, subs: Sub[], { island, trigger, ...n }: No
       }
       return;
     }
-    const r = await (kind === "apns" ? sendApns : sendFcm)({ token: s.endpoint, title: n.title, body: n.body, navigate: n.navigate, tag: n.tag });
+    const r = await (kind === "apns" ? sendApns : sendFcm)({ token: s.endpoint, title: n.title, body: n.body, navigate: n.navigate, tag: n.tag, collapse: n.collapse });
     if (r.ok) sent++;
     else if (r.dead) dead.push(s.endpoint);
     else console.error(`[push] ${kind} ${s.endpoint.slice(0, 12)}… -> ${r.error}`);
@@ -69,16 +70,22 @@ export const sendDigest = internalAction({
     const site = (process.env.SITE_URL ?? "").replace(/\/$/, "");
     const navigate = `${site}/?island=${island}&item=${encodeURIComponent(lead.key)}`;
     const tag = `digest-${island}`;
+    // The lock screen gets plain words, not the agency's paragraph: an emoji, what is happening, the
+    // towns, what to do. The full text still rides in `digest` below and is one tap away in the app.
+    const trig = snap.items.find((i) => i.key === lead.key);
+    const text = trig && island !== "state" ? pushText(trig, snap.items, island as Exclude<Island, "state">, snap.gen) : { title: lead.title, body: lead.body, kind: lead.key };
+    // One slot per kind: the next zone of the same Hurricane Watch replaces this one instead of stacking.
+    const collapse = `${island}-${hashOf(text.kind)}`;
     // Declarative Web Push (Safari 18.4+, no service worker needed) + the same JSON for Chrome's SW handler.
     const webPayload = JSON.stringify({
       web_push: 8030,
-      notification: { title: lead.title, body: lead.body, navigate, tag, lang: "en", silent: false },
+      notification: { title: text.title, body: text.body, navigate, tag: collapse, lang: "en", silent: false },
       digest,
     });
     if (Buffer.byteLength(webPayload) > DIGEST_BUDGET) console.error(`[push] ${island} payload ${Buffer.byteLength(webPayload)} B over budget`);
 
     const subs = await ctx.runQuery(internal.pushStore.forIsland, { island, minSev: urgency });
-    await fanOut(ctx, subs, { island, trigger, title: lead.title, body: lead.body, navigate, tag, webPayload, urgency: "high" });
+    await fanOut(ctx, subs, { island, trigger, title: text.title, body: text.body, navigate, tag, collapse, webPayload, urgency: "high" });
   },
 });
 

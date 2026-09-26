@@ -111,7 +111,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
         )}
 
         {step === "warnings" && (
-          <Screen picture={<TopicIcon topic="alert" size={120} />} title="Warnings on this phone" text={`Shelter openings, evacuations and warnings for ${island ? islandName(island) : "your island"} as notifications. The whole message is in the notification, so you can read it with no signal.`}>
+          <Screen picture={<TopicIcon topic="alert" size={120} />} title="Warnings on this phone" text={`Shelter openings, evacuations and warnings for ${island ? islandName(island) : "your island"} as notifications. What is happening and what to do are in the notification, so you can read it with no signal.`}>
             <button className="cs-btn-ink cs-wide cs-wide--big" disabled={busy} onClick={() => void askPush()}><Icon name="bell" size={20} /> {busy ? "One moment…" : "Turn on warnings"}</button>
             <button className="cs-btn-quiet" onClick={() => setStep("done")}>Not now</button>
             {note && <p className="cs-body">{note}</p>}

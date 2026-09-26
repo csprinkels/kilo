@@ -13,7 +13,7 @@ import http2 from "node:http2";
 import { apnsJwt, decodeEnv, googleGrantJwt, memo, type ServiceAccount } from "./pushJwt";
 
 export type SendResult = { ok: true } | { ok: false; dead: boolean; error: string };
-export type Note = { token: string; title: string; body: string; navigate: string; tag: string };
+export type Note = { token: string; title: string; body: string; navigate: string; tag: string; collapse?: string };
 
 // ---- APNs ----
 function apnsEnv() {
@@ -40,7 +40,7 @@ function h2post(origin: string, path: string, headers: Record<string, string>, b
   });
 }
 
-export async function sendApns({ token, title, body, navigate, tag }: Note): Promise<SendResult> {
+export async function sendApns({ token, title, body, navigate, tag, collapse }: Note): Promise<SendResult> {
   if (!apnsEnv()) return { ok: false, dead: false, error: "APNS env missing" };
   const headers = {
     authorization: `bearer ${await apnsToken()}`,
@@ -49,6 +49,8 @@ export async function sendApns({ token, title, body, navigate, tag }: Note): Pro
     "apns-priority": "10",
     "apns-expiration": String(Math.floor(Date.now() / 1000) + 24 * 3600),
     "content-type": "application/json",
+    // Same kind of warning, same slot: iOS replaces the older one rather than stacking a second.
+    ...(collapse ? { "apns-collapse-id": collapse.slice(0, 64) } : {}),
   };
   const payload = JSON.stringify({ aps: { alert: { title, body }, sound: "default", "thread-id": tag, "interruption-level": "time-sensitive" }, navigate });
   // Xcode debug builds register sandbox tokens; production answers 400 BadDeviceToken for those, so try the sandbox once.
@@ -86,7 +88,7 @@ const fcmAccess = memo(50 * 60_000, async () => {
   return ((await r.json()) as { access_token: string }).access_token;
 });
 
-export async function sendFcm({ token, title, body, navigate, tag }: Note): Promise<SendResult> {
+export async function sendFcm({ token, title, body, navigate, tag, collapse }: Note): Promise<SendResult> {
   const sa = fcmEnv();
   if (!sa) return { ok: false, dead: false, error: "FCM env missing" };
   try {
@@ -98,7 +100,7 @@ export async function sendFcm({ token, title, body, navigate, tag }: Note): Prom
           token,
           notification: { title, body },
           data: { navigate, tag },
-          android: { priority: "high", notification: { channel_id: "warnings", sound: "default" } },
+          android: { priority: "high", notification: { channel_id: "warnings", sound: "default", ...(collapse ? { tag: collapse } : {}) } },
         },
       }),
     });

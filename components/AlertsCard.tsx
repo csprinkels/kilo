@@ -45,8 +45,8 @@ export default function AlertsCard({ island, compact }: { island: Exclude<Island
         <div className="cs-lead-t">
           <h2 className="cs-lead-h">Warnings on this phone</h2>
           <p className="cs-lead-p">
-            {status === "on" && <>On for {name}. The whole message is in the notification, so you can read it with no signal.</>}
-            {(status === "off" || status === null) && <>Get shelter openings, evacuations and warnings for {name} as notifications. The whole message is in the notification, so you can read it with no signal.</>}
+            {status === "on" && <>On for {name}. What is happening and what to do are in the notification, so you can read it with no signal.</>}
+            {(status === "off" || status === null) && <>Get shelter openings, evacuations and warnings for {name} as notifications. What is happening and what to do are in the notification, so you can read it with no signal.</>}
             {status === "needs-install" && <>First add {APP_NAME} to your Home Screen: tap the Share button, then &ldquo;Add to Home Screen&rdquo;. Then open {APP_NAME} from there and come back here.</>}
             {status === "denied" && <>Notifications are turned off for {APP_NAME}. Turn them on in your phone&apos;s settings, then open {APP_NAME} again.</>}
             {status === "unsupported" && <>This phone can&apos;t show notifications from {APP_NAME}.</>}
