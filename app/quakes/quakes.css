@@ -1,7 +1,7 @@
 /* /quakes — what the shared .cs-* set cannot say. Scoped to the card stack. */
 
 /* Notice ships its own top margin for pages that stack it under prose; here the stack gap is the rhythm. */
-.pg-quakes > .cs-card { margin-top: 0; }
+.pg-quakes .cs-card { margin-top: 0; }
 
 /* DotMap keeps its caption inside the figure; .cs-figure zeroes line-height for the
    picture, so the caption takes its own back and sits on a hairline inside the well. */

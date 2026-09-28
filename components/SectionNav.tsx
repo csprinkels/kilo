@@ -22,16 +22,19 @@ export default function SectionNav() {
   const close = () => dialog.current?.close();
   return (
     <>
-      {/* wide screens: the same four, as a segmented row under the top bar, on the wordmark's left edge */}
-      <div className="mt-s3 hidden md:flex">
+      {/* desktops: the same four, as a segmented row under the top bar, on the wordmark's left edge, ʻIo beside it */}
+      <div className="mt-s3 hidden items-center gap-s3 desk:flex">
         <nav aria-label="Sections" className="nav-wide">
           {TABS.map((t) => (
             <Link key={t.href} href={t.href} aria-current={isOn(path, t) ? "page" : undefined}><Icon name={isOn(path, t) ? `${t.icon}-fill` : t.icon} size={19} /> {t.label}</Link>
           ))}
         </nav>
+        <button type="button" aria-haspopup="dialog" className="nav-ask" onClick={open}>
+          <Icon name="magnifying-glass" size={19} /> Ask Kilo
+        </button>
       </div>
-      {/* phones: a floating white rounded rectangle above the home indicator; the lit tab is filled ink inside it */}
-      <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
+      {/* phones and iPads: a floating white rounded rectangle above the home indicator; the lit tab is filled ink inside it */}
+      <nav aria-label="Sections" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 desk:hidden" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}>
         <div className="cs-dock-row pointer-events-auto">
         <ul className="cs-dock">
           {TABS.map((t) => {

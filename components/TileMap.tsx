@@ -81,7 +81,10 @@ function Tiles({ island, segments, focus, detour, you, label, className }: Props
       }
       map.fitBounds(bounds, { padding: [12, 12] });
     });
-    return () => { cancelled = true; map?.remove(); };
+    // Leaflet only listens for the window resizing; a column that widens when a chip empties the rail does not.
+    const ro = new ResizeObserver(() => map?.invalidateSize());
+    ro.observe(el);
+    return () => { cancelled = true; ro.disconnect(); map?.remove(); };
   }, [island, drawn]);
 
   return <div ref={ref} className={`w-full ${className ?? "h-[22rem]"}`} role="img" aria-label={label} />;

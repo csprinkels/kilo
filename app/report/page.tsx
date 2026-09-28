@@ -98,29 +98,36 @@ function HawaiiNeighbors({ island, setIsland }: { island: Island; setIsland: (i:
           <ReportForm preset={isType(linkedType) ? linkedType : undefined} onClose={() => setWriting(false)} />
         ) : (
           <div className="cs-stack">
-            <button className="cs-settings t-reports" onClick={() => setWriting(true)}>
-              <span className="cs-ictile"><Icon name="note-pencil" size={18} /></span>
-              <span className="cs-settings-t">Seen something? Report it to your neighbors</span>
-              <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
-            </button>
-            <section className="cs-card t-reports">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="users-three-fill" size={20} /></span>
-                <div className="cs-tophead-t"><p className="cs-label">Neighbors</p><h2 className="cs-display cs-display--card">Reported near you</h2></div>
-                {posts.length > 0 && <span className="cs-pill cs-pill--ink rp-count">{posts.length}</span>}
+            {/* Wide screens: what neighbors reported on the left, the way to add one in the rail. */}
+            <div className="cs-cols">
+              <div className="cs-side">
+                <button className="cs-settings t-reports" onClick={() => setWriting(true)}>
+                  <span className="cs-ictile"><Icon name="note-pencil" size={18} /></span>
+                  <span className="cs-settings-t">Seen something? Report it to your neighbors</span>
+                  <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
+                </button>
               </div>
-              {!snap?.data ? (
-                offline || snapFailed
-                  ? <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
-                  : <p className="cs-body">Loading what neighbors reported…</p>
-              ) : posts.length === 0 ? (
-                <EmptyState title="Nothing reported today." icon="users-three">Neighbor reports show here for six hours.</EmptyState>
-              ) : (
-                <ul className="cs-rows">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
-              )}
-              <div className="cs-rule" />
-              <Link href="/guidelines/" className="cs-more"><span>Rules for reports</span><Icon name="caret-right" size={14} /></Link>
-            </section>
+              <div className="cs-main">
+                <section className="cs-card t-reports">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="users-three-fill" size={20} /></span>
+                    <div className="cs-tophead-t"><p className="cs-label">Neighbors</p><h2 className="cs-display cs-display--card">Reported near you</h2></div>
+                    {posts.length > 0 && <span className="cs-pill cs-pill--ink rp-count">{posts.length}</span>}
+                  </div>
+                  {!snap?.data ? (
+                    offline || snapFailed
+                      ? <EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState>
+                      : <p className="cs-body">Loading what neighbors reported…</p>
+                  ) : posts.length === 0 ? (
+                    <EmptyState title="Nothing reported today." icon="users-three">Neighbor reports show here for six hours.</EmptyState>
+                  ) : (
+                    <ul className="cs-rows">{posts.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul>
+                  )}
+                  <div className="cs-rule" />
+                  <Link href="/guidelines/" className="cs-more"><span>Rules for reports</span><Icon name="caret-right" size={14} /></Link>
+                </section>
+              </div>
+            </div>
           </div>
         )}
       </div>

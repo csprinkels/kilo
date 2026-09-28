@@ -129,141 +129,148 @@ function VolcanoBody({ onRetry }: { onRetry: () => void }) {
       {d && (
         <div className="cs-stack pg-volcano">
           {bar}
-          {show("vog", worst >= 2) && (
-            <section className="cs-card t-volcano">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="wind" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">Vog</span>
-                  <h2 className="cs-display cs-display--card">{airHead}</h2>
-                </span>
-              </div>
-              {airRest && <p className="cs-body">{airRest}</p>}
-
-              {/* The island's worst reading as a four-step meter. No labels under it: the
-                  app's four words are whole phrases, and shortening them is not ours to do. */}
-              {worst >= 0 && (
-                <div className={`cs-meter${worst === 2 ? " cs-meter--warn" : ""}${worst === 3 ? " vo-meter--bad" : ""}`} aria-hidden>
-                  {[0, 1, 2, 3].map((i) => <span key={i} className={`cs-seg${i <= worst ? " cs-seg--now" : ""}`} />)}
-                </div>
-              )}
-
-              {/* One monitor per cell: the pip stands where the grid's glyph goes. */}
-              {air.length > 0 && (
-                <div className="cs-grid2">
-                  {air.map((a) => (
-                    <p key={a.name}>
-                      <span className={`cs-pip cs-pip--lg ${a.cat != null ? AIR_PIP[a.cat] : "cs-pip--none"}`} aria-hidden />
-                      <b>{a.name}</b>
-                      <span>{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              <div className="cs-rule" />
-              <p className="cs-meta">If vog bothers you, stay inside with the windows closed and keep your medicine close. Dust masks do not stop vog.</p>
-              <div className="cs-actions">
-                <a className="cs-btn-quiet" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health<Icon name="arrow-square-out" size={16} className="cs-away" /></a>
-              </div>
-            </section>
-          )}
-
-          {show("observatory") && k && (
-            <section className="cs-card t-volcano">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="mountains" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">From the observatory</span>
-                  <h2 className="cs-display cs-display--card">{proseHead}</h2>
-                </span>
-              </div>
-              {proseRest && <p className="cs-body">{proseRest}</p>}
-              <div className="cs-foot">
-                <a className="cs-btn-ink" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update</a>
-              </div>
-            </section>
-          )}
-
-          {show("camera") && d.cams.length > 0 && (
-            <section className="cs-card t-volcano">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="camera" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">Crater camera</span>
-                  <h2 className="cs-display cs-display--card">{camHead}</h2>
-                </span>
-              </div>
-              {camRest && <p className="cs-body">{camRest}</p>}
-
-              {openCam && (
-                <figure>
-                  <div className="cs-figure">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://volcanoes.usgs.gov/cams/${openCam}/images/M.jpg?ts=${Math.floor(now / 600_000)}`} alt={camName ?? "Crater camera"} className="w-full" />
+          {/* Wide screens: the observatory's own words on the left; the air, the update and the camera in the rail. */}
+          <div className="cs-cols">
+            <div className="cs-side">
+              {show("vog", worst >= 2) && (
+                <section className="cs-card t-volcano">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="wind" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">Vog</span>
+                      <h2 className="cs-display cs-display--card">{airHead}</h2>
+                    </span>
                   </div>
-                  <figcaption className="cs-figcap">{camName}. A new photo every few minutes.</figcaption>
-                </figure>
+                  {airRest && <p className="cs-body">{airRest}</p>}
+
+                  {/* The island's worst reading as a four-step meter. No labels under it: the
+                      app's four words are whole phrases, and shortening them is not ours to do. */}
+                  {worst >= 0 && (
+                    <div className={`cs-meter${worst === 2 ? " cs-meter--warn" : ""}${worst === 3 ? " vo-meter--bad" : ""}`} aria-hidden>
+                      {[0, 1, 2, 3].map((i) => <span key={i} className={`cs-seg${i <= worst ? " cs-seg--now" : ""}`} />)}
+                    </div>
+                  )}
+
+                  {/* One monitor per cell: the pip stands where the grid's glyph goes. */}
+                  {air.length > 0 && (
+                    <div className="cs-grid2">
+                      {air.map((a) => (
+                        <p key={a.name}>
+                          <span className={`cs-pip cs-pip--lg ${a.cat != null ? AIR_PIP[a.cat] : "cs-pip--none"}`} aria-hidden />
+                          <b>{a.name}</b>
+                          <span>{a.cat != null ? AIR_WORD[a.cat] : "no reading right now"}</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="cs-rule" />
+                  <p className="cs-meta">If vog bothers you, stay inside with the windows closed and keep your medicine close. Dust masks do not stop vog.</p>
+                  <div className="cs-actions">
+                    <a className="cs-btn-quiet" href="https://vog.ivhhn.org/" target="_blank" rel="noreferrer">More about vog and your health<Icon name="arrow-square-out" size={16} className="cs-away" /></a>
+                  </div>
+                </section>
               )}
 
-              {!openCam ? (
-                <div className="cs-actions">
-                  <button onClick={() => setCam(d.cams[0].id)} className="cs-btn-ink cs-wide vo-cam-go">See a photo of the crater (uses a little data)</button>
-                </div>
-              ) : (
-                <div className="cs-actions">
-                  <label className="cs-ghost cs-wide vo-cam-go relative cursor-pointer">
-                    Other cameras <Icon name="caret-down" size={18} />
-                    <select aria-label="Camera" value={openCam} onChange={(e) => setCam(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
-                      {d.cams.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </label>
-                </div>
+              {show("observatory") && k && (
+                <section className="cs-card t-volcano">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="mountains" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">From the observatory</span>
+                      <h2 className="cs-display cs-display--card">{proseHead}</h2>
+                    </span>
+                  </div>
+                  {proseRest && <p className="cs-body">{proseRest}</p>}
+                  <div className="cs-foot">
+                    <a className="cs-btn-ink" href={k.noticeUrl} target="_blank" rel="noreferrer">Read the full update</a>
+                  </div>
+                </section>
               )}
-            </section>
-          )}
 
-          {/* The observatory's own words: a card of rows, their headings as row names, never ours. */}
-          {k && (
-            <section className="cs-card t-volcano">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">Official wording</span>
-                  <h2 className="cs-display cs-display--card">Kīlauea</h2>
-                </span>
-              </div>
-              <OfficialWording title={`USGS level: ${k.level} · Aviation color: ${k.color} (for aircraft only)${since(k.levelSince)}`} body={k.sms}>
-                {ml && <p className="mt-s2">{mlTitle(ml)}</p>}
-                <ul className="cs-rows">
-                  {Object.entries(k.sections).map(([h, body]) => (
-                    <li key={h} className="cs-row">
-                      <span className="cs-rowmain">
-                        <span className="cs-rowname">{h}</span>
-                        <p className="mt-s2 whitespace-pre-line">{body}</p>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </OfficialWording>
-            </section>
-          )}
+              {show("camera") && d.cams.length > 0 && (
+                <section className="cs-card t-volcano">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="camera" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">Crater camera</span>
+                      <h2 className="cs-display cs-display--card">{camHead}</h2>
+                    </span>
+                  </div>
+                  {camRest && <p className="cs-body">{camRest}</p>}
 
-          {/* Kīlauea's notice carries one Mauna Loa line, which is enough while Mauna Loa is
-              quiet. Once it is not, its own official wording has to reach the page whether or not
-              the feed happened to carry a Kīlauea block that day. */}
-          {ml && ml.sms && (ml.level !== "NORMAL" || ml.erupting) && (
-            <section className="cs-card t-volcano">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">Official wording</span>
-                  <h2 className="cs-display cs-display--card">Mauna Loa</h2>
-                </span>
-              </div>
-              <OfficialWording title={`${mlTitle(ml)}${since(ml.levelSince)}`} body={ml.sms} />
-            </section>
-          )}
+                  {openCam && (
+                    <figure>
+                      <div className="cs-figure">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`https://volcanoes.usgs.gov/cams/${openCam}/images/M.jpg?ts=${Math.floor(now / 600_000)}`} alt={camName ?? "Crater camera"} className="w-full" />
+                      </div>
+                      <figcaption className="cs-figcap">{camName}. A new photo every few minutes.</figcaption>
+                    </figure>
+                  )}
+
+                  {!openCam ? (
+                    <div className="cs-actions">
+                      <button onClick={() => setCam(d.cams[0].id)} className="cs-btn-ink cs-wide vo-cam-go">See a photo of the crater (uses a little data)</button>
+                    </div>
+                  ) : (
+                    <div className="cs-actions">
+                      <label className="cs-ghost cs-wide vo-cam-go relative cursor-pointer">
+                        Other cameras <Icon name="caret-down" size={18} />
+                        <select aria-label="Camera" value={openCam} onChange={(e) => setCam(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
+                          {d.cams.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+
+            <div className="cs-main">
+              {/* The observatory's own words: a card of rows, their headings as row names, never ours. */}
+              {k && (
+                <section className="cs-card t-volcano">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">Official wording</span>
+                      <h2 className="cs-display cs-display--card">Kīlauea</h2>
+                    </span>
+                  </div>
+                  <OfficialWording title={`USGS level: ${k.level} · Aviation color: ${k.color} (for aircraft only)${since(k.levelSince)}`} body={k.sms}>
+                    {ml && <p className="mt-s2">{mlTitle(ml)}</p>}
+                    <ul className="cs-rows">
+                      {Object.entries(k.sections).map(([h, body]) => (
+                        <li key={h} className="cs-row">
+                          <span className="cs-rowmain">
+                            <span className="cs-rowname">{h}</span>
+                            <p className="mt-s2 whitespace-pre-line">{body}</p>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </OfficialWording>
+                </section>
+              )}
+
+              {/* Kīlauea's notice carries one Mauna Loa line, which is enough while Mauna Loa is
+                  quiet. Once it is not, its own official wording has to reach the page whether or not
+                  the feed happened to carry a Kīlauea block that day. */}
+              {ml && ml.sms && (ml.level !== "NORMAL" || ml.erupting) && (
+                <section className="cs-card t-volcano">
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">Official wording</span>
+                      <h2 className="cs-display cs-display--card">Mauna Loa</h2>
+                    </span>
+                  </div>
+                  <OfficialWording title={`${mlTitle(ml)}${since(ml.levelSince)}`} body={ml.sms} />
+                </section>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </PageShell>

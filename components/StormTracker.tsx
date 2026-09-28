@@ -43,93 +43,98 @@ export default function StormTracker({ storm, island }: { storm: Storm; island: 
   const tile = level >= 3 ? " cs-ictile--danger" : level >= 2 ? " cs-ictile--warn" : "";
 
   return (
-    <>
-      {/* The storm: topic head, the one sentence, the track, the numbers, the agency. */}
-      <article className={`cs-card t-storms${tone}`}>
-        <div className="cs-tophead">
-          <span className={`cs-ictile cs-ictile--lg${tile}`}><Icon name="wind-fill" size={20} /></span>
-          <span className="cs-tophead-t">
-            <span className="cs-label">{LEVEL_WORD[level] ?? "Storm"}</span>
-            <h2 className="cs-display cs-display--card num">{windsLine(storm)}</h2>
-          </span>
-        </div>
-        <p className="cs-body">{line.text}</p>
-        {warn && (
-          <p className="cs-note">
-            <Icon name="warning" size={18} />
-            <span className={warn.level >= 4 ? "cs-danger" : undefined}>A {warn.kind} is out for <span className="cs-haw">{place.label}</span>.</span>
-          </p>
-        )}
-        <StormTimeline storm={storm} place={place} />
-        <div className="cs-grid2">
-          <p><Icon name="wind" size={18} /><b>{round5(ktToMph(storm.windKt))} mph</b><span>at storm center</span></p>
-          {storm.moveKt != null && storm.moveDirDeg != null && <p><Icon name="navigation-arrow" size={18} /><b>{ktToMph(storm.moveKt)} mph</b><span>moving {dirWord(storm.moveDirDeg)}</span></p>}
-          {!outlook.movingAway && <p><Icon name="map-pin" size={18} /><b>{(Math.round(nmToMi(outlook.closest.distNm) / 10) * 10).toLocaleString("en-US")} miles</b><span>closest, {fmtDayTime(outlook.closest.at)}</span></p>}
-          <p><Icon name="warning-fill" size={18} /><b>Advisory {storm.advNum}</b><span>{fmtTime(storm.issuedAt)}</span></p>
-        </div>
-        <div className="cs-foot">
-          <span className="cs-foot-note">From the Central Pacific Hurricane Center</span>
-          {storm.links.public && <a className="cs-btn-ink" href={storm.links.public} target="_blank" rel="noreferrer">Hurricane Center</a>}
-        </div>
-      </article>
+    <div className="cs-cols">
+      {/* Wide screens: the storm and what to do on the left; the track as a list and the wording in the rail. */}
+      <div className="cs-main">
+        {/* The storm: topic head, the one sentence, the track, the numbers, the agency. */}
+        <article className={`cs-card t-storms${tone}`}>
+          <div className="cs-tophead">
+            <span className={`cs-ictile cs-ictile--lg${tile}`}><Icon name="wind-fill" size={20} /></span>
+            <span className="cs-tophead-t">
+              <span className="cs-label">{LEVEL_WORD[level] ?? "Storm"}</span>
+              <h2 className="cs-display cs-display--card num">{windsLine(storm)}</h2>
+            </span>
+          </div>
+          <p className="cs-body">{line.text}</p>
+          {warn && (
+            <p className="cs-note">
+              <Icon name="warning" size={18} />
+              <span className={warn.level >= 4 ? "cs-danger" : undefined}>A {warn.kind} is out for <span className="cs-haw">{place.label}</span>.</span>
+            </p>
+          )}
+          <StormTimeline storm={storm} place={place} />
+          <div className="cs-grid2">
+            <p><Icon name="wind" size={18} /><b>{round5(ktToMph(storm.windKt))} mph</b><span>at storm center</span></p>
+            {storm.moveKt != null && storm.moveDirDeg != null && <p><Icon name="navigation-arrow" size={18} /><b>{ktToMph(storm.moveKt)} mph</b><span>moving {dirWord(storm.moveDirDeg)}</span></p>}
+            {!outlook.movingAway && <p><Icon name="map-pin" size={18} /><b>{(Math.round(nmToMi(outlook.closest.distNm) / 10) * 10).toLocaleString("en-US")} miles</b><span>closest, {fmtDayTime(outlook.closest.at)}</span></p>}
+            <p><Icon name="warning-fill" size={18} /><b>Advisory {storm.advNum}</b><span>{fmtTime(storm.issuedAt)}</span></p>
+          </div>
+          <div className="cs-foot">
+            <span className="cs-foot-note">From the Central Pacific Hurricane Center</span>
+            {storm.links.public && <a className="cs-btn-ink" href={storm.links.public} target="_blank" rel="noreferrer">Hurricane Center</a>}
+          </div>
+        </article>
 
-      <section className="cs-card t-storms">
-        <div className="cs-tophead">
-          <span className="cs-ictile cs-ictile--lg"><Icon name="check-circle" size={20} /></span>
-          <span className="cs-tophead-t">
-            <span className="cs-label">Storm</span>
-            <h2 className="cs-display cs-display--card">What to do</h2>
-          </span>
-        </div>
-        <p className="cs-body">{todo}</p>
-      </section>
+        <section className="cs-card t-storms">
+          <div className="cs-tophead">
+            <span className="cs-ictile cs-ictile--lg"><Icon name="check-circle" size={20} /></span>
+            <span className="cs-tophead-t">
+              <span className="cs-label">Storm</span>
+              <h2 className="cs-display cs-display--card">What to do</h2>
+            </span>
+          </div>
+          <p className="cs-body">{todo}</p>
+        </section>
+      </div>
 
-      <section className="cs-card t-storms">
-        <div className="cs-tophead">
-          <span className="cs-ictile cs-ictile--lg"><Icon name="map-pin" size={20} /></span>
-          <span className="cs-tophead-t">
-            <span className="cs-label">Storm</span>
-            <h2 className="cs-display cs-display--card">Where it will be</h2>
-          </span>
-        </div>
-        <ul className="st-tl">
-          {where.map((p) => {
-            const mi = nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon));
-            const closest = mi === Math.min(...where.map((q) => nmToMi(distanceNm(q.lat, q.lon, place.lat, place.lon))));
-            return (
-              <li key={p.hour} className="cs-row cs-row--mid">
-                <span className="cs-rowmain">
-                  <span className="cs-rowname num">{fmtDayTime(p.at)}{p.outlook ? <em> · less certain</em> : ""}</span>
-                  <span className="cs-rowsub num">{mi.toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))}{closest ? <> · closest to <span className="cs-haw">{place.label}</span></> : ""}</span>
-                </span>
-                <span className="cs-rowend st-mph num">{round5(ktToMph(p.windKt))} <span>mph</span></span>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      <div className="cs-side">
+        <section className="cs-card t-storms">
+          <div className="cs-tophead">
+            <span className="cs-ictile cs-ictile--lg"><Icon name="map-pin" size={20} /></span>
+            <span className="cs-tophead-t">
+              <span className="cs-label">Storm</span>
+              <h2 className="cs-display cs-display--card">Where it will be</h2>
+            </span>
+          </div>
+          <ul className="st-tl">
+            {where.map((p) => {
+              const mi = nmToMi(distanceNm(p.lat, p.lon, place.lat, place.lon));
+              const closest = mi === Math.min(...where.map((q) => nmToMi(distanceNm(q.lat, q.lon, place.lat, place.lon))));
+              return (
+                <li key={p.hour} className="cs-row cs-row--mid">
+                  <span className="cs-rowmain">
+                    <span className="cs-rowname num">{fmtDayTime(p.at)}{p.outlook ? <em> · less certain</em> : ""}</span>
+                    <span className="cs-rowsub num">{mi.toLocaleString("en-US")} miles {dirWord(bearingDeg(place.lat, place.lon, p.lat, p.lon))}{closest ? <> · closest to <span className="cs-haw">{place.label}</span></> : ""}</span>
+                  </span>
+                  <span className="cs-rowend st-mph num">{round5(ktToMph(p.windKt))} <span>mph</span></span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-      {/* The agency's own words, and the other raw source on this page, in one card. */}
-      <section className="cs-card t-storms">
-        <div className="cs-tophead">
-          <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
-          <span className="cs-tophead-t">
-            <span className="cs-label">Official wording</span>
-            <h2 className="cs-display cs-display--card">{storm.name}</h2>
-          </span>
-        </div>
-        <OfficialWording title={storm.headline ? `${storm.headline}.` : `${cat.label} ${storm.name}`}>
-          {storm.warnings.length > 0 && <ul className="st-ql">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
-          <p className="cs-meta st-adv num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
-          <p className="cs-meta num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
-          <p className="cs-actions">
-            {storm.links.public && <a className="cs-btn-quiet" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
-            {storm.links.graphics && <a className="cs-btn-quiet" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
-          </p>
-        </OfficialWording>
-        <Imagery id={storm.id} />
-      </section>
-    </>
+        {/* The agency's own words, and the other raw source on this page, in one card. */}
+        <section className="cs-card t-storms">
+          <div className="cs-tophead">
+            <span className="cs-ictile cs-ictile--lg"><Icon name="megaphone" size={20} /></span>
+            <span className="cs-tophead-t">
+              <span className="cs-label">Official wording</span>
+              <h2 className="cs-display cs-display--card">{storm.name}</h2>
+            </span>
+          </div>
+          <OfficialWording title={storm.headline ? `${storm.headline}.` : `${cat.label} ${storm.name}`}>
+            {storm.warnings.length > 0 && <ul className="st-ql">{storm.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
+            <p className="cs-meta st-adv num">Advisory {storm.advNum}, issued {fmtTime(storm.issuedAt)}{storm.nextAdvisoryAt ? `, next ${fmtTime(storm.nextAdvisoryAt)}` : ""}.</p>
+            <p className="cs-meta num">{cat.label}. Winds {ktToMph(storm.windKt)} mph, gusts {ktToMph(storm.gustKt)} mph.{storm.pressureMb ? ` Pressure ${storm.pressureMb} mb.` : ""}</p>
+            <p className="cs-actions">
+              {storm.links.public && <a className="cs-btn-quiet" href={storm.links.public} target="_blank" rel="noreferrer">Official advisory</a>}
+              {storm.links.graphics && <a className="cs-btn-quiet" href={storm.links.graphics} target="_blank" rel="noreferrer">Official graphics</a>}
+            </p>
+          </OfficialWording>
+          <Imagery id={storm.id} />
+        </section>
+      </div>
+    </div>
   );
 }
 

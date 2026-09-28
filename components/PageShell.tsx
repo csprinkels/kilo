@@ -19,7 +19,7 @@ export default function PageShell({
 }) {
   const line = sentence ?? blurb;
   return (
-    <main className="relative z-[1] mx-auto w-full max-w-2xl px-4 pb-32 md:pb-20">
+    <main className="relative z-[1] mx-auto w-full max-w-2xl px-4 pb-32 md:max-w-3xl md:px-8 lg:max-w-5xl xl:max-w-6xl desk:pb-20">
       <TopBar island={island} onIsland={onIsland} />
       <SectionNav />
       {fetchedAt != null && <Freshness gen={gen ?? 0} checkedAt={fetchedAt} offline={!!offline} weak={weak} />}

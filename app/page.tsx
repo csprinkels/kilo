@@ -144,137 +144,146 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
 
   return (
     <main className="relative z-[1] min-h-dvh w-full">
-      <div className="mx-auto w-full max-w-2xl px-4 pb-32 md:pb-20">
+      <div className="mx-auto w-full max-w-2xl px-4 pb-32 md:max-w-3xl md:px-8 lg:max-w-5xl xl:max-w-6xl desk:pb-20">
         <TopBar island={island} onIsland={setIsland} />
         <SectionNav />
         <Freshness gen={gen} checkedAt={now} offline={offline} weak={mode === "low" && !offline} />
 
         <div className="cs-stack">
-          {loaded && (
-            /* The page's one raised ground: the warm hero only when the day has something to act on. */
-            <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`} aria-label="What matters now">
-              <h1 className="cs-display cs-display--hero">{story.title}</h1>
-              {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
-              {pinRows.length > 0 && (
-                <>
-                  {/* Everything to act on today, as rows in one white block. */}
-                  <div className="cs-pins">
-                    {pinRows.map((g) => {
-                      const lone = g.items.length === 1 ? g.items[0] : undefined;
-                      const body = (
-                        <>
-                          <span className={`cs-ictile ${g.level >= 3 ? "cs-ictile--danger" : "cs-ictile--warn"}`}><Icon name={pinGlyph(g.items[0])} size={18} /></span>
-                          <span className="cs-pin-main">
-                            <span className="cs-pin-h">{g.headline}{lone && awayMark(lone)}</span>
-                            {g.action && <span className="cs-pin-a">{g.action}</span>}
-                            {!lone && <span className="cs-pin-more">See the list <Icon name="caret-down" size={13} /></span>}
-                          </span>
-                          {lone && <Icon name="caret-right" size={16} className="cs-pin-go" />}
-                        </>
-                      );
-                      if (lone) return <PinLink key={g.key} item={lone} className="cs-pin">{body}</PinLink>;
-                      // Several of one kind, said once. The names are behind a native disclosure: no script, works offline.
-                      return (
-                        <details key={g.key} className="cs-pin">
-                          <summary>{body}</summary>
-                          <ul className="cs-pin-list">
-                            {g.items.map((i) => <li key={i.key}><PinLink item={i}>{plain.get(i.key)!.headline}{awayMark(i)}</PinLink></li>)}
-                          </ul>
-                        </details>
-                      );
-                    })}
-                  </div>
-                  {(pinWarnings > 0 || pinHeadsUp > 0) && (
-                    <div className="cs-pills">
-                      {pinWarnings > 0 && <span className="cs-pill cs-pill--danger"><Icon name="siren" size={13} />{pinWarnings} {pinWarnings === 1 ? "warning" : "warnings"}</span>}
-                      {pinHeadsUp > 0 && <span className="cs-pill cs-pill--warn"><Icon name="warning" size={13} />{pinHeadsUp} heads up</span>}
-                    </div>
+          {/* Wide screens: the headline and the feed on the left, the storm and the weather in the rail. */}
+          <div className="cs-cols">
+            <div className="cs-main">
+              {loaded && (
+                /* The page's one raised ground: the warm hero only when the day has something to act on. */
+                <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`} aria-label="What matters now">
+                  <h1 className="cs-display cs-display--hero">{story.title}</h1>
+                  {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
+                  {pinRows.length > 0 && (
+                    <>
+                      {/* Everything to act on today, as rows in one white block. */}
+                      <div className="cs-pins">
+                        {pinRows.map((g) => {
+                          const lone = g.items.length === 1 ? g.items[0] : undefined;
+                          const body = (
+                            <>
+                              <span className={`cs-ictile ${g.level >= 3 ? "cs-ictile--danger" : "cs-ictile--warn"}`}><Icon name={pinGlyph(g.items[0])} size={18} /></span>
+                              <span className="cs-pin-main">
+                                <span className="cs-pin-h">{g.headline}{lone && awayMark(lone)}</span>
+                                {g.action && <span className="cs-pin-a">{g.action}</span>}
+                                {!lone && <span className="cs-pin-more">See the list <Icon name="caret-down" size={13} /></span>}
+                              </span>
+                              {lone && <Icon name="caret-right" size={16} className="cs-pin-go" />}
+                            </>
+                          );
+                          if (lone) return <PinLink key={g.key} item={lone} className="cs-pin">{body}</PinLink>;
+                          // Several of one kind, said once. The names are behind a native disclosure: no script, works offline.
+                          return (
+                            <details key={g.key} className="cs-pin">
+                              <summary>{body}</summary>
+                              <ul className="cs-pin-list">
+                                {g.items.map((i) => <li key={i.key}><PinLink item={i}>{plain.get(i.key)!.headline}{awayMark(i)}</PinLink></li>)}
+                              </ul>
+                            </details>
+                          );
+                        })}
+                      </div>
+                      {(pinWarnings > 0 || pinHeadsUp > 0) && (
+                        <div className="cs-pills">
+                          {pinWarnings > 0 && <span className="cs-pill cs-pill--danger"><Icon name="siren" size={13} />{pinWarnings} {pinWarnings === 1 ? "warning" : "warnings"}</span>}
+                          {pinHeadsUp > 0 && <span className="cs-pill cs-pill--warn"><Icon name="warning" size={13} />{pinHeadsUp} heads up</span>}
+                        </div>
+                      )}
+                    </>
                   )}
-                </>
+                </section>
               )}
-            </section>
-          )}
 
-          {loaded && <Ask island={island} ctx={askCtx} now={now} />}
-          {loaded && chips}
+              {loaded && <Ask island={island} ctx={askCtx} now={now} />}
+              {loaded && chips}
+            </div>
 
-          {approaching && mainStorm && (
-            <section className="cs-card t-storms" aria-label={mainStorm.text}>
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="wind" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">{/\b(Sat|Sun)\b/.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</span>
-                  {/* non-breaking hyphen: never "Two-" / "C" */}
-                  <h2 className="cs-display cs-display--card">{stormName(mainStorm.s).replace(/-/g, "‑")}</h2>
-                </span>
-              </div>
-              <p className="cs-body">{mainStorm.text}</p>
-              <StormTimeline storm={mainStorm.s} place={place} compact />
-              <div className="cs-grid2">
-                {windsFrom && <p><Icon name="warning" size={18} /><b>{fmtDayTime(windsFrom)}</b><span>{outlook?.hurricaneWindsFrom ? "damaging winds from" : "winds could start"}</span></p>}
-                <p><Icon name="wind" size={18} /><b>{Math.round(ktToMph(mainStorm.s.windKt) / 5) * 5} mph</b><span>at storm center</span></p>
-                {watch && <p><Icon name="siren" size={18} /><b>{watch}</b></p>}
-                <p><Icon name="warning-fill" size={18} /><b>Advisory {mainStorm.s.advNum}</b><span>latest</span></p>
-              </div>
-              <div className="cs-foot">
-                <span className="cs-foot-note">{stormName(mainStorm.s)}</span>
-                <Link href="/storms/" className="cs-btn-ink">Storm page</Link>
-              </div>
-            </section>
-          )}
+            <div className="cs-side">
+              {approaching && mainStorm && (
+                <section className="cs-card t-storms" aria-label={mainStorm.text}>
+                  <div className="cs-tophead">
+                    <span className="cs-ictile cs-ictile--lg"><Icon name="wind" size={20} /></span>
+                    <span className="cs-tophead-t">
+                      <span className="cs-label">{/\b(Sat|Sun)\b/.test(mainStorm.text) ? "Storm this weekend" : "Storm"}</span>
+                      {/* non-breaking hyphen: never "Two-" / "C" */}
+                      <h2 className="cs-display cs-display--card">{stormName(mainStorm.s).replace(/-/g, "‑")}</h2>
+                    </span>
+                  </div>
+                  <p className="cs-body">{mainStorm.text}</p>
+                  <StormTimeline storm={mainStorm.s} place={place} compact />
+                  <div className="cs-grid2">
+                    {windsFrom && <p><Icon name="warning" size={18} /><b>{fmtDayTime(windsFrom)}</b><span>{outlook?.hurricaneWindsFrom ? "damaging winds from" : "winds could start"}</span></p>}
+                    <p><Icon name="wind" size={18} /><b>{Math.round(ktToMph(mainStorm.s.windKt) / 5) * 5} mph</b><span>at storm center</span></p>
+                    {watch && <p><Icon name="siren" size={18} /><b>{watch}</b></p>}
+                    <p><Icon name="warning-fill" size={18} /><b>Advisory {mainStorm.s.advNum}</b><span>latest</span></p>
+                  </div>
+                  <div className="cs-foot">
+                    <span className="cs-foot-note">{stormName(mainStorm.s)}</span>
+                    <Link href="/storms/" className="cs-btn-ink">Storm page</Link>
+                  </div>
+                </section>
+              )}
 
-          {!weatherCard
-            ? <p className="cs-card cs-body cs-flat">Weather loads when the signal is better.</p>
-            : show("weather") && <WeatherNow island={island} />}
+              {!weatherCard
+                ? <p className="cs-card cs-body cs-flat">Weather loads when the signal is better.</p>
+                : show("weather") && <WeatherNow island={island} />}
+            </div>
 
-          {/* Weak signal: the 1.5 KB essentials arrived but the 30 KB snapshot has not. Show the
-              headlines we do have rather than an empty page — this is the path the app exists for. */}
-          {headlinesOnly.length > 0 && (
-            <section className="cs-card" aria-label="Just in">
-              <p className="cs-label">Just in</p>
-              {headlinesOnly.map((a) => (
-                <div key={a.h} className="cs-row">
-                  <span className="cs-rowmain">
-                    <span className="cs-rowname">{a.title}</span>
-                    <span className="cs-rowsub">Details load when the signal is better.</span>
-                  </span>
-                </div>
-              ))}
-            </section>
-          )}
-
-          {bands.map((b) => {
-            const { rows, folded } = foldRuns(b.rows.filter((r) => show(r.topic)));
-            if (!rows.length) return null;
-            return (
-              <section key={b.key} aria-label={b.label}>
-                <div className="cs-feedhead">
-                  <p className="cs-label">{b.label}</p>
-                  <span className="cs-pill cs-pill--ink">{rows.length}</span>
-                </div>
-                <ol className="cs-feed">
-                  {rows.map((r) => <li key={r.key}><FeedRow row={r} island={island} focus={r.key === focusKey} /></li>)}
-                  {Object.entries(folded).map(([topic, n]) => (
-                    <li key={topic} className="cs-feed-quiet">
-                      <Link href={HREF[topic] ?? "/"} className="cs-more">
-                        <span>{n} more {MORE_WORD[topic]?.[n === 1 ? 0 : 1] ?? "of these"}</span>
-                        <Icon name="caret-right" size={14} />
-                      </Link>
-                    </li>
+            <div className="cs-main">
+              {/* Weak signal: the 1.5 KB essentials arrived but the 30 KB snapshot has not. Show the
+                  headlines we do have rather than an empty page — this is the path the app exists for. */}
+              {headlinesOnly.length > 0 && (
+                <section className="cs-card" aria-label="Just in">
+                  <p className="cs-label">Just in</p>
+                  {headlinesOnly.map((a) => (
+                    <div key={a.h} className="cs-row">
+                      <span className="cs-rowmain">
+                        <span className="cs-rowname">{a.title}</span>
+                        <span className="cs-rowsub">Details load when the signal is better.</span>
+                      </span>
+                    </div>
                   ))}
-                </ol>
-              </section>
-            );
-          })}
+                </section>
+              )}
 
-          {!loaded && !offline && <p className="cs-body cs-flat">Loading what is happening around {islandName(island)}…</p>}
-          {/* Home was the one data page with no offline state: with nothing cached it sat on "Loading…" for ever. */}
-          {!loaded && offline && (
-            <section className="cs-card"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
-          )}
+              {bands.map((b) => {
+                const { rows, folded } = foldRuns(b.rows.filter((r) => show(r.topic)));
+                if (!rows.length) return null;
+                return (
+                  <section key={b.key} aria-label={b.label}>
+                    <div className="cs-feedhead">
+                      <p className="cs-label">{b.label}</p>
+                      <span className="cs-pill cs-pill--ink">{rows.length}</span>
+                    </div>
+                    <ol className="cs-feed">
+                      {rows.map((r) => <li key={r.key}><FeedRow row={r} island={island} focus={r.key === focusKey} /></li>)}
+                      {Object.entries(folded).map(([topic, n]) => (
+                        <li key={topic} className="cs-feed-quiet">
+                          <Link href={HREF[topic] ?? "/"} className="cs-more">
+                            <span>{n} more {MORE_WORD[topic]?.[n === 1 ? 0 : 1] ?? "of these"}</span>
+                            <Icon name="caret-right" size={14} />
+                          </Link>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                );
+              })}
 
-          {/* "Not now" hides the block on this phone; the card goes with it rather than staying as an empty white box. */}
-          {!alertsDismissed && <div className="cs-card"><AlertsCard island={island} compact /></div>}
+              {!loaded && !offline && <p className="cs-body cs-flat">Loading what is happening around {islandName(island)}…</p>}
+              {/* Home was the one data page with no offline state: with nothing cached it sat on "Loading…" for ever. */}
+              {!loaded && offline && (
+                <section className="cs-card"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
+              )}
+
+              {/* "Not now" hides the block on this phone; the card goes with it rather than staying as an empty white box. */}
+              {!alertsDismissed && <div className="cs-card"><AlertsCard island={island} compact /></div>}
+            </div>
+          </div>
 
           <Link href="/sources/" className="cs-settings">
             <span className="cs-ictile cs-ictile--ink"><Icon name="gear" size={18} /></span>

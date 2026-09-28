@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* A wide screen with a mouse. Touch keeps the phone's dock at any width — an iPad is held like a
+   big phone, thumbs at the bottom — so the row of tabs under the top bar is for desktops only. */
+@custom-variant desk (@media (min-width: 768px) and (pointer: fine));
+
 /*
   Design tokens. Light = warm paper; dark = volcanic.
   Colour roles: chrome is monochrome (ink on paper); colour appears only in pictures, in danger/warn blocks,
@@ -226,6 +230,9 @@
   text-decoration:none; white-space:nowrap; }
 .nav-wide a:hover{ color:var(--ink); }
 .nav-wide a[aria-current="page"]{ background:var(--ink); color:var(--brand-ink); }
+/* ʻIo beside the row, detached from it the way the round button sits beside the dock */
+.nav-ask{ display:inline-flex; align-items:center; gap:8px; min-height:50px; padding:0 18px; border:0; border-radius:10px;
+  background:var(--brand); color:var(--brand-ink); font:inherit; font-size:15px; font-weight:700; line-height:1; cursor:pointer; }
 @utility row { @apply flex min-h-14 w-full items-center gap-s3 py-s3 text-left; }
 @utility picture { @apply overflow-hidden rounded-card bg-card shadow-card; }
 
@@ -344,6 +351,22 @@ body {
 
 /* ── the column: cards 12px apart, on the app's own responsive container ── */
 .cs-stack{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+/*
+ * Wide screens: a main column and a side rail. <div.cs-cols> holds .cs-main pieces and one .cs-side.
+ * Below 1024px every wrapper is display:contents, so the cards sit in the stack exactly as on a phone,
+ * in DOM order. From 1024px the side is a phone-wide column on the right, from the top, and
+ * spans both rows; the 1fr row soaks up its height, so a short main piece never grows a gap.
+ */
+.cs-cols,.cs-cols > *{ display:contents; }
+@media (min-width:1024px){
+  .cs-cols{ display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto 1fr; row-gap:12px; align-items:start; }
+  .cs-cols > *{ display:flex; flex-direction:column; gap:12px; min-width:0; grid-column:1; }
+  .cs-cols > .cs-side{ grid-column:2; grid-row:1 / -1; width:25rem; margin-left:16px; }
+  /* Nothing in the rail today (a chip hid it, or there is no storm): the auto column shrinks to
+     nothing and the main column takes the width. Not :has(:empty) — WebKit does not re-check that
+     when the rail fills in after the data lands, and the main column collapses to 0px. */
+  .cs-cols > .cs-side:empty{ display:none; }
+}
 
 /* ── the card ── */
 .cs-card{
@@ -1126,7 +1149,7 @@ button.cs-settings{ width:100%; font-family:inherit; text-align:left; cursor:poi
   position:sticky; top:env(safe-area-inset-top); z-index:10; background:var(--bg);
 }
 /* in a card stack the bar's own 8px of ground is the gap, so it gives the stack's 12 back */
-.cs-stack > .pf-bar{ margin:-8px -16px; }
+.cs-stack > .pf-bar,.cs-cols > * > .pf-bar{ margin:-8px -16px; }
 .pf-chip{
   flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px; padding:0 16px;
   border:1px solid var(--hairline); border-radius:10px; background:var(--card);

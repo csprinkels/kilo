@@ -71,7 +71,10 @@ export default function RadarMap({ lat, lon, label }: { lat: number; lon: number
       map.setView([lat, lon], 8.5);
       map.setMaxZoom(11);
     });
-    return () => { cancelled = true; layers.current = []; map?.remove(); };
+    // Leaflet only listens for the window resizing; a column that widens when a chip empties the rail does not.
+    const ro = new ResizeObserver(() => map?.invalidateSize());
+    ro.observe(el);
+    return () => { cancelled = true; layers.current = []; ro.disconnect(); map?.remove(); };
   }, [frames, host, lat, lon]);
 
   // Slider → which frame is visible.

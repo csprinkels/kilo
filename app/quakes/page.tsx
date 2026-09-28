@@ -52,45 +52,50 @@ function QuakesBody({ retry }: { retry: () => void }) {
           </section>
         )}
         {d && (
-          <>
-            {/* One card in the Now language: topic head, the month as a picture in the well, the ones people noticed as rows, the ways out in the footer bar. */}
-            <section className="cs-card t-quakes">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="pulse" size={20} /></span>
-                <span className="cs-tophead-t">
-                  <span className="cs-label">Earthquakes</span>
-                  <h2 className="cs-display cs-display--card">Ones people felt</h2>
-                </span>
-              </div>
-              <DotMap className="cs-figure qk-frame" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
-              {felt.length > 0 ? (
-                <ul className="qk-list">
-                  {felt.map((e) => {
-                    const dot = (8 + Math.min(Math.max(e.m - 3, 0), 3) * 6) / 16; // same idea as the map: bigger dot, bigger quake
-                    return (
-                      <li key={e.i} className="cs-row cs-row--mid">
-                        <span className="qk-mark" aria-hidden><span className="qk-bullet" style={{ width: `${dot}rem`, height: `${dot}rem` }} /></span>
-                        <span className="cs-rowmain">
-                          <span className="cs-rowname">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
-                          <span className="cs-rowsub num">{when(e.t * 1000, now)}{e.f ? ` · ${people(e.f)}` : ""}</span>
-                        </span>
-                        <span className="cs-rowend qk-mag" aria-label={`magnitude ${e.m.toFixed(1)}`}>{e.m.toFixed(1)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <EmptyState title="None this month." />
-              )}
-              <div className="cs-foot">
-                {tell && <a className="cs-btn-quiet" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it</a>}
-                <a className="cs-btn-ink" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map</a>
-              </div>
-            </section>
+          <div className="cs-cols">
+            {/* Wide screens: the month on the left, the standing rule in the rail. */}
+            <div className="cs-main">
+              {/* One card in the Now language: topic head, the month as a picture in the well, the ones people noticed as rows, the ways out in the footer bar. */}
+              <section className="cs-card t-quakes">
+                <div className="cs-tophead">
+                  <span className="cs-ictile cs-ictile--lg"><Icon name="pulse" size={20} /></span>
+                  <span className="cs-tophead-t">
+                    <span className="cs-label">Earthquakes</span>
+                    <h2 className="cs-display cs-display--card">Ones people felt</h2>
+                  </span>
+                </div>
+                <DotMap className="cs-figure qk-frame" dots={dots} label="Map of the Hawaiian Islands with a dot for each earthquake this month" caption="Bigger dot, bigger quake. Lighter dot, older quake." />
+                {felt.length > 0 ? (
+                  <ul className="qk-list">
+                    {felt.map((e) => {
+                      const dot = (8 + Math.min(Math.max(e.m - 3, 0), 3) * 6) / 16; // same idea as the map: bigger dot, bigger quake
+                      return (
+                        <li key={e.i} className="cs-row cs-row--mid">
+                          <span className="qk-mark" aria-hidden><span className="qk-bullet" style={{ width: `${dot}rem`, height: `${dot}rem` }} /></span>
+                          <span className="cs-rowmain">
+                            <span className="cs-rowname">{feltWord(e)} shaking near {quakePlace(e.p)}</span>
+                            <span className="cs-rowsub num">{when(e.t * 1000, now)}{e.f ? ` · ${people(e.f)}` : ""}</span>
+                          </span>
+                          <span className="cs-rowend qk-mag" aria-label={`magnitude ${e.m.toFixed(1)}`}>{e.m.toFixed(1)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <EmptyState title="None this month." />
+                )}
+                <div className="cs-foot">
+                  {tell && <a className="cs-btn-quiet" href={`${USGS}/eventpage/${tell.i}/tellus`} target="_blank" rel="noreferrer">Tell the USGS you felt it</a>}
+                  <a className="cs-btn-ink" href={`${USGS}/map/?extent=18.5,-161&extent=22.8,-154.3`} target="_blank" rel="noreferrer">All quakes on the USGS map</a>
+                </div>
+              </section>
+            </div>
 
-            {/* The standing rule, in the app's shared Notice (card + brick tile + title + line). */}
-            <Notice title="If the ground shakes hard near the coast, go uphill right away." icon="waves">Do not wait for a siren.</Notice>
-          </>
+            <div className="cs-side">
+              {/* The standing rule, in the app's shared Notice (card + brick tile + title + line). */}
+              <Notice title="If the ground shakes hard near the coast, go uphill right away." icon="waves">Do not wait for a siren.</Notice>
+            </div>
+          </div>
         )}
       </div>
     </PageShell>

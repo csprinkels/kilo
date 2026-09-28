@@ -130,6 +130,9 @@ export default function WeatherPage() {
   return (
     <PageShell title={title} island={island} onIsland={setIsland} fetchedAt={d ? w?.fetchedAt : undefined} gen={d?.upd} offline={w?.offline} source="the National Weather Service">
       <div className="cs-stack pg-weather">
+      {/* Wide screens: now, the warnings and the charts on the left; the sea, the air and the full wording in the rail. */}
+      <div className="cs-cols">
+      <div className="cs-main">
       {!d && (w || slow
         ? <section className="cs-card"><EmptyState kind="error" title="Can't load right now." onRetry={() => window.dispatchEvent(new Event("online"))}>Try again when you have signal. In an emergency call 911.</EmptyState></section>
         : <p className="cs-body cs-flat">Loading the weather…</p>)}
@@ -233,7 +236,13 @@ export default function WeatherPage() {
               <DailyRows fc={town.fc} />
             </section>
           )}
+        </>
+      )}
+      </div>
 
+      <div className="cs-side">
+      {d && town && (
+        <>
           {show("surf") && surfLine && d.surf && (
             <section className="cs-card t-tsunami" aria-label="Surf">
               <div className="cs-tophead">
@@ -321,6 +330,8 @@ export default function WeatherPage() {
           <ul className="cs-rows">{headsUp.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={new Set(headsUp.map((x) => x.source)).size > 1} />)}</ul>
         </section>
       )}
+      </div>
+      </div>
       </div>
     </PageShell>
   );

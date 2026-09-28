@@ -146,7 +146,7 @@ export default function RoadsPage() {
   return (
     <PageShell title="Roads" sentence={loaded ? roadsSentence(island, closures, trouble, roadwork.length, plain) : undefined} island={island} onIsland={setIsland}
       fetchedAt={ess?.fetchedAt ?? snap?.fetchedAt} gen={snap?.data?.gen} offline={offline} weak={mode === "low" && !offline} source={SOURCE[island]}>
-      {/* One column of white cards on the paper ground, in Now's language. */}
+      {/* White cards on the paper ground, in Now's language. */}
       <div className="cs-stack pg-traffic">
         {!loaded && (offline || snapFailed) && (
           <section className="cs-card">
@@ -158,125 +158,132 @@ export default function RoadsPage() {
         {loaded && (
           <>
             {bar}
-            {/* The island map is the card's picture; its key rides under it, each word wearing its own swatch. */}
-            {show("map") && (
-              <section className="cs-card t-roads">
-                <div className="cs-tophead">
-                  <span className="cs-ictile cs-ictile--lg"><Icon name="map-pin" size={20} /></span>
-                  <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">On the map</h2></div>
-                </div>
-                <div className="cs-figure">
-                  <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
-                </div>
-                {keys.length > 0 && (
-                  <div className="cs-keys">
-                    {keys.map((k) => <span key={k.text} className="cs-key"><i className={`cs-key-sw ${k.sw}`} aria-hidden /> {k.text}</span>)}
-                  </div>
-                )}
-              </section>
-            )}
-
-            {official.length > 0 && (
-              <section className="cs-card">
-                {you ? (
-                  <p className="cs-body cs-flat">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
-                ) : (
-                  <>
-                    <div className="cs-lead">
-                      <span className="cs-ictile"><Icon name="crosshair" size={18} /></span>
-                      <div className="cs-lead-t">
-                        <p className="cs-lead-h">What is closed near me</p>
+            {/* Wide screens: the map on the left; the list, the neighbors and the links in the rail. */}
+            <div className="cs-cols">
+              <div className="cs-main">
+                {/* The island map is the card's picture; its key rides under it, each word wearing its own swatch. */}
+                {show("map") && (
+                  <section className="cs-card t-roads">
+                    <div className="cs-tophead">
+                      <span className="cs-ictile cs-ictile--lg"><Icon name="map-pin" size={20} /></span>
+                      <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">On the map</h2></div>
+                    </div>
+                    <div className="cs-figure">
+                      <TileMap island={island} segments={segments} you={you ?? undefined} label={`Map of ${islandName(island)} showing ${plural(drawn.closed, "closed road")} and ${plural(drawn.lane, "roadwork site")}`} />
+                    </div>
+                    {keys.length > 0 && (
+                      <div className="cs-keys">
+                        {keys.map((k) => <span key={k.text} className="cs-key"><i className={`cs-key-sw ${k.sw}`} aria-hidden /> {k.text}</span>)}
                       </div>
-                    </div>
-                    {/* the dark button rides Now's footer bar, never loose in the body */}
-                    <div className="cs-foot">
-                      <span className="cs-foot-note">{APP_NOTE}</span>
-                      <button className="cs-btn-ink" onClick={locate} disabled={locating}><Icon name="crosshair" size={16} aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
-                    </div>
-                  </>
+                    )}
+                  </section>
                 )}
-              </section>
-            )}
-            {youMsg && <p className="cs-card cs-body cs-flat">{youMsg}</p>}
 
-            <section className="cs-card t-roads">
-              <div className="cs-tophead">
-                <span className="cs-ictile cs-ictile--lg"><Icon name="traffic-cone-fill" size={20} /></span>
-                <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">Closed or blocked</h2></div>
+                {official.length > 0 && (
+                  <section className="cs-card">
+                    {you ? (
+                      <p className="cs-body cs-flat">{nearCount ? `${plural(nearCount, "closure or crash", "closures and crashes")} within ${NEAR_MILES} miles of you. Closest first.` : `Nothing closed within ${NEAR_MILES} miles of you. Closest first.`}</p>
+                    ) : (
+                      <>
+                        <div className="cs-lead">
+                          <span className="cs-ictile"><Icon name="crosshair" size={18} /></span>
+                          <div className="cs-lead-t">
+                            <p className="cs-lead-h">What is closed near me</p>
+                          </div>
+                        </div>
+                        {/* the dark button rides Now's footer bar, never loose in the body */}
+                        <div className="cs-foot">
+                          <span className="cs-foot-note">{APP_NOTE}</span>
+                          <button className="cs-btn-ink" onClick={locate} disabled={locating}><Icon name="crosshair" size={16} aria-hidden /> {locating ? "Finding you…" : "Show what is closed near me"}</button>
+                        </div>
+                      </>
+                    )}
+                  </section>
+                )}
+                {youMsg && <p className="cs-card cs-body cs-flat">{youMsg}</p>}
               </div>
-              {official.length ? (
-                <>
-                  {anyStale && <p className="cs-note"><Icon name="warning" size={18} aria-hidden /><span>Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</span></p>}
-                  {byDistrict.map((d) => (
-                    <div key={d.name ?? "-"}>
-                      {/* a district is a Hawaiian name, so never Amatic: a bold Nunito meta line */}
-                      {byDistrict.length > 1 && d.name && <h3 className="cs-meta cs-haw tr-dist">{d.name}</h3>}
-                      <ul className="cs-rows">
-                        {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
-                      </ul>
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <p className="cs-body">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
-              )}
-              {grouped.length > rows.length && !showAll && <button className="cs-more tr-more" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-right" size={18} aria-hidden /></button>}
-            </section>
 
-            {island === "hawaii" && (
-              <section className="cs-card t-reports">
-                <div className="cs-tophead">
-                  <span className="cs-ictile cs-ictile--lg"><Icon name="users-three-fill" size={20} /></span>
-                  <div className="cs-tophead-t"><p className="cs-label">Neighbors</p><h2 className="cs-display cs-display--card">What neighbors say</h2></div>
-                </div>
-                {neighbors.length ? <ul className="cs-rows">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="cs-body">Nothing from neighbors today.</p>}
-              </section>
-            )}
-
-            {/* HDOT files some closures as roadwork, and plain.ts words those "Road closed on …".
-                When one of them is a closure this stops being a section and has to stay on screen. */}
-            {show("roadwork", roadwork.some(isClosed)) && roadwork.length > 0 && (
-              showWork || only === "roadwork" ? (
+              <div className="cs-side">
                 <section className="cs-card t-roads">
                   <div className="cs-tophead">
                     <span className="cs-ictile cs-ictile--lg"><Icon name="traffic-cone-fill" size={20} /></span>
-                    <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">Roadwork</h2></div>
+                    <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">Closed or blocked</h2></div>
                   </div>
-                  <p className="cs-body">Planned work. Expect a wait, not a closed road.</p>
-                  <ul className="cs-rows">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
+                  {official.length ? (
+                    <>
+                      {anyStale && <p className="cs-note"><Icon name="warning" size={18} aria-hidden /><span>Where it says “Last update”, Civil Defense has not changed that row since then. Check before you go.</span></p>}
+                      {byDistrict.map((d) => (
+                        <div key={d.name ?? "-"}>
+                          {/* a district is a Hawaiian name, so never Amatic: a bold Nunito meta line */}
+                          {byDistrict.length > 1 && d.name && <h3 className="cs-meta cs-haw tr-dist">{d.name}</h3>}
+                          <ul className="cs-rows">
+                            {d.rows.map((g) => <RoadRow key={g.item.key} item={g.item} also={g.also} island={island} now={now} plain={plain.get(g.item.key)!} roads={roadsPack?.lines ?? []} miles={milesFrom(g.item)} you={you ?? undefined} district={byDistrict.length > 1 ? g.item.districts[0] : undefined} showSource={mixedSources} />)}
+                          </ul>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <p className="cs-body">{island === "oahu" ? "Nothing reported. Crashes show up here soon after someone calls 911." : island === "hawaii" ? "Nothing reported. Closures show up here when Civil Defense lists one, or when a neighbor reports one." : "Nothing reported. Closures show up here when the county lists one."}</p>
+                  )}
+                  {grouped.length > rows.length && !showAll && <button className="cs-more tr-more" onClick={() => setShowAll(true)}>Show {grouped.length - rows.length} more <Icon name="caret-right" size={18} aria-hidden /></button>}
                 </section>
-              ) : (
-                <button className="cs-settings t-roads" onClick={() => setShowWork(true)}>
-                  <span className="cs-ictile"><Icon name="traffic-cone" size={18} /></span>
-                  <span className="cs-settings-t">Show {plural(roadwork.length, "roadwork site")}</span>
-                  <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
-                </button>
-              )
-            )}
 
-            {show("live") && (!online || offline ? (
-              <p className="cs-card cs-body cs-flat">The live traffic map is Waze&rsquo;s, so it needs a signal. Everything above is saved on your phone.</p>
-            ) : showMap || only === "live" ? (
-              <section className="cs-card">
-                <div className="cs-figure">
-                  <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" />
-                </div>
-              </section>
-            ) : (
-              <button className="cs-settings t-roads" onClick={() => setShowMap(true)}>
-                <span className="cs-ictile"><Icon name="car" size={18} /></span>
-                <span className="cs-settings-t">Open the live traffic map (needs a good signal)</span>
-                <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
-              </button>
-            ))}
+                {island === "hawaii" && (
+                  <section className="cs-card t-reports">
+                    <div className="cs-tophead">
+                      <span className="cs-ictile cs-ictile--lg"><Icon name="users-three-fill" size={20} /></span>
+                      <div className="cs-tophead-t"><p className="cs-label">Neighbors</p><h2 className="cs-display cs-display--card">What neighbors say</h2></div>
+                    </div>
+                    {neighbors.length ? <ul className="cs-rows">{neighbors.map((i) => <NeighborRow key={i.key} item={i} now={now} />)}</ul> : <p className="cs-body">Nothing from neighbors today.</p>}
+                  </section>
+                )}
 
-            {island === "hawaii" && (
-              <Link href="/report/?type=road_blocked" className="cs-settings t-reports">
-                <span className="cs-ictile"><Icon name="note-pencil" size={18} /></span>
-                <span className="cs-settings-t">Saw something on the road? Tell your neighbors</span>
-                <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
-              </Link>
-            )}
+                {/* HDOT files some closures as roadwork, and plain.ts words those "Road closed on …".
+                    When one of them is a closure this stops being a section and has to stay on screen. */}
+                {show("roadwork", roadwork.some(isClosed)) && roadwork.length > 0 && (
+                  showWork || only === "roadwork" ? (
+                    <section className="cs-card t-roads">
+                      <div className="cs-tophead">
+                        <span className="cs-ictile cs-ictile--lg"><Icon name="traffic-cone-fill" size={20} /></span>
+                        <div className="cs-tophead-t"><p className="cs-label">Roads</p><h2 className="cs-display cs-display--card">Roadwork</h2></div>
+                      </div>
+                      <p className="cs-body">Planned work. Expect a wait, not a closed road.</p>
+                      <ul className="cs-rows">{roadwork.map((i) => <ItemRow key={i.key} item={i} now={now} showSource={false} />)}</ul>
+                    </section>
+                  ) : (
+                    <button className="cs-settings t-roads" onClick={() => setShowWork(true)}>
+                      <span className="cs-ictile"><Icon name="traffic-cone" size={18} /></span>
+                      <span className="cs-settings-t">Show {plural(roadwork.length, "roadwork site")}</span>
+                      <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
+                    </button>
+                  )
+                )}
+
+                {show("live") && (!online || offline ? (
+                  <p className="cs-card cs-body cs-flat">The live traffic map is Waze&rsquo;s, so it needs a signal. Everything above is saved on your phone.</p>
+                ) : showMap || only === "live" ? (
+                  <section className="cs-card">
+                    <div className="cs-figure">
+                      <iframe title={`Live traffic map of ${islandName(island)}`} src={`https://embed.waze.com/iframe?zoom=${w.zoom}&lat=${w.lat}&lon=${w.lon}&ct=livemap`} className="block h-[26rem] w-full" loading="lazy" />
+                    </div>
+                  </section>
+                ) : (
+                  <button className="cs-settings t-roads" onClick={() => setShowMap(true)}>
+                    <span className="cs-ictile"><Icon name="car" size={18} /></span>
+                    <span className="cs-settings-t">Open the live traffic map (needs a good signal)</span>
+                    <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
+                  </button>
+                ))}
+
+                {island === "hawaii" && (
+                  <Link href="/report/?type=road_blocked" className="cs-settings t-reports">
+                    <span className="cs-ictile"><Icon name="note-pencil" size={18} /></span>
+                    <span className="cs-settings-t">Saw something on the road? Tell your neighbors</span>
+                    <Icon name="caret-right" size={18} className="cs-ic" aria-hidden />
+                  </Link>
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>
