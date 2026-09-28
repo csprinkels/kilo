@@ -23,7 +23,7 @@ copy it saved, stamped with the time it was checked.
 credentials, no sample files, no in-app purchase, no subscription. On first launch you pick an island
 and a town. **Please pick Hawaiʻi Island** — neighbor reports are Hawaiʻi Island only, so the Reports
 screen is where the user-generated content, flagging and blocking can be seen. Every screen is reachable
-from the section links on every page (a bar at the bottom on iPhone, pills under the header on iPad).
+from the section bar at the bottom of every page, on iPhone and iPad alike.
 
 Location and notifications are both optional and skippable. Two features use location — sorting road
 closures by distance on Roads, and the evacuation-zone check on Tsunami — and each has a no-location
@@ -58,8 +58,9 @@ the app.
 - Open-Meteo — an independent forecast model shown beside the National Weather Service forecast and
   labelled in the app as an alternate prediction (CC-BY).
 
-There is **no AI or machine-learning service**. The in-app search ("ʻIo") is a fixed lexicon running
-on the device over the same items already on screen; it has no network call and no model, and every
+There is **no AI or machine-learning service**. The in-app search ("ʻIo", the round button beside the
+section bar) is a fixed lexicon running on the device over the app's own data; the question is never
+sent anywhere and there is no model, and every
 sentence it shows is either the agency's own wording or one of a small set of fixed lines. There is
 no authentication provider, no payment processor, and no advertising or analytics SDK.
 

@@ -53,10 +53,10 @@ https://kilohi.org/privacy
 
 ## Version
 1.0.0  — must match MARKETING_VERSION in the Xcode build AND the version record in App Store Connect.
-As of Sep 21 2026 the project says MARKETING_VERSION = 1.0.1 while the rejected submission in App Store
-Connect reads "1.0.0 (1.0.1)" — version 1.0.0, build 1.0.1. Confirm which string the Rejected record
-carries before archiving: a binary whose version does not match creates a NEW version record and
-detaches the Resolution Center thread Apple's questions live on.
+The rejected record in App Store Connect reads "1.0.0 (1.0.1)" (confirmed still 1.0.0 on Sep 28 2026),
+so the project is set to MARKETING_VERSION = 1.0.0, CURRENT_PROJECT_VERSION = 1.0.3. A binary whose
+version does not match creates a NEW version record and detaches the Resolution Center thread Apple's
+questions live on.
 
 ## Copyright
 2026 Christian Sprinkel

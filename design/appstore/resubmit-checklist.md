@@ -8,10 +8,10 @@ around them because the app now looks different.
 ## 1. Build
 - [ ] `git pull` on `main`, then `pnpm native:ios`. It builds against production Convex, refuses a
       bundle without the Turnstile key or with the dev backend, syncs, and opens Xcode.
-- [ ] Bump the build number. `CURRENT_PROJECT_VERSION` is `1.0.2`; App Store Connect rejects a
-      build number it has already seen, so make it `1.0.3` (or higher).
-- [ ] Decide the version. `MARKETING_VERSION` is `1.0.1`. Keep it if 1.0.1 was never approved;
-      the listing and review notes still say "1.0.0" in their headings, so make those match.
+      (Checked 2026-09-28: bundle reads standing-ram-435 with Turnstile; Release compiles.)
+- [x] Build number `CURRENT_PROJECT_VERSION` = `1.0.3`, higher than the 1.0.1 already uploaded.
+- [x] Version `MARKETING_VERSION` = `1.0.0`, matching the Rejected record in App Store Connect
+      (confirmed 2026-09-28), so the build attaches to the record holding Apple's questions.
 - [ ] Product → Archive with the **Release** configuration and a distribution profile, so
       `aps-environment` is `production` (see the note at the top of `scripts/native.mjs`).
 - [ ] Upload to App Store Connect and wait for processing.
@@ -31,8 +31,13 @@ around them because the app now looks different.
 ## 3. Screenshots — must be retaken
 The sets in `iphone-6.9/` and `ipad-13/` were captured on Sep 23, **before** the redesign, so they
 no longer match the app. Apple rejects screenshots that do not reflect the build (2.3.3).
-- [x] iPhone 6.9": Now, Weather, Roads, Tsunami, Storms — retaken 2026-09-26 from the real app (`tools/capture.sh`, framed by `tools/template.html`).
-- [x] iPad 13": the same five, retaken 2026-09-26.
+- [x] iPhone 6.9": Now, Weather, Roads, Tsunami, Storms — retaken 2026-09-28 after the iPad dock change
+      (ce36f9a), framed by `tools/premium.html` via `tools/render-premium.mjs`. 1320 × 2868, no alpha.
+- [x] iPad 13": the same five, retaken 2026-09-28. 2064 × 2752, no alpha.
+- [x] Retook `1-now` on both devices Sep 28 without the police crash headline, using the Now
+      page filters: Weather on iPhone, Roads on iPad. Updated raw captures and framed exports.
+- [x] Visually checked all ten current screenshots Sep 28: no death/injury headlines, profanity,
+      or graphic imagery. Rebuilt `premium/Kilo-App-Store.zip` with the checked images.
 - [ ] Upload both sets in App Store Connect for the new version.
 
 ## 4. Screen recording for App Review
@@ -42,12 +47,13 @@ no longer match the app. Apple rejects screenshots that do not reflect the build
 - [ ] Attach it to the Resolution Center reply (or link it) with `review-notes.md` as the text.
 
 ## 5. App Store Connect text
-- [ ] App Review Information → Notes: paste `review-notes-short.md` (3,911 bytes, under the 4,000 cap).
-- [ ] Optional line for both notes: the search now also opens as a sheet from the round button
-      beside the tab bar; it is still the on-device lexicon, no network call, no model.
+- [ ] App Review Information → Notes: paste `review-notes-short.md` from "SETUP." down (3,772 bytes,
+      under the 4,000 cap).
+- [x] Both notes updated 2026-09-28: iPad now uses the bottom section bar (not pills), and the search
+      is named as the round button beside it.
 - [ ] Description, keywords, promotional text: `listing.md` is still accurate; paste unchanged.
-- [ ] Support URL https://kilohi.org/support and Privacy URL https://kilohi.org/privacy both
-      resolve (checked 2026-09-24, both 200 after redirect to app.kilohi.org).
+- [x] Support URL https://kilohi.org/support and Privacy URL https://kilohi.org/privacy both
+      resolve (checked 2026-09-28, both 200 after redirect to app.kilohi.org).
 - [ ] App Privacy answers unchanged: no data collected and linked to the user, no tracking.
 - [ ] Age rating still reflects user-generated content (the Reports screen).
 - [ ] Location permission string (Info.plist) is unchanged and matches what the app does.

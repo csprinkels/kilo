@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Kilo · App Store collection</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+*{box-sizing:border-box}body{margin:0;padding:60px;width:2200px;height:1750px;background:#f5f2eb;color:#173c3c;font-family:Nunito,sans-serif}
+header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:35px}h1{font-size:48px;letter-spacing:-2px;margin:0}header p{font-size:23px;margin:0;color:#61716c}h2{font-size:20px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin:25px 0 18px}.row{display:grid;grid-template-columns:repeat(5,1fr);gap:24px}img{display:block;width:100%;border-radius:5px;box-shadow:0 8px 20px #173c3c14}a{color:inherit}footer{margin-top:24px;font-size:20px;color:#61716c}
+</style></head><body>
+<header><h1>Kilo. Hawaiʻi, at a glance.</h1><p>App Store collection · 5 stories, 2 devices</p></header>
+<script>
+for (const [folder, title] of [['iphone-6.9', 'iPhone · 1320 × 2868'], ['ipad-13', 'iPad · 2064 × 2752']]) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h2');
+  heading.textContent = title;
+  section.append(heading);
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const name of ['1-now', '2-weather', '3-roads', '4-tsunami', '5-storms']) {
+    const a = document.createElement('a');
+    a.href = '../premium/' + folder + '/' + name + '.png';
+    const img = document.createElement('img');
+    img.src = a.href;
+    img.alt = title + ' — ' + name;
+    a.append(img);
+    row.append(a);
+  }
+  section.append(row);
+  document.body.append(section);
+}
+</script>
+<footer>Made in Hilo. For Hawaiʻi.</footer>
+</body></html>

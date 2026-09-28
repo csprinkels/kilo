@@ -6,7 +6,7 @@ Center (review-notes.md). This is the 4000-byte Notes field version.
 SETUP. Nothing to set up: no account, login, credentials, sample files or purchases. On first
 launch pick **Hawaiʻi Island** — neighbor reports are Hawaiʻi Island only, so Reports is where the
 user-generated content, flagging and blocking can be seen. Every screen is reachable from the
-section links (a bar at the bottom on iPhone, pills under the header on iPad). Location and
+section bar at the bottom of the screen, on iPhone and iPad. Location and
 notifications are optional: two features use location — distance sorting on Roads and the
 evacuation-zone check on Tsunami — and each has a no-location alternative on the same screen.
 
@@ -40,8 +40,8 @@ National Weather Service, Pacific Tsunami Warning Center, Central Pacific Hurric
 USGS Hawaiian Volcano Observatory, NOAA buoys and tides, AirNow, Hawaiʻi DOT, County Civil Defense,
 HI-EMA, County Water Supply, Hawaiʻi Police, Honolulu 911 dispatch, Department of Health / IVHHN,
 State of Hawaiʻi GIS, and Open-Meteo (an alternate forecast, labelled as such, CC-BY). No AI or
-machine-learning service: the in-app search is a fixed on-device lexicon over what is already on
-screen. No authentication provider, payment processor, advertising or analytics SDK.
+machine-learning service: the in-app search (the round button beside the section bar) is a fixed
+on-device lexicon over the app's own data; the question never leaves the phone. No authentication provider, payment processor, advertising or analytics SDK.
 
 THIRD-PARTY MATERIAL. Kilo is not a government app and claims no affiliation. It republishes public
 agency feeds; US federal works (NWS, USGS, NHC, PTWC) are public domain and the state and county
