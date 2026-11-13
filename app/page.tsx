@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
@@ -11,31 +11,28 @@ import StormTimeline from "@/components/StormTimeline";
 import ConditionIcon from "@/components/ConditionIcon";
 import Onboarding from "@/components/Onboarding";
 import Ask from "@/components/Ask";
-import { ICON } from "@/components/ItemRow";
+import ItemRow, { ICON } from "@/components/ItemRow";
 import type { DigestItem, Island, Item } from "@/lib/types";
 import { ISLANDS, hashOf } from "@/lib/types";
 import type { StormsSnapshot } from "@/lib/storm";
 import { ISLAND_POINTS, ktToMph, outlookFor } from "@/lib/storm";
-import type { Quakes, Weather } from "@/lib/pages";
+import type { Quakes, Volcano, Weather } from "@/lib/pages";
 import { useFeed, useIslandChosen, useJson, useStoredIsland } from "@/lib/data";
 import { usePageFilter } from "@/components/PageFilter";
-import { condWord, conditionCode, nowAndLater, sunTimes } from "@/lib/summary";
+import { airNow, biggestSurf, condWord, conditionCode, nextTide, nowAndLater, sunTimes } from "@/lib/summary";
 import { TOWNS } from "@/lib/towns";
 import { plainAlert, quakeSentence, rankStorms, stormName, type Plain } from "@/lib/plain";
-import { nowStory, topicRows } from "@/lib/now";
+import { nowStory, topicRows, volcanoLine, type Row } from "@/lib/now";
 import { buildFeed, dropSuperseded, foldPins, foldRuns, hrefOf, type FeedRow as FeedRowT } from "@/lib/feed";
 import MiniMap from "@/components/MiniMap";
 import { fmtDayTime, fmtTime, islandName } from "@/lib/brand";
+import { isNative, shareItem } from "@/lib/native";
+import { track } from "@/lib/stat";
 
 /** A pushed digest item rendered like any other row when the phone has no newer snapshot. */
 const fromDigest = (d: DigestItem, at: number): Item => ({
   ...d, source: "digest", tier: "official", islands: [], lastConfirmedAt: at, hash: "",
 });
-
-/** A notification deep link lands on a card: put it on screen. */
-function useFocusScroll(key: string | undefined, focus?: boolean) {
-  useEffect(() => { if (focus && key) document.getElementById(`item-${hashOf(key)}`)?.scrollIntoView({ block: "center" }); }, [focus, key]);
-}
 
 export default function Home() {
   const [island, setIsland] = useStoredIsland();
@@ -43,12 +40,18 @@ export default function Home() {
   // Deep link from a notification: /?island=hawaii&item=<key> (read once; static export has no server-side params)
   const focusKey = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("item"), () => null);
   const linkedIsland = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("island"), () => null);
+  // A neighbor's shared link (ref=share) shows its island for this visit only: it must never move this phone's island or its warnings.
+  const [peek, setPeek] = useState<Island | null>(null);
   useEffect(() => {
-    if (linkedIsland && ISLANDS.includes(linkedIsland as never) && linkedIsland !== island) queueMicrotask(() => setIsland(linkedIsland as Island));
+    const q = new URLSearchParams(window.location.search);
+    if (linkedIsland && ISLANDS.includes(linkedIsland as never) && linkedIsland !== island) queueMicrotask(() => (q.get("ref") ? setPeek : setIsland)(linkedIsland as Island));
+    // A link with an item and no ref is a tapped web notification; the app counts its own taps in lib/native.ts.
+    if (q.get("item") && !q.get("ref") && !isNative()) track("open:push");
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!chosen && !linkedIsland) return <FirstRun onPick={setIsland} />;
-  return <Now island={island === "state" ? "hawaii" : island} setIsland={setIsland} focusKey={focusKey} />;
+  const shown = peek ?? island;
+  return <Now island={shown === "state" ? "hawaii" : shown} setIsland={(i) => { setPeek(null); setIsland(i); }} focusKey={focusKey} />;
 }
 
 /** First run, for someone who arrived from a neighbor's link: a few screens, one idea each, then Now. */
@@ -118,7 +121,10 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
      A topic summary is not a row — Lowell and Karina are two rows, not one "Storms" card. */
   const headlineItem = lead ?? (nextPlain ? headsUp[0] : undefined);
   // A kind said once: the hero already carries the headline item, so a group it led drops it.
-  const pinRows = foldPins(items.filter((i) => i !== headlineItem && i !== mainStormItem), plain, island, now);
+  // With a storm in the hero the lead warning is only said there when the storm covers it; otherwise it must stay a pin.
+  const pinRows = foldPins(items.filter((i) => i !== mainStormItem && (i !== headlineItem || (!!mainStorm && !stormCovered))), plain, island, now);
+  // The item the hero's title is about, when it is one (the roads sentence and the quiet day are not).
+  const heroItem = mainStorm ? mainStormItem : lead ?? shelters[0] ?? headlineItem;
   const bands = buildFeed({ items, plain, now, storms: stormLines, island });
   const story = nowStory({ storm: mainStorm, roads, shelterPlain: shelters[0] ? plain.get(shelters[0].key) : undefined, leadPlain: stormCovered ? undefined : leadPlain, nextPlain, island: islandName(island) });
   // The hero's foot counts the pins by level: what is a warning, what is only a heads up.
@@ -142,6 +148,22 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
   if (weatherCard) present.add("weather");
   const { bar: chips, show } = usePageFilter(CHIP_ORDER.filter((t) => present.has(t)).map((t) => ({ id: t, label: CHIP_LABEL[t] })), { label: "Filter the feed", clearOn: story.title });
 
+  const feed = bands.map((b) => ({ b, ...foldRuns(b.rows.filter((r) => show(r.topic))) }));
+  /* A link to an item (a notification, a shared alert) has to land on it. The hero, the pins and the
+     feed cover most; a folded row, a long-term closure or a neighbor's report is on none of them, so
+     it gets a card of its own, open. */
+  const linked = focusKey ? items.find((i) => i.key === focusKey) : undefined;
+  const linkedLoose = linked && linked !== heroItem && !pinRows.some((g) => g.items.includes(linked)) && !feed.some((f) => f.rows.some((r) => r.key === linked.key)) ? linked : undefined;
+  const linkedGone = !!focusKey && !linked && !!snap?.data && snap.data.island === island && !snap.offline && snap.data.gen >= gen;
+  const linkedKey = linked?.key;
+  useEffect(() => {
+    if (!linkedKey) return;
+    const el = document.getElementById(`item-${hashOf(linkedKey)}`);
+    el?.closest("details")?.setAttribute("open", ""); // a pin folded behind "See the list"
+    el?.scrollIntoView({ block: "center" });
+  }, [linkedKey]);
+  const topics = rows.filter((r) => show(TOPIC_KEY[r.key] ?? r.key));
+
   return (
     <main className="relative z-[1] min-h-dvh w-full">
       <div className="mx-auto w-full max-w-2xl px-4 pb-32 md:max-w-3xl md:px-8 lg:max-w-5xl xl:max-w-6xl desk:pb-20">
@@ -158,6 +180,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                 <section className={`cs-card cs-hero ${lead || nextPlain || mainStorm ? "cs-hero--warn" : ""}`} aria-label="What matters now">
                   <h1 className="cs-display cs-display--hero">{story.title}</h1>
                   {story.sub && <p className="cs-body cs-body--hero">{story.sub}</p>}
+                  {heroItem && plain.get(heroItem.key)!.level >= 1 && <ShareButton item={heroItem} />}
                   {pinRows.length > 0 && (
                     <>
                       {/* Everything to act on today, as rows in one white block. */}
@@ -197,6 +220,14 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                   )}
                 </section>
               )}
+
+              {linkedLoose && (
+                <section className="cs-card" aria-label="The alert you opened">
+                  <p className="cs-label">You opened</p>
+                  <ul className="cs-rows"><ItemRow item={linkedLoose} now={now} focus /></ul>
+                </section>
+              )}
+              {linkedGone && <p className="cs-card cs-body cs-flat">The alert you opened has ended or been replaced. This is what is happening now.</p>}
 
               {loaded && <Ask island={island} ctx={askCtx} now={now} />}
               {loaded && chips}
@@ -250,8 +281,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                 </section>
               )}
 
-              {bands.map((b) => {
-                const { rows, folded } = foldRuns(b.rows.filter((r) => show(r.topic)));
+              {feed.map(({ b, rows, folded }) => {
                 if (!rows.length) return null;
                 return (
                   <section key={b.key} aria-label={b.label}>
@@ -260,7 +290,7 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                       <span className="cs-pill cs-pill--ink">{rows.length}</span>
                     </div>
                     <ol className="cs-feed">
-                      {rows.map((r) => <li key={r.key}><FeedRow row={r} island={island} focus={r.key === focusKey} /></li>)}
+                      {rows.map((r) => <li key={r.key}><FeedRow row={r} island={island} /></li>)}
                       {Object.entries(folded).map(([topic, n]) => (
                         <li key={topic} className="cs-feed-quiet">
                           <Link href={HREF[topic] ?? "/"} className="cs-more">
@@ -273,6 +303,27 @@ function Now({ island, setIsland, focusKey }: { island: Exclude<Island, "state">
                   </section>
                 );
               })}
+
+              {/* One line per topic, quiet or not: the way into each topic page, and into the evacuation-zone lookup on an ordinary day. */}
+              {loaded && topics.length > 0 && (
+                <section className="cs-card" aria-label="By topic">
+                  <p className="cs-label">By topic</p>
+                  {topics.map((r) => {
+                    const topic = TOPIC_KEY[r.key] ?? r.key;
+                    return (
+                      <Link key={r.key} href={r.href} className={`cs-row cs-row--mid t-${topic}`}>
+                        <span className="cs-ictile"><Icon name={TOPIC_ICON[topic] ?? "bell"} size={18} /></span>
+                        <span className="cs-rowmain">
+                          <span className="cs-rowname">{r.label}</span>
+                          {/* The volcano file is only read here, on Hawaiʻi Island, on a quiet day with a healthy link. */}
+                          <span className="cs-rowsub">{r.key === "volcano" && r.quiet && island === "hawaii" && weatherCard ? <VolcanoText row={r} now={now} /> : r.text}</span>
+                        </span>
+                        <Icon name="caret-right" size={16} className="cs-ic" />
+                      </Link>
+                    );
+                  })}
+                </section>
+              )}
 
               {!loaded && !offline && <p className="cs-body cs-flat">Loading what is happening around {islandName(island)}…</p>}
               {/* Home was the one data page with no offline state: with nothing cached it sat on "Loading…" for ever. */}
@@ -307,6 +358,24 @@ const awayMark = (item: Item) => hrefOf(item).startsWith("http") ? <Icon name="a
 /** The pin's glyph: the row's own kind, a warning triangle for a watch, a drop for a water outage. */
 const pinGlyph = (i: Item): IconName => i.type === "advisory" ? "warning" : i.type === "outage" && i.fields?.kind ? "drop" : ICON[i.type] ?? "warning";
 
+/** Share for the hero's item: the same one-message text and link as every other Share in the app. */
+function ShareButton({ item }: { item: Item }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button className="cs-btn-quiet" onClick={async () => { if ((await shareItem(item)) === "copied") setCopied(true); }}>
+      <Icon name="share-network" size={16} aria-hidden /> {copied ? "Copied." : "Share"}
+    </button>
+  );
+}
+
+/** The volcano line, with HVO's own sentence once its file has arrived. Never holds up the page: ours shows until then. */
+function VolcanoText({ row, now }: { row: Row; now: number }) {
+  const v = useJson<Volcano>("v1/volcano.json");
+  return <>{volcanoLine(row, v?.data?.kilauea, now)}</>;
+}
+
+/** A topic row's key, as the topic the chips and tiles know it by. */
+const TOPIC_KEY: Record<string, string> = { neighbors: "reports" };
 /** Where a folded run sends you, and what to call the things it folded. */
 const HREF: Record<string, string> = {
   roads: "/traffic/", storms: "/storms/", quakes: "/quakes/",
@@ -333,8 +402,7 @@ const TOPIC_ICON: Record<string, IconName> = {
  * who said it — and a picture of where, but only when the thing has a real position. A notice has
  * no map, and inventing one would say the app knows something it does not.
  */
-function FeedRow({ row, island, focus }: { row: FeedRowT; island: Exclude<Island, "state">; focus?: boolean }) {
-  useFocusScroll(row.key, focus);
+function FeedRow({ row, island }: { row: FeedRowT; island: Exclude<Island, "state"> }) {
   // An agency release has no page here, so its row is the agency's own post. Off-app links open in
   // a new tab — a full navigation inside the app would replace the app with the agency's website.
   const away = row.href.startsWith("http");
@@ -358,7 +426,8 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   const town = w?.data?.towns.find((t) => t.id === townId) ?? w?.data?.towns[0];
   const meta = TOWNS.find((t) => t.id === town?.id);
   if (!w) return <p className="cs-card cs-body cs-flat">Loading the weather…</p>;
-  if (!town?.hourly) return <p className="cs-card cs-body cs-flat">Weather is not available right now.</p>;
+  const d = w.data;
+  if (!d || !town?.hourly) return <p className="cs-card cs-body cs-flat">Weather is not available right now.</p>;
   const h = town.hourly;
   const obsFresh = town.obs && w.fetchedAt - town.obs.at < 2 * 3_600_000;
   const code = obsFresh && town.obs?.sky ? conditionCode("", town.obs.sky) : h.c[0], night = !!h.n[0];
@@ -375,6 +444,11 @@ function WeatherNow({ island }: { island: Exclude<Island, "state"> }) {
   if (lo != null) cells.push(<p key="lo"><Icon name="drop" size={18} /><b>{lo}°</b><span>low tonight</span></p>);
   if (rh != null) cells.push(<p key="rh"><Icon name="drop-fill" size={18} /><b>{rh}%</b><span>humidity</span></p>);
   if (mph != null) cells.push(<p key="wind"><Icon name="wind" size={18} /><b>{mph ? `${mph} mph` : "Calm"}</b><span>wind</span></p>);
+  // What the same file already holds: the biggest surf, the next turn of the tide, the air as a word (never the index number).
+  const surf = d.surf && biggestSurf(d.surf.zones, island), tide = d.tide && nextTide(d.tide, w.fetchedAt), air = airNow(d.air, town.name, island);
+  if (surf) cells.push(<p key="surf"><Icon name="waves" size={18} /><b>{surf.ft.replace("-", "–")} ft</b><span>{surf.side} waves {(d.surf?.days?.[0] ?? "today").toLowerCase()}</span></p>);
+  if (tide) cells.push(<p key="tide"><Icon name="waves" size={18} /><b>{fmtTime(tide.t)}</b><span>{tide.hi ? "high" : "low"} tide</span></p>);
+  if (air) cells.push(<p key="air"><Icon name="wind" size={18} /><b>{air.word}</b><span>air in {air.name}</span></p>);
   return (
     <section className="cs-card t-weather" aria-label={`${tempLabel} · ${condWord(code)} in ${town.name}`}>
       <div className="cs-tophead">

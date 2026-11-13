@@ -7,7 +7,7 @@ import "../support/text.css";
  * The privacy policy, in the same plain words as the rest of the app. Both app stores require a public URL for this page.
  * Every sentence here is a promise the code keeps; change the code, change the sentence.
  */
-const UPDATED = "August 24, 2026";
+const UPDATED = "November 12, 2026";
 
 /** One white card: a title, then a body paragraph or a bulleted list. */
 const Card = ({ title, list, children }: { title: string; list?: string[]; children?: React.ReactNode }) => (
@@ -48,7 +48,7 @@ export default function Privacy() {
         ]} />
 
         <Card title="What we count">
-          So we can see which parts of {APP_NAME} people actually use, we keep simple counts &mdash; how many times each screen is opened and each main button is tapped. These counts live on our own server, are added up across everyone, and are never tied to you, your phone, or where you are. There is no cookie, no advertising company, and nothing that could pick you out. Example: &ldquo;the Weather screen was opened 300 times today.&rdquo; One of those counts is a plain visit, added once per day: your browser remembers today&rsquo;s date so the second and third time you open {APP_NAME} today are not counted again. That date stays on your device, is never sent anywhere, and is not a name or a number for you.
+          So we can see which parts of {APP_NAME} people actually use, we keep simple counts &mdash; how many times each screen is opened and each main button is tapped. These counts live on our own server, are added up across everyone, and are never tied to you, your phone, or where you are. There is no cookie, no advertising company, and nothing that could pick you out. Example: &ldquo;the Weather screen was opened 300 times today.&rdquo; One of those counts is a plain visit, added once per day: your browser remembers today&rsquo;s date so the second and third time you open {APP_NAME} today are not counted again. From that date your device also works out one thing for us: whether this is your first visit or a return, and if it is a return, whether the last one was yesterday, in the past week, or longer ago. Only that answer is added to a count, with no device and no person attached. Example: &ldquo;40 of today&rsquo;s visits were people coming back within a week.&rdquo; The date itself stays on your device, is never sent anywhere, and is not a name or a number for you. If you opened {APP_NAME} from a link we made ourselves, such as a QR code or a shared link, we also count which kind of link it was, and nothing else about it.
         </Card>
 
         <Card title="Where the information comes from">

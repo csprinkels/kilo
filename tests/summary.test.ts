@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { summarize, feelsLike, sunTimes, clock } from "../lib/summary.ts";
+import { summarize, feelsLike, sunTimes, clock, biggestSurf, nextTide, airNow } from "../lib/summary.ts";
+import { parseSrf } from "../convex/parsers/pages.ts";
 import { parseHourly } from "../convex/parsers/pages.ts";
 import type { Hourly } from "../lib/pages.ts";
 
@@ -47,4 +48,23 @@ test("feels-like and sun times", () => {
   const { rise, set } = sunTimes(midnightHST, 19.7297, -155.09);
   assert.equal(clock(rise), "6 AM"); assert.equal(clock(set), "6 PM"); // Hilo, Aug 20: ~6:03 AM / 6:46 PM HST
   assert.ok(set - rise > 12 * 3_600_000 && set - rise < 13 * 3_600_000);
+});
+
+test("Now's extra weather cells: biggest surf, next tide turn, air as a word", () => {
+  const zones = parseSrf(readFileSync(new URL("../fixtures/srf-hfo-am.txt", import.meta.url), "utf8")).zones;
+  assert.deepEqual(biggestSurf({ Kauai: zones["Kauai"] }, "kauai"), { side: "North shore", ft: "14-18" });
+  const big = Object.fromEntries(Object.entries(zones).filter(([k]) => k.startsWith("Big Island")));
+  assert.match(biggestSurf(big, "hawaii")!.side, /^(Hilo|Kona) side$/);
+  assert.equal(biggestSurf({}, "maui"), undefined);
+
+  const tide = { station: "1", name: "Hilo", t0, h: [], hl: [{ t: t0 + 3_600_000, v: 2.1, hi: true }, { t: t0 + 7 * 3_600_000, v: 0.2, hi: false }] };
+  assert.equal(nextTide(tide, t0)!.hi, true);
+  assert.equal(nextTide(tide, t0 + 2 * 3_600_000)!.hi, false);
+  assert.equal(nextTide(tide, t0 + 8 * 3_600_000), undefined, "a table that has run out names nothing");
+
+  const air = [{ name: "Hilo", pm25: 17, cat: "Good", at: t0 }, { name: "Kona", pm25: 112, cat: "Unhealthy for Sensitive Groups", at: t0 }];
+  assert.deepEqual(airNow(air, "Hilo", "hawaii"), { name: "Hilo", word: "Good" });
+  assert.deepEqual(airNow(air, "Volcano", "hawaii"), { name: "Kona", word: "Vog" }, "no monitor in town: the island's worst");
+  assert.deepEqual(airNow([{ ...air[1], name: "Kihei" }], "Kihei", "maui"), { name: "Kihei", word: "Poor" });
+  assert.equal(airNow([], "Hilo", "hawaii"), undefined);
 });

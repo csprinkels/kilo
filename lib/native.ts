@@ -1,16 +1,40 @@
 "use client";
 import { Capacitor } from "@capacitor/core";
+import { smsText, type Item } from "./types";
+import { itemLink } from "./now";
+import { track } from "./stat";
 
 /** True inside the iOS/Android app (Capacitor). In a browser, everything below falls through to the web APIs. */
 export const isNative = () => Capacitor.isNativePlatform();
 
-/** Share one text message's worth. The native sheet in the app; Web Share or the clipboard on the web. Returns "shared" | "copied" | "cancelled". */
-export async function shareText(text: string): Promise<"shared" | "copied" | "cancelled"> {
+/** Share one text message's worth, and the link that opens it. The native sheet in the app; Web Share or the clipboard on the web. Returns "shared" | "copied" | "cancelled". */
+export async function shareText(text: string, url?: string): Promise<"shared" | "copied" | "cancelled"> {
+  track("share");
   try {
-    if (isNative()) { const { Share } = await import("@capacitor/share"); await Share.share({ text }); return "shared"; }
-    if (navigator.share) { await navigator.share({ text }); return "shared"; }
-    await navigator.clipboard.writeText(text); return "copied";
+    if (isNative()) { const { Share } = await import("@capacitor/share"); await Share.share({ text, url }); return "shared"; }
+    if (navigator.share) { await navigator.share({ text, url }); return "shared"; }
+    await navigator.clipboard.writeText(url ? `${text} ${url}` : text); return "copied";
   } catch { return "cancelled"; }
+}
+
+/** Share an item with the link that opens it on Now, for the island this phone is looking at. */
+export function shareItem(item: Item) {
+  let island: string | null = null;
+  try { island = localStorage.getItem("island"); } catch { /* storage off: the item's own island */ }
+  // A statewide item opens on this phone's island; anything else on the island it belongs to (the page may be showing a neighbor's link).
+  if (!island || island === "state" || !item.islands.some((i) => i === island || i === "state")) island = item.islands.find((i) => i !== "state") ?? "hawaii";
+  return shareText(smsText(item), itemLink(island, item.key, "share"));
+}
+
+type Fix = { coords: { latitude: number; longitude: number; accuracy: number } };
+/**
+ * navigator.geolocation.getCurrentPosition, but in the app it asks the phone itself. Through the web view, iOS stacks
+ * WebKit's own prompt on top of the system one, and WebKit's names the page's origin: "localhost" would like to use
+ * your current location. The plugin asks once, as Kilo, with the NSLocationWhenInUseUsageDescription text.
+ */
+export function getPosition(ok: (p: Fix) => void, fail: () => void, opts?: PositionOptions) {
+  if (!isNative()) return navigator.geolocation.getCurrentPosition(ok, fail, opts);
+  import("@capacitor/geolocation").then(({ Geolocation }) => Geolocation.getCurrentPosition(opts)).then(ok, fail);
 }
 
 /**
@@ -35,6 +59,7 @@ export async function nativeBoot(go: (path: string) => void) {
   PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
     const nav = (notification.data as { navigate?: unknown } | undefined)?.navigate;
     if (typeof nav !== "string") return;
+    track("open:push");
     try { const u = new URL(nav, location.origin); go(u.pathname + u.search); } catch { /* ignore */ }
   });
   await SplashScreen.hide().catch(() => {});

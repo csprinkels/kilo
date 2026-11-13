@@ -75,9 +75,15 @@ test("new feeds: USGS, HVO, HDOT, HI-EMA, PTWC parse their fixtures", async () =
   assert.ok(lanes.length > 0 && lanes.length < 32, `expected dedupe by project, got ${lanes.length}`);
   assert.ok(lanes.every((l) => l.sev === 1 && ["oahu", "maui", "kauai", "hawaii"].includes(l.islands[0])));
 
-  const notices = parseHiema(txt("hiema.rss"), now);
-  assert.ok(notices.length >= 1);
+  // 5 days, not 14: the August 4 proclamations were still filling the feed two weeks on.
+  assert.equal(parseHiema(txt("hiema.rss"), now).length, 0, "a week-old proclamation has aged out");
+  const notices = parseHiema(txt("hiema.rss"), Date.parse("2026-08-14T08:00:00Z"));
+  assert.equal(notices.length, 1);
   assert.match(notices[0].title, /Lala/);
+  assert.equal(notices[0].sev, 2, "a first proclamation for a named storm is worth a heads up");
+  // Everything else HI-EMA posts is a notice: renewals of old disasters, the monthly siren test.
+  const old = parseHiema(txt("hiema.rss"), Date.parse("2026-08-01T00:00:00Z")).filter((n) => !/Lala/.test(n.title));
+  assert.ok(old.length === 4 && old.every((n) => n.sev === 1), old.map((n) => `${n.sev} ${n.title}`).join(" | "));
   assert.ok(!/<|&#8230;/.test(notices[0].body), "HTML and entities stripped");
   assert.deepEqual(notices[0].islands, ["state"]);
 
@@ -136,6 +142,8 @@ test("HPD media releases: keyword severity and district tagging", async () => {
   assert.equal(crash?.sev, 2);
   assert.deepEqual(crash?.districts, ["Ka‘ū"], "Ocean View -> Kaʻū");
   assert.deepEqual(items.find((i) => /Nāʻālehu/.test(i.title))?.districts, ["Ka‘ū"]);
+  // A missing-person release stays in the feed as a notice; it must not sort above roads and weather.
+  assert.equal(items.find((i) => /Runaway/.test(i.title))?.sev, 1);
   assert.equal(districtFor("Stalled truck on Hwy 11 near Kurtistown"), "Puna");
   assert.equal(districtFor("Kailua-Kona water main break"), "North Kona");
   assert.equal(districtFor("Hawaii Island police are investigating"), undefined);
@@ -301,4 +309,28 @@ test("an NWS zone decides its island over the county code: South Haleakala is Ma
   assert.deepEqual(maui.islands, ["maui"], "the zone is on Maui whatever the county code says");
   assert.deepEqual(both.islands.sort(), ["hawaii", "maui"]);
   assert.deepEqual(odd.islands, ["hawaii"], "an unknown zone falls back to the county code");
+});
+
+test("essentials: a sev-1 notice is listed but is never the one-line headline", async () => {
+  const { buildEssentials } = await import("../lib/types.ts");
+  const base = { source: "hpd", tier: "official" as const, islands: ["hawaii" as const], districts: [], body: "", srcUrl: "", issuedAt: NOW, lastConfirmedAt: NOW, hash: "" };
+  const missing: import("../lib/types.ts").Item = { ...base, key: "hpd:1", type: "notice", sev: 1, title: "Police Seek Missing Runaway" };
+  const roadwork: import("../lib/types.ts").Item = { ...base, key: "hdot:1", source: "hdot", type: "road_closure", sev: 1, title: "Route 11: lane closure", issuedAt: NOW - 3_600_000 };
+  const ess = buildEssentials("hawaii", [missing, roadwork], NOW, "normal", [1, 1]);
+  assert.equal(ess.hl, "Route 11: lane closure");
+  assert.equal(ess.alerts.length, 2, "still in the list");
+  assert.equal(buildEssentials("hawaii", [missing], NOW, "normal", [1, 1]).hl, "Nothing active");
+  // A police notice that matters (911 down, a closed highway) still headlines.
+  assert.equal(buildEssentials("hawaii", [{ ...missing, sev: 3, title: "Police Report 911 Service Number is Non Operational" }], NOW, "normal", [1, 1]).hl, "Police Report 911 Service Number is Non Operational");
+});
+
+test("HI-EMA: a hazard that can still be coming is a heads up even as a renewal or a 'preparedness' post", async () => {
+  const { parseHiema } = await import("../convex/parsers/feeds.ts");
+  const rss = (t: string) => `<rss><channel><item><title>${t}</title><link>https://dod.hawaii.gov/hiema/x</link><pubDate>Wed, 11 Nov 2026 20:00:00 +0000</pubDate><description>x</description></item></channel></rss>`;
+  const sev = (t: string) => parseHiema(rss(t), Date.parse("2026-11-12T00:00:00Z"))[0]?.sev;
+  assert.equal(sev("HI-EMA Urges Preparedness as Hurricane Kiko Approaches"), 2);
+  assert.equal(sev("Second Emergency Proclamation Relating to Hurricane Kiko"), 2);
+  assert.equal(sev("Gov. Green Issues Proclamation Relating to Kona Low"), 2);
+  assert.equal(sev("Gov. Green Issues Emergency Proclamation Relating to Homelessness"), 1);
+  assert.equal(sev("Statewide Tsunami Siren Test Set for December"), 1);
 });

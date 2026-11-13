@@ -200,6 +200,7 @@ export function useStoredIsland(): [Island, (i: Island) => void] {
   return [island, (i) => {
     try { localStorage.setItem("island", i); } catch { /* storage off: the choice still holds for this visit */ }
     warmZones(i);
+    void import("./push").then((m) => m.syncPush(i)); // warnings follow the island; lazy because push.ts imports this file
     islandListeners.forEach((cb) => cb());
   }];
 }

@@ -19,6 +19,7 @@ test("weather parsers: obs (with METAR fallback), forecast periods, SRF zones, N
   assert.deepEqual(Object.keys(srf.zones), ["Kauai", "Oahu", "Maui", "Big Island Windward and Southeast", "Big Island Leeward"]);
   assert.deepEqual(srf.zones["Big Island Leeward"]["West"], ["1-3", "1-3"]);
   assert.equal(srf.uv, "Extreme");
+  assert.deepEqual(srf.days, ["Tonight", "Thursday"]);
   assert.equal(new Date(srf.at).toISOString(), "2026-08-20T01:44:00.000Z");
 
   const buoys = parseNdbc(txt("ndbc-hi.txt"), [{ id: "51206", name: "Hilo" }, { id: "51201", name: "Waimea Bay" }]);
@@ -27,6 +28,18 @@ test("weather parsers: obs (with METAR fallback), forecast periods, SRF zones, N
   const air = parseAirNow(txt("airnow-hi.dat"));
   assert.ok(air.length >= 3 && air.every((a) => a.cat && a.pm25 >= 0));
   assert.ok(air.some((a) => a.name === "Hilo"));
+  // Column 13 of reportingarea.dat is the AQI value, published under the old name `pm25`.
+  assert.deepEqual(parseAirNow("08/20/26|08/20/26|0:00|HST|0|O|Y|Hilo|HI|19.7175|-155.1103|PM2.5|17|Good|No||Hawaii State Dept. of Health"), [{ name: "Hilo", pm25: 17, cat: "Good", at: Date.UTC(2026, 7, 20, 10) }]);
+});
+
+test("SRF: both table layouts name their periods; no UV line means no UV", () => {
+  const am = parseSrf(txt("srf-hfo-am.txt")), pm = parseSrf(txt("srf-hfo-pm.txt"));
+  assert.deepEqual(am.days, ["Today", "Friday"]);
+  assert.deepEqual(am.zones["Kauai"]["North"], ["14-18", "6-8"]); // Today PM, Friday PM
+  assert.deepEqual(pm.days, ["Tonight", "Friday"]);
+  assert.deepEqual(pm.zones["Kauai"]["North"], ["10-15", "7-10"]); // Tonight AM, Friday PM
+  assert.equal(am.uv, undefined); assert.equal(pm.uv, undefined);
+  assert.equal(parseSrf("no table here").days, undefined);
 });
 
 test("quakes: compact shape, cap + more flag", () => {

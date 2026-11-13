@@ -9,6 +9,7 @@ import { useJson, useStoredIsland } from "@/lib/data";
 import { useStatic } from "@/components/RoadMap";
 import ZoneMap from "@/components/ZoneMap";
 import { zoneAt, type ZoneCollection } from "@/lib/geo";
+import { getPosition } from "@/lib/native";
 import { distanceNm, nmToMi } from "@/lib/storm";
 import { SOURCE_NAME, fmtUntil } from "@/lib/plain";
 import { APP_NAME, fmtClock, islandName } from "@/lib/brand";
@@ -82,7 +83,7 @@ export default function TsunamiPage() {
   const lookup = () => {
     if (!("geolocation" in navigator)) { setResult({ error: "This phone can't share its location. Check the map below instead." }); return; }
     setBusy(true); setResult(null);
-    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+    getPosition(async ({ coords }) => {
       const p = { lat: coords.latitude, lon: coords.longitude };
       try {
         // The zone packs for all four islands ship inside the app, so this answer is always computed here,

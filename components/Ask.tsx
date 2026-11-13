@@ -11,10 +11,10 @@ import { markOf } from "@/lib/feed";
 import { useJson } from "@/lib/data";
 import { ISLAND_POINTS } from "@/lib/storm";
 import type { Weather } from "@/lib/pages";
-import { ask, type AskCtx } from "@/lib/ask";
+import { ask, examples, type AskCtx } from "@/lib/ask";
 import type { Island } from "@/lib/types";
 
-type Ctx = Omit<AskCtx, "roads" | "tide">;
+type Ctx = Omit<AskCtx, "roads" | "tide" | "island" | "wx" | "town">;
 type IslandId = Exclude<Island, "state">;
 
 /**
@@ -33,12 +33,23 @@ export default function Ask({ island, ctx, now, inputId = "ask", autoFocus }: { 
         <span className="sr-only">Ask about {island === "hawaii" ? "Hawaiʻi Island" : "your island"}</span>
         <input
           id={inputId} type="search" value={q} autoComplete="off" autoFocus={autoFocus}
-          enterKeyHint="search" placeholder="Is Saddle Road open?"
+          enterKeyHint="search" placeholder={examples(island)[0]}
           onChange={(e) => setQ(e.target.value)}
         />
       </label>
-      {asked && <div className="cs-card"><Results island={island} ctx={ctx} q={asked} now={now} /></div>}
+      {asked
+        ? <div className="cs-card"><Results island={island} ctx={ctx} q={asked} now={now} onPick={setQ} /></div>
+        : <Examples island={island} onPick={setQ} />}
     </section>
+  );
+}
+
+/** Questions Ask really answers on this island, one tap each: a promise the lexicon can keep. */
+function Examples({ island, onPick }: { island: IslandId; onPick: (q: string) => void }) {
+  return (
+    <div className="cs-pills" style={{ marginTop: 0 }}>
+      {examples(island).map((e) => <button key={e} type="button" className="cs-chip cs-chip--link" onClick={() => onPick(e)}>{e}</button>)}
+    </div>
   );
 }
 
@@ -46,10 +57,11 @@ export default function Ask({ island, ctx, now, inputId = "ask", autoFocus }: { 
  * Split out so the island road pack and the weather file are only fetched once a question exists.
  * Weather is already on this page (the card below), so this is a cache read, not a second download.
  */
-function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: string; now: number }) {
+function Results({ island, ctx, q, now, onPick }: { island: IslandId; ctx: Ctx; q: string; now: number; onPick: (q: string) => void }) {
   const pack = useRoads(island);
   const wx = useJson<Weather>(`v1/${island}/weather.json`);
-  const a = ask(q, { ...ctx, roads: pack?.lines, tide: wx?.data?.tide, now });
+  // "town" is the Weather page's saved choice. Results only mounts after typing, so never on the server.
+  const a = ask(q, { ...ctx, island, roads: pack?.lines, tide: wx?.data?.tide, wx: wx?.data ?? undefined, town: localStorage.getItem("town") ?? undefined, now });
 
   /*
    * Some answers are a picture. "When is high tide" is a curve, a storm is a track, and a closure
@@ -68,9 +80,10 @@ function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: strin
 
   if (!a.say) {
     return (
-      <p className="cs-body">
-        Kilo has nothing about that. Try a road name, a town, or a word like storm, school or power.
-      </p>
+      <>
+        <p className="cs-body">Kilo has nothing about that. Try one of these.</p>
+        <Examples island={island} onPick={onPick} />
+      </>
     );
   }
   return (
@@ -78,7 +91,14 @@ function Results({ island, ctx, q, now }: { island: IslandId; ctx: Ctx; q: strin
       <h3 className="cs-title">{a.say}</h3>
       {figure}
       {a.items.length > 0 && <ul className="cs-rows">{a.items.map((i) => <ItemRow key={i.key} item={i} now={now} />)}</ul>}
-      {a.topic && a.href && (
+      {a.link && (
+        <div className="cs-chiprow">
+          <a href={a.link.url} target="_blank" rel="noreferrer" className="cs-chip cs-chip--link">
+            {a.link.label} <Icon name="arrow-square-out" size={14} className="cs-ic" />
+          </a>
+        </div>
+      )}
+      {!a.link && a.topic && a.href && (
         <div className="cs-chiprow">
           <Link href={a.href} className="cs-chip cs-chip--link">
             {a.topic.label} <Icon name="caret-right" size={14} className="cs-ic" />

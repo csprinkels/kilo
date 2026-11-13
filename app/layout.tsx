@@ -14,12 +14,23 @@ import { APP_NAME, TAGLINE } from "@/lib/brand";
 const body = Nunito({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
 const heading = Amatic_SC({ subsets: ["latin", "latin-ext"], weight: ["700"], variable: "--font-heading", display: "swap" });
 
+const TITLE = `${APP_NAME} — ${TAGLINE}`;
+const DESCRIPTION = "Official Hawaiʻi alerts, storms, shelters, roads, weather, quakes, volcano and neighbor reports in one place. Works offline.";
+
 export const metadata: Metadata = {
-  title: `${APP_NAME} — ${TAGLINE}`,
-  description: "Official Hawaiʻi alerts, storms, shelters, roads, weather, quakes, volcano and neighbor reports in one place. Works offline.",
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: APP_NAME },
-  icons: { icon: [{ url: "/favicon.png", sizes: "64x64" }, { url: "/icon.svg", type: "image/svg+xml" }], apple: "/apple-touch-icon.png" },
+  // /icon.svg is 972 KB; browsers fetched it on first load. The two PNGs cover every case.
+  icons: { icon: [{ url: "/favicon.png", sizes: "64x64" }], apple: "/apple-touch-icon.png" },
+  metadataBase: new URL("https://app.kilohi.org"),
+  // "./" resolves against each route, so pages without their own layout (privacy, sources) do not claim to be the home page.
+  alternates: { canonical: "./" },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: "./", siteName: APP_NAME, type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image" },
+  // Safari's "Open in the app" banner. Inert inside the Capacitor app: only Safari reads this tag, WKWebView ignores it.
+  itunes: { appId: "6809719836" },
 };
 
 export const viewport: Viewport = {

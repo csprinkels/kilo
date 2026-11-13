@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import { hasVoted, voteReport } from "@/lib/report";
 import type { Item, ItemType } from "@/lib/types";
-import { hashOf, smsText } from "@/lib/types";
-import { shareText } from "@/lib/native";
+import { hashOf } from "@/lib/types";
+import { shareItem } from "@/lib/native";
 import { LEVEL_WORD, lastUpdated, plainAlert, staleLine } from "@/lib/plain";
 import { fmtClock } from "@/lib/brand";
 import { track } from "@/lib/stat";
@@ -16,11 +16,11 @@ export const ICON: Record<ItemType, IconName> = {
 };
 export const LEVEL_TEXT: Record<number, string> = { 4: "text-danger", 3: "text-warn", 2: "text-ink", 1: "text-ink-2", 0: "text-ink-2" };
 
-/** Map + official link + share, shared by both row kinds. Share is one text message's worth; no link to load. */
+/** Map + official link + share, shared by both row kinds. Share is one text message's worth plus the link back to this item. */
 function Actions({ item }: { item: Item }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
-    if ((await shareText(smsText(item))) === "copied") setCopied(true);
+    if ((await shareItem(item)) === "copied") setCopied(true);
   };
   return (
     <p className="mt-s2 flex flex-wrap gap-x-s4">

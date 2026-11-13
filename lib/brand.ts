@@ -60,11 +60,13 @@ export const fmtDateTime = (ms: number) =>
 /** "Thu 8 AM" in HST: timeline and map labels. */
 export const fmtDayTime = (ms: number) =>
   new Intl.DateTimeFormat("en-US", { timeZone: HST, weekday: "short", hour: "numeric" }).format(ms).replace(",", "");
-/** Clock time only ("3:42 PM"); weekday prefix once it is more than a day old ("Tue 3:12 PM"). No "HST", no "ago". */
+/** "May 26, 1:23 PM" once it is more than 6 days old: a weekday alone cannot tell this Tuesday from one in May. */
+export const fmtDated = (ms: number, now: number) => (now - ms > 6 * 86_400_000 ? fmtDateTime(ms) : undefined);
+/** Clock time only ("3:42 PM"); weekday prefix once it is more than a day old ("Tue 3:12 PM"); the date after 6 days. No "HST", no "ago". */
 export const fmtClock = (ms: number, now = Date.now()) =>
-  now - ms > 24 * 3_600_000
+  fmtDated(ms, now) ?? (now - ms > 24 * 3_600_000
     ? new Intl.DateTimeFormat("en-US", { timeZone: HST, weekday: "short", hour: "numeric", minute: "2-digit" }).format(ms).replace(",", "")
-    : fmtTime(ms);
+    : fmtTime(ms));
 
 export const ago = (ms: number, now = Date.now()) => {
   const m = Math.max(0, Math.round((now - ms) / 60_000));

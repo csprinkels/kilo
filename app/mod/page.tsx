@@ -101,7 +101,7 @@ export default function ModPage() {
             {push === "on"
               ? <span className="cs-meta">You get a notification when something is held.</span>
               : push === "off" || push === null
-                ? <button className="btn" onClick={() => void enablePush("mod", 4).then(setPush)}><Icon name="bell" size={18} /> Notify me when something is held</button>
+                ? <button className="btn" onClick={() => void enablePush("mod", 4).then(setPush).catch(() => setErr("Could not turn notifications on. Try again when you have signal."))}><Icon name="bell" size={18} /> Notify me when something is held</button>
                 : <span className="cs-meta">{push === "needs-install" ? "Add Kilo to your Home Screen to get notifications here." : push === "denied" ? "Notifications are off for Kilo in your phone's settings." : "This phone cannot show notifications."}</span>}
           </div>
         </section>

@@ -7,8 +7,8 @@
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0e4d2">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#241d17">
 <title>Kilo — Hawaiʻi, at a glance</title>
-<meta name="description" content="Kilo shows what is happening on your island — weather, roads, storms, earthquakes, the volcano, tsunami and neighbor reports — in plain words. Free, no ads, no account. Coming to iPhone and Android.">
-<meta property="og:title" content="Kilo — Hawaiʻi, at a glance"><meta property="og:description" content="What is happening on your island, in plain words. Free, no ads, no account. Coming to iPhone and Android — join the waitlist."><meta property="og:image" content="https://kilohi.org/img/og.png"><meta property="og:url" content="https://kilohi.org/"><meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Kilo shows what is happening on your island — weather, roads, storms, earthquakes, the volcano, tsunami and neighbor reports — in plain words. Free, no ads, no account. On iPhone and in any browser.">
+<meta property="og:title" content="Kilo — Hawaiʻi, at a glance"><meta property="og:description" content="What is happening on your island, in plain words. Free, no ads, no account. On iPhone and in any browser."><meta property="og:image" content="https://kilohi.org/img/og.png"><meta property="og:url" content="https://kilohi.org/"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/img/icon.png" type="image/png"><link rel="apple-touch-icon" href="/img/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The app's two faces: Amatic SC for display, Nunito for everything you read. latin-ext carries ā ī ū ō and the ʻokina. -->
@@ -90,7 +90,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:1rem;mi
 }
 @media(prefers-color-scheme:dark){.hero-img{filter:brightness(.82) saturate(.95)}}
 
-/* ── the waitlist form: inputs share the card's ring and the button's radius ── */
+.cs-cta--quiet{background:var(--card);color:var(--sea);border:1px solid var(--line)}.cs-cta--quiet:hover{background:var(--tint)}
+.actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.75rem}
+/* ── the Android form: inputs share the card's ring and the button's radius ── */
 .form{display:flex;flex-wrap:wrap;gap:.5rem;max-width:36rem;margin-top:1.75rem}
 .form input[type=email],.form select{min-height:3rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:0 1rem;font:400 1rem var(--font-body)}
 .form input[type=email]{flex:1 1 13rem}
@@ -129,7 +131,7 @@ figure{margin:0}
 .never li:first-child{border-top:0;padding-top:.1rem}
 .never li:last-child{padding-bottom:.1rem}
 .never svg{width:1.25rem;height:1.25rem;color:var(--brand);flex:none}
-.cs-note{display:flex;align-items:flex-start;gap:.625rem;margin:1.25rem 0 0;padding:.7rem .8rem;border-left:3px solid var(--amber);border-radius:0 14px 14px 0;background:var(--warn-bg);font-size:.9375rem;line-height:1.45;color:var(--ink)}
+.cs-note{display:flex;align-items:flex-start;gap:.625rem;margin:1.25rem 0 0;padding:.7rem .8rem;border:1px solid var(--hairline);border-radius:14px;background:var(--warn-bg);font-size:.9375rem;line-height:1.45;color:var(--ink)}
 .cs-note svg{width:1.125rem;height:1.125rem;flex:0 0 auto;margin-top:.1rem;color:var(--warn)}
 
 /* the closing card */
@@ -154,18 +156,14 @@ figure{margin:0}
   </header>
   <div class="hero">
   <div class="hero-copy">
-    <p class="cs-label"><span class="cs-dot"></span>Coming to iPhone and Android</p>
+    <p class="cs-label"><span class="cs-dot"></span>On iPhone and the web</p>
     <h1 class="cs-display">Hawaiʻi, at a glance.</h1>
     <p class="lede">What is happening on your island right now — weather, roads, storms, earthquakes, the volcano, tsunami, and what neighbors report — in plain words, on one screen. Free. No ads. No account.</p>
-    <form class="form" id="join" novalidate>
-      <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" aria-label="Email">
-      <select name="island" aria-label="Your island"><option value="hawaii">Hawaiʻi Island</option><option value="maui">Maui</option><option value="oahu">Oʻahu</option><option value="kauai">Kauaʻi</option><option value="other">Somewhere else</option></select>
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="cs-cta" type="submit">Join the waitlist</button>
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEX_NkEczVOXF-_0" data-callback="onTurnstile" data-appearance="interaction-only"></div>
-      <p class="msg" id="msg" role="status"></p>
-    </form>
-    <p class="note">One email when the apps are ready. Nothing else, ever.</p>
+    <div class="actions">
+      <a class="cs-cta" href="https://apps.apple.com/app/id6809719836">Get the iPhone app</a>
+      <a class="cs-cta cs-cta--quiet" href="https://app.kilohi.org/?ref=site">Open Kilo in your browser</a>
+    </div>
+    <p class="note">Made in Hilo by one person. On Android, open it in Chrome — it works today, warnings included.</p>
   </div>
   </div>
   </div>
@@ -212,20 +210,21 @@ figure{margin:0}
       <li><svg aria-hidden="true"><use href="#chk"/></svg>Make a neighbor’s post look official</li>
     </ul>
     <div class="cs-rule"></div>
-    <p class="cs-meta">This waitlist is the one time we ask for an email. It is used for a single launch message, then deleted.</p>
+    <p class="cs-meta">The Android list below is the one time we ask for an email. It is used for a single launch message, then deleted.</p>
     <p class="cs-note"><svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" aria-hidden="true"><path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z"/><line x1="128" y1="144" x2="128" y2="104"/><circle cx="128" cy="180" r="12" fill="currentColor" stroke="none"/></svg><span>Kilo is not an emergency service. If someone is hurt or in danger, call 911.</span></p>
   </div>
 </section>
 
 <section>
   <div class="cs-hero cta">
-    <p class="cs-label" style="justify-content:center"><span class="cs-dot"></span>Waitlist</p>
-    <h2 class="cs-display">Be first to know when the apps are out</h2>
-    <form class="form" id="join2" novalidate>
+    <p class="cs-label" style="justify-content:center"><span class="cs-dot"></span>Android</p>
+    <h2 class="cs-display">One email when the Android app is out</h2>
+    <form class="form" id="join" novalidate>
       <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" aria-label="Email">
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="cs-cta" type="submit">Join the waitlist</button>
-      <p class="msg" id="msg2" role="status"></p>
+      <button class="cs-cta" type="submit">Tell me</button>
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEX_NkEczVOXF-_0" data-callback="onTurnstile" data-appearance="interaction-only"></div>
+      <p class="msg" id="msg" role="status"></p>
     </form>
   </div>
 </section>
@@ -240,7 +239,7 @@ figure{margin:0}
 const API='https://standing-ram-435.convex.site';
 const openedAt=Date.now(); let token='';
 window.onTurnstile=(t)=>{token=t};
-for (const [fid,mid] of [['join','msg'],['join2','msg2']]) {
+for (const [fid,mid] of [['join','msg']]) {
   const f=document.getElementById(fid), m=document.getElementById(mid);
   f.addEventListener('submit', async (e)=>{
     e.preventDefault(); const btn=f.querySelector('button'); const email=f.email.value.trim();

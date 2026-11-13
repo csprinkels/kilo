@@ -4,3 +4,13 @@
 /privacy/*  https://app.kilohi.org/privacy/  301
 /support    https://app.kilohi.org/support/  301
 /support/*  https://app.kilohi.org/support/  301
+
+# Topic pages live in the app build too; these are the addresses people type or share.
+/weather    https://app.kilohi.org/weather/  301
+/roads      https://app.kilohi.org/traffic/  301
+/traffic    https://app.kilohi.org/traffic/  301
+/tsunami    https://app.kilohi.org/tsunami/  301
+/volcano    https://app.kilohi.org/volcano/  301
+/quakes     https://app.kilohi.org/quakes/   301
+/storms     https://app.kilohi.org/storms/   301
+/report     https://app.kilohi.org/report/   301

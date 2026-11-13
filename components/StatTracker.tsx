@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { track, wireStatFlush } from "@/lib/stat";
+import { refEvent, returnBucket, track, wireStatFlush } from "@/lib/stat";
 import { isNative } from "@/lib/native";
 
 const SCREEN: Record<string, string> = {
@@ -20,10 +20,14 @@ export default function StatTracker() {
     // One "visit" per browser per day. The de-duping happens here, in the browser: the server still only ever
     // receives a number, never an id. Someone who clears storage or uses two browsers counts twice — fine.
     try {
+      const src = refEvent(location.search);
+      if (src && !sessionStorage.getItem("srcSent")) { sessionStorage.setItem("srcSent", "1"); track(src); } // once per tab, not per reload
       const today = hstDay();
-      if (localStorage.getItem("lastVisit") === today) return;
+      const last = localStorage.getItem("lastVisit");
+      if (last === today) return;
       localStorage.setItem("lastVisit", today);
       track(isNative() ? "visit:app" : "visit:web");
+      track(returnBucket(last, today)); // new vs. came back: the bucket goes out, the date does not
     } catch { /* private mode: no storage, no visit count, nothing breaks */ }
   }, []);
   useEffect(() => {

@@ -149,7 +149,7 @@ export const run = internalAction({
           upd: now, island, towns,
           tide,
           tideAt: fresh ? now : prev?.tideAt,
-          surf: srf ? { at: srf.at, uv: srf.uv, zones: Object.fromEntries(Object.entries(srf.zones).filter(([z]) => (island === "hawaii" ? /Big Island/ : island === "maui" ? /^Maui/ : island === "oahu" ? /^Oahu/ : /^Kauai/).test(z))) } : prev?.surf,
+          surf: srf ? { at: srf.at, uv: srf.uv, days: srf.days, zones: Object.fromEntries(Object.entries(srf.zones).filter(([z]) => (island === "hawaii" ? /Big Island/ : island === "maui" ? /^Maui/ : island === "oahu" ? /^Oahu/ : /^Kauai/).test(z))) } : prev?.surf,
           surfAt: srf ? now : prev?.surfAt,
           buoys: buoysAll.filter((b) => BUOYS.find((x) => x.id === b.id)?.island === island),
           air: airAll ? airAll.filter((a) => AIR_ISLAND[a.name] === island) : prev?.air ?? [],

@@ -87,7 +87,7 @@ export function parseAltModels(json: { hourly?: Record<string, (string | number 
 }
 
 // ---------- NWS Surf Zone Forecast (SRF) text: zone blocks with shore rows of heights (feet) ----------
-export function parseSrf(text: string): { at: number; zones: Record<string, Record<string, [string, string]>>; uv?: string } {
+export function parseSrf(text: string): NonNullable<Weather["surf"]> {
   const zones: Record<string, Record<string, [string, string]>> = {};
   const blocks = text.split(/\n(?=HIZ\d)/);
   for (const b of blocks) {
@@ -95,11 +95,13 @@ export function parseSrf(text: string): { at: number; zones: Record<string, Reco
     if (!name) continue;
     const shores: Record<string, [string, string]> = {};
     for (const m of b.matchAll(/^(North|East|South|West) Facing\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/gm)) {
-      shores[m[1]] = [m[3], m[5]]; // AM columns: tonight->tomorrow morning, next day morning; simple and stable
+      shores[m[1]] = [m[3], m[5]]; // second column of each period; which periods they are is in `days`
     }
     if (Object.keys(shores).length) zones[name] = shores;
   }
   const uv = /UV Index\.+\s*(\w+)/.exec(text)?.[1];
+  // The table header under the rule: "Today  Friday" in the morning product, "Tonight  Friday" in the afternoon one.
+  const hd = /^_{10,}\n +([A-Za-z]+(?: [A-Za-z]+)*) {3,}([A-Za-z]+(?: [A-Za-z]+)*) *$/m.exec(text);
   const when = /(\d{3,4}) (AM|PM) HST \w{3} (\w{3}) (\d{1,2}) (\d{4})/.exec(text);
   let at = Date.now();
   if (when) {
@@ -107,7 +109,7 @@ export function parseSrf(text: string): { at: number; zones: Record<string, Reco
     let h = Math.floor(Number(when[1]) / 100) % 12; if (when[2] === "PM") h += 12;
     at = Date.UTC(Number(when[5]), MON.indexOf(when[3]), Number(when[4]), h + 10, Number(when[1]) % 100);
   }
-  return { at, zones, uv };
+  return { at, zones, uv, ...(hd ? { days: [hd[1], hd[2]] as [string, string] } : {}) };
 }
 
 // ---------- NDBC latest_obs.txt: whitespace table, "MM" = missing ----------
@@ -131,6 +133,7 @@ export function parseAirNow(text: string): Weather["air"] {
     const f = line.split("|");
     if (f.length < 14 || f[8] !== "HI" || f[5] !== "O" || f[11] !== "PM2.5") continue;
     const [mm, dd, yy] = f[1].split("/").map(Number), [h] = (f[2] || "0:00").split(":").map(Number);
+    // `pm25` holds the AQI value (0-500), not a concentration: the name is kept because the shipped iOS app reads it.
     out.push({ name: f[7], pm25: Number(f[12]), cat: f[13], at: Date.UTC(2000 + yy, mm - 1, dd, h + 10) });
   }
   return out;

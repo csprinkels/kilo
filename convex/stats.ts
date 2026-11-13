@@ -5,6 +5,9 @@ import { v } from "convex/values";
 const hstDay = (now: number) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Honolulu", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 
+// The only names the app sends. Anything else is dropped without a word, so the table cannot be filled with junk.
+const KNOWN = /^(?:(?:visit|return|view|open|src|warnings|report|ask):[\w.+-]{1,40}|share(?::[\w.+-]{1,40})?)$/;
+
 /**
  * Add to today's tallies. `events` is {name: howManyTimes}; each name is a screen view or a tap, added up across everyone.
  * Nothing here identifies a phone or a person — it is only "this happened N times today".
@@ -15,7 +18,7 @@ export const bump = internalMutation({
     const day = hstDay(at);
     for (const [event, n] of Object.entries(events)) {
       const inc = Math.max(0, Math.min(1000, Math.floor(n))); // clamp: a single post can only nudge a counter so far
-      if (!inc || !event || event.length > 60) continue;
+      if (!inc || !KNOWN.test(event)) continue;
       const row = await ctx.db.query("stats").withIndex("by_day_event", (q) => q.eq("day", day).eq("event", event)).unique();
       if (row) await ctx.db.patch(row._id, { count: row.count + inc });
       else await ctx.db.insert("stats", { day, event, count: inc });

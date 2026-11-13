@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ask, type AskCtx } from "../lib/ask.ts";
+import { readFileSync } from "node:fs";
+import { ask, examples, NOTHING, type AskCtx } from "../lib/ask.ts";
+import { parseSrf } from "../convex/parsers/pages.ts";
+import type { Weather } from "../lib/pages.ts";
 import type { Plain } from "../lib/plain.ts";
 import type { Item } from "../lib/types.ts";
 import type { RoadLine } from "../lib/roads.ts";
@@ -121,4 +124,84 @@ test("ask: a tide table whose turns are all in the past says so rather than nami
   const a = ask("high tide", ctx([], [], { tide: TIDE, now: Date.UTC(2026, 8, 6, 0, 0) }));
   assert.match(a.say, /run out/);
   assert.doesNotMatch(a.say, /10:18/, "a turn two days gone must not be offered as the next one");
+});
+
+const fill = (v: number) => Array<number>(24).fill(v);
+const WX: Weather = {
+  upd: now, island: "hawaii", buoys: [],
+  towns: [{ id: "hilo", name: "Hilo", fc: [], hourly: { t0: now, t: fill(78), p: fill(70), w: fill(8), wd: fill(2), c: fill(5), n: fill(0), rh: fill(70) } }],
+  surf: parseSrf(readFileSync(new URL("../fixtures/srf-hfo.txt", import.meta.url), "utf8")),
+  air: [{ name: "Hilo", pm25: 42, cat: "Good", at: now }, { name: "Kona", pm25: 112, cat: "Unhealthy for Sensitive Groups", at: now }],
+};
+
+test("ask: rain, surf, vog and sunset are answered from the weather file, not with 'no weather warning'", () => {
+  const c = ctx([], [], { wx: WX, now });
+  assert.equal(ask("is it going to rain today", c).say, "Hilo: Showers likely throughout the day.");
+  assert.match(ask("surf", c).say, /^Surf is \d+ to \d+ feet on (north|east|south|west)-facing shores/);
+  // The number is the index, never micrograms, and the worst monitor is the one named.
+  assert.equal(ask("vog today", c).say, "The air quality index is 112 in Kona: unhealthy for sensitive groups.");
+  assert.match(ask("when is sunset", c).say, /^Sunrise is at \d:\d\d AM and sunset at \d:\d\d PM in Hilo\.$/);
+  assert.match(ask("is it windy", c).say, /^Wind in Hilo is 8 mph/);
+  for (const q of ["is it going to rain today", "surf", "vog today", "when is sunset"]) {
+    const a = ask(q, c);
+    assert.equal(a.topic?.key, "weather", q);
+    assert.equal(a.allClear, false, q);
+  }
+  // A weather file that has not loaded is not a quiet sky.
+  const cold = ask("is it going to rain today", ctx([], []));
+  assert.match(cold.say, /not loaded/);
+  assert.equal(cold.allClear, false);
+});
+
+test("ask: power is never an all-clear, because no power company gives Kilo a feed", () => {
+  const police = item({ key: "p1", type: "notice", source: "hpd", districts: ["Puna"], title: "Missing person in Puna", body: "Police ask for help. Power outage in Puna is not part of this." });
+  const boil = item({ key: "w1", type: "outage", source: "hidws", title: "Boil water notice for Puna", body: "Water outage." });
+  const plain: [string, Plain][] = [["p1", P("Police are looking for a missing person")], ["w1", P("Boil your water in Puna", 3)]];
+
+  const a = ask("power outage in Puna", ctx([police, boil], plain));
+  assert.match(a.say, /no feed from Hawaiian Electric/);
+  assert.equal(a.allClear, false);
+  assert.equal(a.items.length, 0, "neither a police notice nor a water notice answers a power question");
+  assert.match(a.link!.url, /hawaiianelectric\.com/);
+  assert.match(ask("is the power out", ctx([], [], { island: "kauai" })).link!.url, /kiuc\.coop/);
+  // "outage" alone could be either, so the water notice rides along under the power line.
+  assert.equal(ask("any outages", ctx([police, boil], plain)).items[0]?.key, "w1");
+
+  // Water has a feed on Hawaiʻi Island only.
+  assert.equal(ask("boil water", ctx([police, boil], plain)).say, "Boil your water in Puna.");
+  const quiet = ask("is the water safe", ctx([police], [plain[0]]));
+  assert.equal(quiet.allClear, true);
+  assert.match(quiet.say, /No water notices/);
+  const oahu = ask("is the water safe", ctx([], [], { island: "oahu" }));
+  assert.equal(oahu.allClear, false);
+  assert.match(oahu.say, /no feed/);
+  // Schools and shelters likewise come from one county.
+  assert.equal(ask("is school closed", ctx([], [])).allClear, true);
+  assert.equal(ask("is school closed", ctx([], [], { island: "maui" })).allClear, false);
+  assert.match(ask("are shelters open", ctx([], [], { island: "maui" })).say, /no feed/);
+});
+
+test("ask: a topic is a filter, so a question about one thing never returns another", () => {
+  const road = item({ key: "r1", type: "road_closure", districts: ["Puna"], title: "School Road closed in Puna", body: "School traffic affected. Closed." });
+  const a = ask("is school closed in Puna", ctx([road], [["r1", P("School Road closed")]]));
+  assert.equal(a.items.length, 0);
+  assert.equal(a.say, NOTHING.school);
+  // And everything of the topic's kind answers, whether or not it repeats the question's words.
+  const quake = item({ key: "q1", type: "quake", title: "M 4.2 - 5 km S of Volcano" });
+  assert.equal(ask("any earthquakes", ctx([quake], [["q1", P("A 4.2 near Volcano")]])).say, "A 4.2 near Volcano.");
+});
+
+test("ask: every suggested question gets a real answer on its island", () => {
+  for (const island of ["hawaii", "maui", "oahu", "kauai"] as const) {
+    const roads = JSON.parse(readFileSync(new URL(`../public/${island}-roads.json`, import.meta.url), "utf8")).lines;
+    const qs = examples(island);
+    assert.ok(qs.length >= 4 && qs.length <= 6);
+    for (const q of qs) {
+      const a = ask(q, { items: [], plain: new Map(), storms: [], roads, island, wx: { ...WX, island }, tide: TIDE, now });
+      assert.ok(a.say, `${island}: "${q}" got no answer`);
+      assert.ok(!Object.values(NOTHING).includes(a.say), `${island}: "${q}" -> ${a.say}`);
+      assert.doesNotMatch(a.say, /not loaded|run out|has no/, `${island}: "${q}" -> ${a.say}`);
+      if (/open\?$/.test(q)) assert.match(a.say, /^No closure reported on \w+ (Rd|Hwy|Highway)/, `${island}: "${q}" -> ${a.say}`);
+    }
+  }
 });

@@ -10,13 +10,13 @@ import MiniMap from "@/components/MiniMap";
 import { usePageFilter } from "@/components/PageFilter";
 import { useRoads, type Segment } from "@/components/RoadMap";
 import type { Island, Item } from "@/lib/types";
-import { hashOf, smsText } from "@/lib/types";
+import { hashOf } from "@/lib/types";
 import { useFeed, useStoredIsland } from "@/lib/data";
 import { ISLAND_LABEL, fmtClock } from "@/lib/brand";
 import { LEVEL_WORD, lastUpdated, plainAlert, type Plain, highway } from "@/lib/plain";
 import { endsWord, matchDetour, milesToPath, milesWord, pathMidpoint, pathMiles, type LatLon, type RoadLine } from "@/lib/roads";
 import { districtName } from "@/lib/places";
-import { shareText } from "@/lib/native";
+import { getPosition, shareItem } from "@/lib/native";
 import "./traffic.css";
 
 type IslandId = Exclude<Island, "state">;
@@ -136,7 +136,7 @@ export default function RoadsPage() {
   const locate = () => {
     if (!("geolocation" in navigator)) { setYouMsg("This phone cannot share its location."); return; }
     setLocating(true); setYouMsg(null);
-    navigator.geolocation.getCurrentPosition(
+    getPosition(
       ({ coords }) => { setYou([coords.latitude, coords.longitude]); setLocating(false); },
       () => { setLocating(false); setYouMsg("Your phone would not share its location. You can still read the list below."); },
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 },
@@ -331,8 +331,7 @@ function RoadRow({ item, also = [], island, now, plain: p, roads, miles, you, di
   const totalMiles = stretches.reduce((n, i) => n + pathMiles(i.path!), 0);
   const caption = path && verb ? `${roadName(item)} ${verb} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}${also.length ? ` in ${also.length + 1} stretches` : ""}` : path ? `${roadName(item)} ${endsWord(allPoints, island)} · ${milesWord(totalMiles)}` : "";
   const share = async () => {
-    const text = smsText(item);
-    if ((await shareText(text)) === "copied") setCopied(true);
+    if ((await shareItem(item)) === "copied") setCopied(true);
   };
   return (
     <li id={`item-${hashOf(item.key)}`}>

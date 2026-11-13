@@ -19,11 +19,12 @@ export type Weather = {
   towns: TownWx[];
   tide?: Tide;
   tideAt?: number;  // when we last fetched: predictions are computed, not observed, so this is a slow gate
-  surf?: { at: number; zones: Record<string, Record<string, [string, string]>>; uv?: string }; // zone -> shore -> [today, tomorrow] feet
+  // zone -> shore -> [first period, second period] feet; `days` names the two periods as the forecast does ("Tonight", "Friday"), absent in older data
+  surf?: { at: number; zones: Record<string, Record<string, [string, string]>>; uv?: string; days?: [string, string] };
   surfAt?: number;  // when we last fetched surf, not when the product was issued: the refresh gate reads this
   buoys: { id: string; name: string; at: number; hFt: number; perS: number; dir: number }[];
-  air: { name: string; pm25: number; cat: string; at: number }[];
-  airAt?: number;   // ditto for AirNow
+  air: { name: string; pm25: number; cat: string; at: number }[]; // pm25 is the AQI value (0-500), not µg/m³; the name stays for the shipped iOS app
+  airAt?: number;  // ditto for AirNow
 };
 
 export type Quake = { i: string; m: number; t: number; p: string; ll: [number, number]; d: number; f?: number; mmi?: number; r?: 1 };

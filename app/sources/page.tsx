@@ -93,7 +93,7 @@ export default function Settings() {
   const hidden = useHidden();
   const county = COUNTY_ALERTS[island];
   const countyName = county.label.replace(/\s*\(.*\)$/, "");
-  const countyHow = county.how.startsWith("Text") ? county.how : "Sign up on their website";
+  const countyHow = county.how.startsWith("Text") ? county.how.replace(/\.$/, "") : "Sign up on their website";
 
   return (
     <PageShell title="Settings and about" sentence={`Pick your island and text size, turn on warnings, and see where ${APP_NAME}'s information comes from.`}>

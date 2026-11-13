@@ -95,7 +95,8 @@ export function buildEssentials(island: Island, items: Item[], gen: number, mode
   return {
     v: 1, island, gen, mode,
     sev: items[0]?.sev ?? 0,
-    hl: clip(items[0]?.title ?? "Nothing active", 90),
+    // A sev-1 notice (a missing-person release, a press release) is in the list but is never the headline.
+    hl: clip(items.find((i) => i.type !== "notice" || i.sev >= 2)?.title ?? "Nothing active", 90),
     alerts: top.map((i) => ({ h: hashOf(i.key), sev: i.sev, type: i.type, title: clip(i.title, 64), at: i.issuedAt })),
     shelters,
     ok,

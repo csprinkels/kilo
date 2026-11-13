@@ -282,3 +282,25 @@ test("a single forecast zone reads as a side of the island, never a bare compass
   assert.equal(at("Big Island Interior"), "in the interior");
   assert.equal(at("Kona"), "in Kona");
 });
+
+test("Honolulu dispatch addresses read the way people write them", () => {
+  const crash = (title: string): Item => ({
+    key: "hnl:1", source: "hnl", type: "traffic", tier: "official", sev: 1, status: "crash", islands: ["oahu"], districts: ["Waipahu"],
+    title, body: "", srcUrl: "", issuedAt: NOW, lastConfirmedAt: NOW, hash: "",
+  });
+  const h = (title: string) => plainAlert(crash(title), NOW, "oahu").headline;
+  assert.equal(h("Crash: 940485 KOAKI ST (Waikele Pet Hospital)"), "Crash at 94-0485 Koaki St (Waikele Pet Hospital)");
+  assert.equal(h("Crash: 911076 Lanakoi St (Ups)"), "Crash at 91-1076 Lanakoi St", "a dispatch tag is not a place");
+  assert.equal(h("Crash, vehicle towed: 169 H1W FWY (H1w Airport Off)"), "Crash at 169 H1W Fwy (H1W Airport Off)");
+  assert.equal(h("Crash: 3040 Monsarrat Ave"), "Crash at 3040 Monsarrat Ave", "a town address has no district to hyphenate");
+  assert.equal(h("Crash: ONEAWA ST / MOKAPU BLVD (Romy's Kahuku Prawns)"), "Crash at Oneawa St / Mokapu Blvd (Romy's Kahuku Prawns)");
+});
+
+test("a zone already called a shore is not given a second one", () => {
+  const surf = (areaDesc: string): Item => ({
+    key: "nws:s", source: "nws", type: "advisory", tier: "official", sev: 2, islands: ["oahu"], districts: [], title: "High Surf Advisory", body: "", srcUrl: "",
+    issuedAt: NOW, lastConfirmedAt: NOW, hash: "", fields: { areaDesc, event: "High Surf Advisory" },
+  });
+  assert.equal(plainAlert(surf("Kauai North; Oahu North Shore; Koolau Windward"), NOW, "oahu").headline, "Big waves on the north and Koolau Windward shores");
+  assert.equal(plainAlert(surf("Kauai North; Oahu North Shore"), NOW, "oahu").headline, "Big waves on the north shore");
+});

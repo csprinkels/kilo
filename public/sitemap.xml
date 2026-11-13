@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://app.kilohi.org/</loc></url>
+  <url><loc>https://app.kilohi.org/weather/</loc></url>
+  <url><loc>https://app.kilohi.org/traffic/</loc></url>
+  <url><loc>https://app.kilohi.org/tsunami/</loc></url>
+  <url><loc>https://app.kilohi.org/volcano/</loc></url>
+  <url><loc>https://app.kilohi.org/quakes/</loc></url>
+  <url><loc>https://app.kilohi.org/storms/</loc></url>
+  <url><loc>https://app.kilohi.org/report/</loc></url>
+  <url><loc>https://app.kilohi.org/sources/</loc></url>
+  <url><loc>https://app.kilohi.org/support/</loc></url>
+  <url><loc>https://app.kilohi.org/privacy/</loc></url>
+  <url><loc>https://app.kilohi.org/guidelines/</loc></url>
+</urlset>

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nowStory, officialExtra, topicRows } from "../lib/now.ts";
+import { itemLink, nowStory, officialExtra, topicRows, volcanoLine } from "../lib/now.ts";
 import type { Plain } from "../lib/plain.ts";
 import type { Item } from "../lib/types.ts";
 
@@ -18,7 +18,8 @@ test("topicRows: a quiet island says so in the same six lines every time", () =>
   assert.equal(rows[1].text, "None near Hawaiʻi.");
   assert.equal(rows[2].text, "Nothing big in the last few days.");
   assert.equal(rows[3].text, "Kīlauea is taking a rest.");
-  assert.equal(rows[4].text, "The ocean is fine.");
+  assert.equal(rows[4].text, "The ocean is fine. Check if you are in an evacuation zone.");
+  assert.equal(rows[4].href, "/tsunami/");
   assert.equal(rows[5].text, "Nobody posted today.");
   // Reports is a Hawaiʻi Island thing for now
   assert.equal(topicRows([], new Map(), "maui", now, [], false).length, 5);
@@ -106,7 +107,7 @@ test("topicRows: a tsunami watch never prints 'The ocean is fine.'", () => {
   // The far-away-quake record is level 0 and stays an all-clear.
   const far = topicRows([watch], new Map([["t1", P("An earthquake happened far away. No tsunami danger for Hawaiʻi.", 0)]]), "hawaii", now, [], false)[4];
   assert.equal(far.quiet, true);
-  assert.equal(far.text, "The ocean is fine.");
+  assert.equal(far.text, "The ocean is fine. Check if you are in an evacuation zone.");
 });
 
 test("topicRows: an unread storms file is never reported as no storms", () => {
@@ -127,4 +128,62 @@ test("nowStory: a level-2 watch outranks a closed road and never reads 'Nothing 
   assert.equal(nowStory({ roads: roadsLoud, nextPlain: watch, island }).title, "A tsunami may be coming.");
   // A real level-3+ warning still outranks it.
   assert.equal(nowStory({ roads: roadsQuiet, leadPlain: P("Tsunami warning", 4, "Leave the evacuation zone now."), nextPlain: watch, island }).title, "Tsunami warning.");
+});
+
+test("topicRows: a closure the county last touched in May is a count, never the headline", () => {
+  const DAY = 86_400_000;
+  const may = item({ key: "old", type: "road_closure", issuedAt: now - 90 * DAY, fields: { editDate: String(now - 90 * DAY) } });
+  const said = item({ key: "lt", type: "road_closure", issuedAt: now - 2 * DAY, fields: { reason: "Long-term bridge repair", editDate: String(now - 2 * DAY) } });
+  const fresh = item({ key: "new", type: "road_closure", issuedAt: now - 90 * DAY, fields: { editDate: String(now - 3_600_000) } });
+  const plain = new Map([["old", P("Kaalaiki Road closed both ways in Kaʻū")], ["lt", P("Old bridge closed")], ["new", P("Highway 11 closed both ways in Puna", 3)]]);
+  const island = "Hawaiʻi Island";
+
+  const quiet = topicRows([may, said], plain, "hawaii", now, [], false)[0];
+  assert.equal(quiet.text, "No new crashes or closures. 2 long-term closures.");
+  assert.equal(quiet.href, "/traffic/");
+  assert.equal(nowStory({ roads: quiet, island }).title, "Here's what's on Hawaiʻi Island today.");
+
+  // A highway closed an hour ago still leads, whatever else has been closed since May.
+  const loud = topicRows([may, fresh, said], plain, "hawaii", now, [], false)[0];
+  assert.equal(loud.text, "Highway 11 closed both ways in Puna. 2 long-term closures.");
+  assert.equal(nowStory({ roads: loud, island }).title, "Highway 11 closed both ways in Puna.");
+
+  // A closed highway is never filed away, however long ago the county last touched it; nor is a brand-new "long-term" closure.
+  const hwy = item({ key: "hwy", type: "road_closure", title: "Mamalahoa Highway 11 — Closed in Both Directions", issuedAt: now - 9 * DAY, fields: { editDate: String(now - 9 * DAY) } });
+  const lava = item({ key: "lava", type: "road_closure", title: "Pohoiki Road — Closed", fields: { reason: "Lava. Long term closure expected.", editDate: String(now - 3_600_000) } });
+  const p2 = new Map([["hwy", P("Highway 11 closed both ways in Kaʻū", 2)], ["lava", P("Pohoiki Road closed in Puna", 2)]]);
+  assert.equal(topicRows([hwy], p2, "hawaii", now, [], false)[0].quiet, false);
+  assert.equal(topicRows([lava], p2, "hawaii", now, [], false)[0].quiet, false);
+});
+
+test("topicRows: one crash out of twelve is not Oʻahu's headline; the count is", () => {
+  const crash = (k: string) => item({ key: k, type: "traffic", source: "hnl", sev: 1, status: "crash", islands: ["oahu"] });
+  const crashes = Array.from({ length: 12 }, (_, n) => crash(`c${n}`));
+  const stalled = { ...crash("s1"), status: "hazard" };
+  const plain = new Map<string, Plain>([...crashes, stalled].map((c) => [c.key, P("Crash at 94-0485 Koaki St", 1)]));
+  const row = topicRows(crashes, plain, "oahu", now, [], false)[0];
+  assert.equal(row.text, "12 crashes on Oʻahu.");
+  assert.equal(row.href, "/traffic/");
+  assert.equal(nowStory({ roads: row, island: "Oʻahu" }).title, "12 crashes on Oʻahu.");
+  assert.equal(topicRows([...crashes, stalled], plain, "oahu", now, [], false)[0].text, "12 crashes and 1 other traffic problem on Oʻahu.");
+  // A dead traffic light is level 2 and still gets its own words.
+  const signal = { ...crash("sig"), sev: 2 as const, status: "signal" };
+  plain.set("sig", P("Traffic light out at Bishop St / S King St", 2));
+  assert.equal(topicRows([...crashes, signal], plain, "oahu", now, [], false)[0].text, "Traffic light out at Bishop St / S King St. 12 more.");
+});
+
+test("itemLink: the key is encoded and ref is optional", () => {
+  assert.equal(itemLink("maui", "nws:urn:oid:2.49.0.1.840.0.abc&x=1", "share"), "https://app.kilohi.org/?island=maui&item=nws%3Aurn%3Aoid%3A2.49.0.1.840.0.abc%26x%3D1&ref=share");
+  assert.equal(itemLink("hawaii", "k1", undefined, ""), "/?island=hawaii&item=k1");
+  assert.equal(new URL(itemLink("oahu", "a b/c?d", "share")).searchParams.get("item"), "a b/c?d");
+});
+
+test("volcanoLine: HVO's sentence as written on a quiet, fresh day; ours otherwise", () => {
+  const quiet = topicRows([], new Map(), "hawaii", now, [], false).find((r) => r.key === "volcano")!;
+  const sms = "Kilauea is not erupting; the episode 57 forecast window is November 16-21.";
+  assert.equal(volcanoLine(quiet, { sms, erupting: false, noticeAt: now - 3_600_000 }, now), sms);
+  assert.equal(volcanoLine(quiet, { sms, erupting: false, noticeAt: now - 3 * 86_400_000 }, now), quiet.text, "a saved copy days old is not today's forecast");
+  assert.equal(volcanoLine(quiet, { sms, erupting: true, noticeAt: now }, now), quiet.text);
+  assert.equal(volcanoLine(quiet, undefined, now), quiet.text);
+  assert.equal(volcanoLine({ ...quiet, quiet: false, text: "Lava is flowing." }, { sms, noticeAt: now }, now), "Lava is flowing.");
 });

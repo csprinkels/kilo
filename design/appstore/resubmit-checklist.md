@@ -41,9 +41,10 @@ no longer match the app. Apple rejects screenshots that do not reflect the build
 - [ ] Upload both sets in App Store Connect for the new version.
 
 ## 4. Screen recording for App Review
-- [ ] Record again on the physical iPhone; the old recording shows the old design. Start at launch
-      and follow the order in `review-notes.md` §1: onboarding → Now → Weather → Roads → Reports,
-      including posting, flagging and hiding. Show the ʻIo sheet once.
+- [x] Recorded 2026-09-28 in the iPhone 17 Pro Max simulator (3:31), release build pointed at the dev
+      Convex deployment so no real post was flagged: onboarding → Now → Weather → Roads → Reports
+      (post a "Something else" report, flag and hide a seeded test post, undo in Settings) → ʻIo.
+      `review-notes.md` §1 says so. The file is not in the repo (46 MB).
 - [ ] Attach it to the Resolution Center reply (or link it) with `review-notes.md` as the text.
 
 ## 5. App Store Connect text

@@ -2,7 +2,7 @@
 // The official wording lives in item.title/body and is shown on the card, not behind a disclosure.
 // Rules: ≤ 20 words a sentence, 6th-grade words, clock times only, no acronyms, never invent a fact the feed didn't give.
 import type { Island, Item } from "./types.ts";
-import { ISLAND_LABEL, fmtDateTime, fmtDayTime, fmtTime } from "./brand.ts";
+import { ISLAND_LABEL, fmtDateTime, fmtDated, fmtDayTime, fmtTime } from "./brand.ts";
 import type { Quake, Quakes } from "./pages.ts";
 import { bearingDeg, distanceNm, ktToMph, nmToMi, outlookFor, type Storm } from "./storm.ts";
 import { fold } from "./places.ts";
@@ -70,7 +70,8 @@ export function zonesOf(item: Item, island?: Island): string[] {
     const z = raw.trim();
     if (!z || !ZONES[isl].test(z)) continue;
     // "Big Island East" -> "east"; "Kona" stays "Kona"; a bare island name says nothing.
-    const short = z.replace(/^(Big Island|Maui|Oahu|Kauai|Molokai|Lanai)\s+/i, "").trim();
+    // "Oahu North Shore" -> "north": the sentence adds "shore" itself, and printed "north shore shores".
+    const short = z.replace(/^(Big Island|Maui|Oahu|Kauai|Molokai|Lanai)\s+/i, "").replace(/\s+Shore$/i, "").trim();
     if (!short || /^(Big Island|Maui|Oahu|Kauai|Molokai|Lanai|Niihau|Kahoolawe)$/i.test(short)) continue;
     seen.add(DIRECTION.test(short) ? short.toLowerCase() : short);
   }
@@ -298,8 +299,16 @@ function road(item: Item, now: number): Plain {
   };
 }
 
+/** Honolulu dispatch's address as people write it: "940485 KOAKI ST (Ups)" -> "94-0485 Koaki St". */
+const dispatchAddress = (s: string) =>
+  s.replace(/\s*\((?:[A-Za-z]{1,4}|[^A-Za-z]*)\)/g, "")          // "(Ups)", "(****)": a dispatch tag, not a place
+    .replace(/^(\d{2})(\d{4})\b/, "$1-$2")                        // the district hyphen dispatch drops
+    .toLowerCase().replace(/(?<![\w'’])[a-z]/g, (c) => c.toUpperCase())
+    .replace(/\bH\d[a-z]?\b/gi, (m) => m.toUpperCase());           // H1W, not H1w
+
 function traffic(item: Item): Plain {
-  const where = item.title.split(/:|—/).slice(1).join(" ").trim() || placeOf(item);
+  const raw = item.title.split(/:|—/).slice(1).join(" ").trim();
+  const where = (item.source === "hnl" ? dispatchAddress(raw) : raw) || placeOf(item);
   const st = item.status ?? "";
   const community = item.tier === "community";
   const kind = /signal/.test(st) ? "Traffic light out" : /crash/.test(st) ? "Crash" : /stall|hazard/.test(st) ? "Stalled car" : "Traffic trouble";
@@ -452,11 +461,17 @@ export function lastUpdated(item: Item, now = Date.now()): { at: number; stale: 
   const limit = item.type === "shelter" ? 12 * 3_600_000 : 24 * 3_600_000;
   return { at, stale: item.source.startsWith("hccda") && now - at > limit };
 }
+/** A county side-road closure nobody has touched in 3 days, or a day-old one the county calls long-term: still closed, no longer today's news. A closed highway is always news. */
+export const longTermClosure = (item: Item, now = Date.now()) => {
+  if (item.type !== "road_closure" || item.source === "hdot" || (/highway|hwy|belt road|saddle|inouye/i.test(item.title) && !/\bold\b/i.test(item.title))) return false; // "Old Mamalahoa Highway" is a side road
+  const age = now - lastUpdated(item, now).at;
+  return age > 3 * DAY || (age > DAY && /long.?term/i.test(item.fields?.reason ?? ""));
+};
 export const staleLine = (item: Item, now = Date.now()) => {
   const u = lastUpdated(item, now);
   return u.stale ? `Not updated since ${fmtClockLong(u.at, now)}. Check before you go.` : undefined;
 };
-const fmtClockLong = (ms: number, now: number) => (now - ms > 6 * 86_400_000 ? fmtDateTime(ms) : new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long", hour: "numeric", minute: "2-digit" }).format(ms));
+const fmtClockLong = (ms: number, now: number) => (fmtDated(ms, now) ?? new Intl.DateTimeFormat("en-US", { timeZone: "Pacific/Honolulu", weekday: "long", hour: "numeric", minute: "2-digit" }).format(ms));
 
 /** One line for a community post: always says "Neighbor report" and never carries a level word. */
 export const neighborLine = (item: Item) => `Neighbor report: ${plainAlert(item).headline}`;

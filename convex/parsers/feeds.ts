@@ -104,26 +104,38 @@ export function parseWordPress(rss: string, o: WpOpts, now = Date.now()): Item[]
     .filter(({ at }) => Number.isFinite(at) && now - at < o.maxAgeDays * DAY)
     .map(({ it, at }) => {
       const link = text(it.link), title = clip(text(it.title), 120), body = clip(stripHtml(text(it.description)), 600);
+      const sev = o.sev?.(title, body) ?? (2 as const);
       return {
         key: `${o.source}:${text(it.guid) || link}`, source: o.source, type: "notice" as const, tier: "official" as const,
-        sev: o.sev?.(title, body) ?? (2 as const), islands: o.islands, districts: o.districts?.(`${title} ${body}`) ?? [],
+        sev, islands: o.islands, districts: o.districts?.(`${title} ${body}`) ?? [],
         title, body, srcUrl: link,
         fields: { category: asArray(it.category).map(text).join(", ") },
         issuedAt: at, lastConfirmedAt: now, expiresAt: at + o.maxAgeDays * DAY,
-        hash: hashOf(title, body),
+        hash: hashOf(title, body, sev),   // sev is in the hash so a change to the rules reaches rows already stored
       };
     });
 }
 
 export const HIEMA_URL = "https://dod.hawaii.gov/hiema/feed/";
-export const parseHiema = (rss: string, now = Date.now()) => parseWordPress(rss, { source: "hiema", islands: ["state"], maxAgeDays: 14 }, now);
+// Mostly proclamations and press releases. Title only: a siren-test release talks about tsunamis in its body.
+const HIEMA_SEV = (title: string): Item["sev"] => {
+  if (/\btest\b|awareness (week|month)/i.test(title)) return 1; // a siren test names the tsunami it is not
+  // Something that can still be coming is news even as the "Second Proclamation"; a renewal for a past quake or fire season is not.
+  if (/hurricane|tropical (storm|depression)|tsunami|evacuat|shelter|dam\b|missile/i.test(title)) return 2;
+  if (/\b(second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(st|nd|rd|th)|supplement\w*)\b.*proclamation/i.test(title)) return 1;
+  // Named by hazard, not by "emergency proclamation": those are also issued for homelessness and vaccines.
+  return /hurricane|storm|tropical depression|kona low|wind|evacuat|shelter|tsunami|flood|fire|lava|erupt|earthquake|dam\b|missile|landslide/i.test(title) ? 2 : 1;
+};
+export const parseHiema = (rss: string, now = Date.now()) => parseWordPress(rss, { source: "hiema", islands: ["state"], maxAgeDays: 5, sev: HIEMA_SEV }, now);
 
 // Hawaiʻi Police Department media releases: after-the-fact mostly, but also "911 non-operational", road closures, crashes.
 export const HPD_URL = "https://www.hawaiipolice.gov/feed/";
 const HPD_SEV = (title: string, body: string): Item["sev"] => {
   const t = `${title} ${body}`;
   if (/\b911\b.*(non.?operational|not working|outage|down)|tsunami|evacuat|shelter in place|active shooter/i.test(t)) return 3;
-  if (/crash|collision|closed|closure|roadway|highway|traffic|signal|stoplight|missing|runaway|flood|fire|hazmat|checkpoint/i.test(t)) return 2;
+  // Missing-person and runaway releases are sev 1: they stay in the feed, below roads and weather.
+  if (/missing|runaway/i.test(title)) return 1;
+  if (/crash|collision|closed|closure|roadway|highway|traffic|signal|stoplight|flood|fire|hazmat|checkpoint/i.test(t)) return 2;
   return 1;
 };
 export const parseHpd = (rss: string, now = Date.now(), districts?: (t: string) => string[]) =>

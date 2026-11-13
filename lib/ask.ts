@@ -5,9 +5,11 @@
 //
 // Every sentence a user reads here is either plain.ts's wording for a real item, or one of the fixed
 // lines below. Nothing is generated.
-import type { Item, ItemType } from "./types.ts";
+import type { Island, Item, ItemType } from "./types.ts";
 import type { Storm } from "./storm.ts";
-import type { Tide } from "./pages.ts";
+import type { Tide, Weather } from "./pages.ts";
+import { summarize, sunTimes } from "./summary.ts";
+import { TOWNS } from "./towns.ts";
 import { fmtTime } from "./brand.ts";
 import type { Plain } from "./plain.ts";
 import { fold } from "./places.ts";
@@ -29,7 +31,7 @@ export const TOPICS: Topic[] = [
     nouns: ["earthquake", "earthquakes", "quake", "quakes", "tremor", "aftershock"],
     words: ["shake", "shaking", "shook", "felt", "magnitude"] },
   { key: "volcano", label: "Volcano", href: "/volcano/", types: ["volcano"],
-    nouns: ["volcano", "lava", "eruption", "vog", "kilauea", "mauna", "caldera", "crater", "fissure"],
+    nouns: ["volcano", "lava", "eruption", "kilauea", "mauna", "caldera", "crater", "fissure"],
     words: ["volcanic", "erupting", "erupt", "loa", "sulfur", "summit", "smoke"] },
   { key: "tsunami", label: "Tsunami", href: "/tsunami/", types: ["tsunami", "evac"],
     nouns: ["tsunami", "evacuation", "siren", "sirens", "zone", "zones", "inundation"],
@@ -38,7 +40,7 @@ export const TOPICS: Topic[] = [
     nouns: ["shelter", "shelters", "refuge"],
     words: ["cot", "cots", "sheltering", "stay", "open"] },
   { key: "weather", label: "Weather", href: "/weather/", types: ["advisory"],
-    nouns: ["weather", "rain", "wind", "surf", "swell", "forecast", "flood", "heat", "temperature"],
+    nouns: ["weather", "rain", "wind", "surf", "swell", "forecast", "flood", "heat", "temperature", "vog", "air", "aqi"],
     words: ["raining", "rainy", "windy", "wave", "waves", "flooding", "hot", "sunny", "sunrise", "sunset", "humid", "fog", "cold"] },
   { key: "school", label: "Schools", href: "/", types: ["school"],
     nouns: ["school", "schools", "class", "classes", "campus"],
@@ -79,7 +81,11 @@ export type Answer = {
   allClear: boolean;
   /** The storms this answer is about, so the caller can draw the track it just described. */
   storms?: AskStorm[];
+  /** Someone else's page, for what Kilo has no feed for: the utility's own outage list. */
+  link?: { label: string; url: string };
 };
+
+type IslandId = Exclude<Island, "state">;
 
 export type AskCtx = {
   items: Item[];
@@ -101,7 +107,55 @@ export type AskCtx = {
   tide?: Tide;
   /** For picking the next turn out of the tide table. Defaults to the real clock. */
   now?: number;
+  /** Which island is asking: it decides the utility to point at and which feeds exist. Defaults to Hawaiʻi Island. */
+  island?: IslandId;
+  /** The island's weather file, for rain, wind, surf and air. `undefined` means it has not loaded. */
+  wx?: Weather;
+  /** The town chosen on the Weather page, so both speak for the same place. Defaults to the island's first. */
+  town?: string;
 };
+
+/** Questions Ask can truly answer on this island. tests/ask.test.ts holds every one of them to a real answer. */
+export const examples = (island: IslandId): string[] => [
+  { hawaii: "Is Saddle Road open?", maui: "Is Hana Highway open?", oahu: "Is Pali Highway open?", kauai: "Is Kuhio Highway open?" }[island],
+  "Will it rain today?", "When is high tide?", "How big is the surf?",
+  island === "hawaii" ? "Is there vog today?" : "How is the air today?", "When is sunset?",
+];
+
+const has = (qt: string[], ...ws: string[]) => qt.some((w) => ws.includes(w));
+
+/**
+ * The weather question in a fixed frame around the forecast's own numbers, or nothing when the
+ * question is one the alerts answer (flooding) or the weather file has not loaded.
+ */
+function wxSay(qt: string[], ctx: AskCtx, island: IslandId): string | undefined {
+  if (has(qt, "sunrise", "sunset")) {
+    const t = TOWNS.find((t) => t.island === island && t.id === ctx.town) ?? TOWNS.find((t) => t.island === island)!;
+    const day = Math.floor(((ctx.now ?? Date.now()) - 36_000_000) / 86_400_000) * 86_400_000 + 36_000_000; // HST midnight
+    const s = sunTimes(day, t.lat, t.lon);
+    return `Sunrise is at ${fmtTime(s.rise)} and sunset at ${fmtTime(s.set)} in ${t.name}.`;
+  }
+  const wx = ctx.wx;
+  if (!wx || has(qt, "flood", "flooding")) return undefined;
+  if (has(qt, "vog", "air", "aqi")) {
+    if (!wx.air.length) return "Kilo has no air monitor reading for this island right now.";
+    const m = wx.air.reduce((a, b) => (b.pm25 > a.pm25 ? b : a));
+    // The field is named pm25 but AirNow sends the index (0 to 500), not micrograms.
+    return `The air quality index is ${m.pm25} in ${m.name}: ${m.cat.toLowerCase()}.`;
+  }
+  if (has(qt, "surf", "swell", "wave", "waves")) {
+    const top = (r: string) => parseInt(r.split("-")[1] ?? r) || 0;
+    const shores = Object.values(wx.surf?.zones ?? {}).flatMap((z) => Object.entries(z));
+    if (!shores.length) return "Kilo has no surf forecast for this island right now.";
+    const [shore, [range]] = shores.reduce((a, b) => (top(b[1][0]) > top(a[1][0]) ? b : a));
+    return `Surf is ${range.replace("-", " to ")} feet on ${shore.toLowerCase()}-facing shores, the biggest on the island.`;
+  }
+  const town = wx.towns.find((t) => t.id === ctx.town) ?? wx.towns[0];
+  const h = town?.hourly;
+  if (!h?.t.length) return "Kilo has no forecast for this island right now.";
+  if (has(qt, "wind", "windy")) return `Wind in ${town.name} is ${h.w[0]} mph, up to ${Math.max(...h.w.slice(0, 24))} mph in the next day.`;
+  return `${town.name}: ${summarize(h)}`;
+}
 
 /**
  * The next two turns of the tide, in a fixed frame. Only the numbers and times come from the data;
@@ -188,19 +242,48 @@ export function ask(q: string, ctx: AskCtx): Answer {
   // title, never its body: a closure elsewhere routinely names this road as the way around, and that
   // is not the road being closed.
   const onRoad = (i: Item) => road!.names.some((nm) => nm.every((w) => fold(i.title).includes(w)));
-  const pool = road ? ctx.items.filter(onRoad) : ctx.items;
+  // A question about one topic is only ever answered from that topic: "power outage in Puna" must
+  // not come back with a police notice that happens to say Puna. Reports are a tier, not a type.
+  const inTopic = (i: Item) => !!topic && (topic.key === "reports" ? i.tier === "community" : topic.types.includes(i.type));
+  const pool = road ? ctx.items.filter(onRoad) : topic ? ctx.items.filter(inTopic) : ctx.items;
+  const island = ctx.island ?? "hawaii";
+  const wxLine = topic?.key === "weather" && !road ? wxSay(qt, ctx, island) : undefined;
+  // Everything of the topic's own kind answers a question about the topic; beside a forecast
+  // sentence only the alerts the question's words name belong.
+  const min = topic && !road && !wxLine ? 4 : 6;
 
   const scored = pool.map((item) => {
     const hay = haystack(item);
     let score = road ? 6 : 0;
-    if (topic?.types.includes(item.type)) score += 4;
+    if (inTopic(item)) score += 4;
     for (const w of qt) if (w.length > 2 && hay.includes(w)) score += 2;
     if (districts.length && districts.some((d) => item.districts.includes(d))) score += 3;
     score += (ctx.plain.get(item.key)?.level ?? 0) * 0.5;
     return { item, score };
-  }).filter((h) => h.score >= 6).sort((a, b) => b.score - a.score || b.item.issuedAt - a.item.issuedAt);
+  }).filter((h) => h.score >= min).sort((a, b) => b.score - a.score || b.item.issuedAt - a.item.issuedAt);
 
   const items = scored.slice(0, 6).map((h) => h.item);
+  if (wxLine) return { say: wxLine, items, topic, href: topic!.href, allClear: false };
+
+  // No power company publishes a feed Kilo can read, so silence about power is never an all-clear.
+  if (topic?.key === "outage" && !road) {
+    const water = has(qt, "water", "boil"), power = has(qt, "power", "electricity", "electric", "lights");
+    if (power || !water) {
+      const u = island === "kauai"
+        ? { name: "KIUC", url: "https://kiuc.coop/outage-center" }
+        : { name: "Hawaiian Electric", url: "https://www.hawaiianelectric.com/safety-and-outages/power-outages" };
+      return {
+        say: `Kilo has no feed from ${u.name}, so it cannot say whether the power is out. Their outage page can.`,
+        items: power && !water ? items.filter((i) => i.source !== "hidws") : items,
+        topic, link: { label: `${u.name} outages`, url: u.url }, allClear: false,
+      };
+    }
+    // Water: only Hawaiʻi County's water department has a feed (convex/ingest.ts SOURCES, "hidws").
+    if (!items.length) return island === "hawaii"
+      ? { say: "No water notices from the county water department.", items, topic, href: topic.href, allClear: true }
+      : { say: "Kilo has no feed from the water department on this island.", items, topic, allClear: false };
+  }
+
   if (items.length) {
     const p = ctx.plain.get(items[0].key);
     return {
@@ -212,12 +295,20 @@ export function ask(q: string, ctx: AskCtx): Answer {
   // Nothing matched. Saying so precisely is the most useful thing a search over a closed set can do:
   // we know every road in the pack, so "nothing reported on Saddle Rd" is a fact, not a shrug.
   if (road) return { say: `No closure reported on ${road.label}.`, items: [], topic: TOPICS[0], href: "/traffic/", allClear: true };
+  if (topic?.key === "weather" && !ctx.wx) return { say: "The weather has not loaded yet.", items: [], topic, href: topic.href, allClear: false };
+  // Schools and shelters come from Hawaiʻi County Civil Defense alone; elsewhere there is nothing to be silent.
+  if (topic && island !== "hawaii" && NO_FEED[topic.key]) return { say: NO_FEED[topic.key], items: [], topic, allClear: false };
   if (topic) return { say: NOTHING[topic.key] ?? "Nothing reported.", items: [], topic, href: topic.href, allClear: true };
   return { say: "", items: [], allClear: false };
 }
 
+const NO_FEED: Record<string, string> = {
+  school: "Kilo has no feed for school closures on this island. Check with the school.",
+  shelters: "Kilo has no feed for shelters on this island. Check with your county.",
+};
+
 /** The all-clear line per topic. Fixed wording, no agency words, safe to show when we found nothing. */
-const NOTHING: Record<string, string> = {
+export const NOTHING: Record<string, string> = {
   roads: "No crashes or closures reported.",
   storms: "No storms near Hawaiʻi right now.",
   quakes: "No earthquake big enough to feel.",
@@ -226,7 +317,6 @@ const NOTHING: Record<string, string> = {
   shelters: "No shelters are open right now.",
   weather: "No weather warning right now.",
   school: "No school closures reported.",
-  outage: "No power or water problems reported.",
   reports: "Nobody has posted a report today.",
   tides: "The tide table has not loaded yet.",
 };

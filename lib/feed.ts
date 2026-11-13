@@ -6,7 +6,7 @@
 //   feed    — everything else, worst first, newest inside that.
 // A topic summary is not a feed row: Lowell and Karina are two rows, not a "Storms" card.
 import type { Island, Item, ItemType } from "./types.ts";
-import { plainAlert, type Level, type Plain, type StormLine } from "./plain.ts";
+import { longTermClosure, plainAlert, type Level, type Plain, type StormLine } from "./plain.ts";
 import type { LatLon } from "./roads.ts";
 import { fmtClock } from "./brand.ts";
 
@@ -139,7 +139,8 @@ export type FeedInput = {
  */
 export function buildFeed({ items, plain, now, storms }: FeedInput): FeedBand[] {
   const rows: FeedRow[] = items
-    .filter((i) => i.tier !== "community")
+    // A long-term closure is not "happening today": it stays on the Roads page and in the roads count.
+    .filter((i) => i.tier !== "community" && !longTermClosure(i, now))
     .map((i) => [i, plain.get(i.key)] as const)
     .filter((pair): pair is readonly [Item, Plain] => !!pair[1] && !isPinned(pair[0], pair[1]))
     .map(([i, p]) => rowOf(i, p, now));
@@ -159,7 +160,9 @@ export function buildFeed({ items, plain, now, storms }: FeedInput): FeedBand[] 
 
   // Severity first, then newest — the order asked for. Everything urgent is already pinned,
   // so in practice this band runs from "worth knowing" down to "for the record".
-  rows.sort((a, b) => b.level - a.level || b.at - a.at);
+  // Below "heads up", a press release never sits above roads and weather just for being newer.
+  const release = (r: FeedRow) => Number(r.level < 2 && r.topic === "reports");
+  rows.sort((a, b) => b.level - a.level || release(a) - release(b) || b.at - a.at);
   return rows.length ? [{ key: "today", label: "Also happening today", rows }] : [];
 }
 

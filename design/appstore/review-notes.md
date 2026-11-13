@@ -6,11 +6,15 @@ Information → Notes field, which caps at 4000 bytes — paste **review-notes-s
 
 ---
 
-**1. Screen recording.** Attached/linked separately. It is captured on a physical iPhone running the
-latest iOS, begins at app launch, and shows: onboarding (island, town, optional location, optional
-warnings) → the Now screen → Weather → Roads → Reports, including posting a neighbor report, flagging
-a post, and hiding a neighbor. There is no account registration, no login, no account deletion and no
-paid content anywhere in the app, so none of those flows appear.
+**1. Screen recording.** Attached. It was recorded in the iOS Simulator (iPhone 17 Pro Max, iOS 26.3)
+with a release build of this version, starting at first launch, and shows: onboarding (island, town,
+and the optional location and warnings steps, both skipped) → the Now screen → Weather → Roads →
+Reports: posting a neighbor report (a "Something else" post, which is always held for a person to read
+first), flagging a neighbor's post, hiding that neighbor, and undoing the hide in Settings → "Neighbors
+you have hidden"; then the in-app search. So that no real neighbor's post was flagged on camera, the
+build was pointed at our test server, which runs the same code against the same public feeds; the post
+that is flagged and hidden is a test post there. There is no account registration, no login, no
+account deletion and no paid content anywhere in the app, so none of those flows appear.
 
 **2. What the app is, and who it is for.** Kilo shows what is happening on one Hawaiian island —
 official warnings, storms, road closures, shelters, weather, earthquakes, tsunami evacuation zones and

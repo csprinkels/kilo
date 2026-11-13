@@ -71,7 +71,8 @@ export default defineSchema({
     failures: v.number(),
     kind: v.optional(v.string()), // absent = "web"; "apns" | "fcm" rows keep the device token in `endpoint`, p256dh/auth ""
   }).index("by_endpoint", ["endpoint"]).index("by_island", ["island"]),
-  pushLog: defineTable({ island: v.string(), at: v.number(), trigger: v.string(), sent: v.number(), failed: v.number() }).index("by_island", ["island"]),
+  // kind + level: what was said and how urgently, so a reissue stays quiet. held: waiting for the gap to end (lib/pushRules.ts).
+  pushLog: defineTable({ island: v.string(), at: v.number(), trigger: v.string(), sent: v.number(), failed: v.number(), kind: v.optional(v.string()), level: v.optional(v.number()), held: v.optional(v.boolean()), until: v.optional(v.number()) }).index("by_island", ["island"]),
 
   // Community reports. Never deleted by app code while fresh; never published with coordinates (none collected in v1).
   reports: defineTable({

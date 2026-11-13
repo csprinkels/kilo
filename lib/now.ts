@@ -1,12 +1,22 @@
 // What the Now page says, as pure functions: the one-line story at the top and the one line per topic.
 // No React here so tests/now.test.ts can pin the sentences.
 import type { Island, Item } from "./types.ts";
-import type { Plain, StormLine } from "./plain.ts";
-import { fmtClock } from "./brand.ts";
+import { longTermClosure, type Plain, type StormLine } from "./plain.ts";
+import { fmtClock, islandName } from "./brand.ts";
 
 export type Row = { key: string; label: string; text: string; href: string; quiet: boolean };
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+/** The one link that opens an item in Kilo: a push tap and a shared alert land on the same place. */
+export const itemLink = (island: string, key: string, ref?: string, site = "https://app.kilohi.org") =>
+  `${site}/?island=${island}&item=${encodeURIComponent(key)}${ref ? `&ref=${ref}` : ""}`;
+
+/** On a quiet day HVO's own short sentence (v1/volcano.json kilauea.sms) says more than ours. Used as written, and only while fresh. */
+export const volcanoLine = (row: Row, k: { sms?: string; erupting?: boolean; noticeAt?: number } | undefined, now: number) =>
+  row.quiet && k?.sms && !k.erupting && now - (k.noticeAt ?? 0) < 2 * 86_400_000 ? k.sms : row.text;
+
+/** The roads sentence the hero may print: without the counts that follow it. */
+const roadLead = (text: string) => text.replace(/(\s+\d+ more\.)?(\s+\d+ long-term closures?\.)?$/, "");
 
 /** The hero sentence: the storm if one is coming, else the lead warning, else a shelter, else the roads, else "ordinary day". */
 export function nowStory({ storm, roads, shelterPlain, leadPlain, nextPlain, island }: {
@@ -20,7 +30,7 @@ export function nowStory({ storm, roads, shelterPlain, leadPlain, nextPlain, isl
   island: string;
 }): { title: string; sub: string } {
   const extra = [
-    !roads.quiet ? roads.text.replace(/\s+\d+ more\.$/, "") : "",
+    !roads.quiet ? roadLead(roads.text) : "",
     shelterPlain?.headline ?? "",
   ].filter(Boolean).join(" ");
   if (storm) {
@@ -31,7 +41,7 @@ export function nowStory({ storm, roads, shelterPlain, leadPlain, nextPlain, isl
   if (shelterPlain) return { title: shelterPlain.headline + (shelterPlain.headline.endsWith(".") ? "" : "."), sub: extra && extra !== shelterPlain.headline ? extra : (shelterPlain.action || "") };
   // A watch outranks a closed road: it is the thing you opened the app to find out about.
   if (nextPlain) return { title: nextPlain.headline + (nextPlain.headline.endsWith(".") ? "" : "."), sub: extra || nextPlain.action };
-  if (!roads.quiet) return { title: roads.text.replace(/\s+\d+ more\.$/, ""), sub: "The rest of the island looks ordinary." };
+  if (!roads.quiet) return { title: roadLead(roads.text), sub: "The rest of the island looks ordinary." };
   return { title: `Here's what's on ${island} today.`, sub: "Nothing urgent. Roads and weather are below." };
 }
 
@@ -56,7 +66,10 @@ export function topicRows(
   quakeText?: string,
 ): Row[] {
   const of = (f: (i: Item) => boolean) => items.filter((i) => i.tier !== "community" && f(i));
-  const roads = of((i) => i.type === "road_closure" && i.source !== "hdot");
+  const closures = of((i) => i.type === "road_closure" && i.source !== "hdot");
+  // A road the county closed in May is still closed, but it is not today's headline: it becomes a count.
+  const roads = closures.filter((i) => !longTermClosure(i, now));
+  const longTerm = closures.length - roads.length;
   const traffic = of((i) => i.type === "traffic");
   const roadwork = of((i) => i.source === "hdot").length;
   const community = items.filter((i) => i.tier === "community");
@@ -64,12 +77,17 @@ export function topicRows(
   const volcano = of((i) => i.type === "volcano");
   const tsunami = of((i) => i.type === "tsunami");
 
-  let roadsText = "No crashes or closures reported.";
-  if (roads.length || traffic.length) {
-    const first = plain.get((roads[0] ?? traffic[0]).key)!.headline;
+  let roadsText = longTerm ? "No new crashes or closures." : "No crashes or closures reported.";
+  // One level-1 crash out of a dozen is not the island's headline; a closure or a dead traffic light can be.
+  const first = roads[0] ?? traffic.find((t) => (plain.get(t.key)?.level ?? 0) >= 2);
+  if (first) {
     const more = roads.length + traffic.length - 1;
-    roadsText = `${first}.${more ? ` ${more} more.` : ""}`;
-  } else if (roadwork) roadsText = `No crashes or closures reported. ${plural(roadwork, "roadwork site")} today.`;
+    roadsText = `${plain.get(first.key)!.headline}.${more ? ` ${more} more.` : ""}`;
+  } else if (traffic.length) {
+    const crashes = traffic.filter((t) => /crash/.test(t.status ?? "")).length, other = traffic.length - crashes;
+    roadsText = `${[crashes && plural(crashes, "crash", "crashes"), other && plural(other, crashes ? "other traffic problem" : "traffic problem")].filter(Boolean).join(" and ")} on ${islandName(island)}.`;
+  } else if (roadwork) roadsText += ` ${plural(roadwork, "roadwork site")} today.`;
+  if (longTerm) roadsText += ` ${plural(longTerm, "long-term closure")}.`;
 
   // Fallback when the quake file has not loaded: the island snapshot only keeps 3 days, so say less rather than wrong.
   if (!quakeText) {
@@ -86,7 +104,7 @@ export function topicRows(
   // in effect. Level 0 is the "no danger for Hawaiʻi" record, so anything above it speaks for itself.
   const worstTsunami = tsunami.slice().sort((a, b) => plain.get(b.key)!.level - plain.get(a.key)!.level)[0];
   const tsunamiHot = !!worstTsunami && plain.get(worstTsunami.key)!.level >= 2;
-  const tsunamiText = tsunamiAbove ? "See the warning above." : tsunamiHot ? plain.get(worstTsunami.key)!.headline : "The ocean is fine.";
+  const tsunamiText = tsunamiAbove ? "See the warning above." : tsunamiHot ? plain.get(worstTsunami.key)!.headline : "The ocean is fine. Check if you are in an evacuation zone.";
   const neighborsText = community.length ? `${plural(community.length, "report")} today. Latest: ${plain.get(community[0].key)!.headline}.` : "Nobody posted today.";
 
   const quakeQuiet = quakeText.startsWith("Nothing big") || (!/\b\d\.\d\b/.test(quakeText) && !/shook|felt/i.test(quakeText));

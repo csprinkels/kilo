@@ -104,7 +104,9 @@ export default function WeatherPage() {
   const storm = (stormsSnap?.data?.storms ?? []).map((s) => stormLine(s, ISLAND_POINTS[island])).find((l) => l.approaching && l.level >= 3);
   // The surf card is one sentence, and that sentence comes out empty on feeds whose zone names it
   // cannot read. Build it once: what the chip offers and what the card holds are then the same thing.
-  const surfLine = d?.surf ? surfSentence(d.surf.zones, island) : "";
+  // The forecast's own period names ("Tonight", "Friday"); data published before they were stored falls back to today/tomorrow.
+  const surfDays = d?.surf?.days;
+  const surfLine = d?.surf ? surfSentence(d.surf.zones, island, surfDays?.[1]) : "";
   const air = d && d.air.length > 0 && town ? airFor(d.air, town.name) : undefined;
   const airLevel = air ? rank(air.cat) : 0;
 
@@ -249,18 +251,18 @@ export default function WeatherPage() {
                 <span className="cs-ictile cs-ictile--lg"><Icon name="waves" size={20} /></span>
                 <span className="cs-tophead-t">
                   <span className="cs-label">Surf</span>
-                  <h2 className="cs-display cs-display--card">Waves today</h2>
+                  <h2 className="cs-display cs-display--card">Waves {surfDays?.[0].toLowerCase() ?? "today"}</h2>
                 </span>
               </div>
               <p className="cs-body">{surfLine}</p>
               <div className="cs-grid2">
-                {/* One short label per cell, as on Now: today and tomorrow are two cells, not one wrapped line. */}
+                {/* One short label per cell, as on Now: the two periods are two cells, not one wrapped line. */}
                 {surfSides(d.surf.zones, island).flatMap((s) => [
                   <p key={s.side}><Icon name="waves" size={18} /><b>{s.today} ft</b><span>{s.side}</span></p>,
-                  <p key={`${s.side}-tomorrow`}><Icon name="waves" size={18} /><b>{s.tomorrow} ft</b><span>{s.side.replace(/ (side|shore)$/i, "")} tomorrow</span></p>,
+                  <p key={`${s.side}-tomorrow`}><Icon name="waves" size={18} /><b>{s.tomorrow} ft</b><span>{s.side.replace(/ (side|shore)$/i, "")} {surfDays?.[1] ?? "tomorrow"}</span></p>,
                 ])}
                 {d.buoys[0] && <p><Icon name="navigation-arrow" size={18} /><b>{d.buoys[0].hFt} ft</b><span>{d.buoys[0].name} buoy · {d.buoys[0].perS} s</span></p>}
-                {d.surf.uv && <p><Icon name="sun-horizon" size={18} /><b>{d.surf.uv} high</b><span>UV today</span></p>}
+                {d.surf.uv && <p><Icon name="sun-horizon" size={18} /><b>{d.surf.uv}</b><span>UV {surfDays?.[0] === "Tonight" ? surfDays[1] : "today"}</span></p>}
               </div>
             </section>
           )}
@@ -290,7 +292,7 @@ export default function WeatherPage() {
               <p className="cs-body">{airSentence(d.air, town.name, island)}</p>
               <div className="cs-grid2">
                 {d.air.map((m) => <p key={m.name}><Icon name={island === "hawaii" ? "mountains" : "wind"} size={18} /><b>{m.pm25}</b><span>{m.name} · {m.cat.toLowerCase()}</span></p>)}
-                <p><Icon name="question" size={18} /><b>PM2.5</b><span>fine particles, µg/m³</span></p>
+                <p><Icon name="question" size={18} /><b>0 to 500</b><span>air quality index, lower is cleaner</span></p>
               </div>
               {island === "hawaii" && (
                 <div className="cs-foot">
@@ -439,7 +441,7 @@ function weekSentence(fc: Period[]): string {
 }
 
 /** One sentence from the surf forecast: which side, how big, and whether tomorrow is bigger. */
-function surfSentence(zones: Record<string, Record<string, [string, string]>>, island: Island): string {
+function surfSentence(zones: Record<string, Record<string, [string, string]>>, island: Island, next = "tomorrow"): string {
   const hi = (s: string) => parseInt(s.split("-")[1] ?? s) || 0;
   const words = (s: string) => s.replace("-", " to ");
   const biggest = (shores: Record<string, [string, string]>) => Object.values(shores).reduce((a, b) => (hi(b[0]) > hi(a[0]) ? b : a));
@@ -458,7 +460,7 @@ function surfSentence(zones: Record<string, Record<string, [string, string]>>, i
   if (!parts.length) return "";
   const all = Object.values(zones).flatMap((z) => Object.values(z));
   const today = Math.max(...all.map((r) => hi(r[0]))), tomorrow = Math.max(...all.map((r) => hi(r[1])));
-  const trend = tomorrow - today >= 2 ? " Bigger tomorrow." : today - tomorrow >= 2 ? " Smaller tomorrow." : " About the same tomorrow.";
+  const trend = tomorrow - today >= 2 ? ` Bigger ${next}.` : today - tomorrow >= 2 ? ` Smaller ${next}.` : ` About the same ${next}.`;
   return `Waves ${parts.join(", ")}.${trend}`;
 }
 

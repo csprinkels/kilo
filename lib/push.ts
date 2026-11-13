@@ -25,6 +25,38 @@ const b64ToU8 = (s: string) => {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 };
 
+/** POST this phone's one subscription row. The moderator's row is only accepted with the key /mod keeps in this browser. */
+async function postSub(body: Record<string, unknown>, island: string) {
+  const res = await fetch(`${API_URL}/v1/push/subscribe`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, island, ...(island === "mod" ? { modKey: localStorage.getItem("modKey") } : {}) }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) throw new Error(`subscribe ${res.status}`);
+  localStorage.setItem("push.island", island);
+}
+
+/**
+ * Point the subscription this phone already has at `island` (default: the stored one). The server keeps one
+ * island per phone, so without this a phone switched to Oʻahu keeps getting Hawaiʻi Island's warnings.
+ * Silent: never asks for permission, never throws.
+ */
+export async function syncPush(to?: Island): Promise<void> {
+  try {
+    const island = to ?? localStorage.getItem("island");
+    if (!island || island === "state" || localStorage.getItem("push.island") === "mod") return; // the owner's phone stays on moderator notes
+    if (isNative()) {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token || (await (await plugin()).push.checkPermissions()).receive !== "granted") return;
+      const { Capacitor } = await import("@capacitor/core");
+      return await postSub({ kind: Capacitor.getPlatform() === "ios" ? "apns" : "fcm", token, minSev: 3 }, island);
+    }
+    if (!("Notification" in window) || Notification.permission !== "granted" || !("serviceWorker" in navigator)) return;
+    const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+    if (sub) await postSub({ subscription: sub.toJSON(), minSev: 3 }, island); // 3: what every island subscription asks for
+  } catch { /* offline or storage off: the next launch tries again */ }
+}
+
 /** Subscribe this browser to the island digest. Returns the new status. */
 export async function enablePush(island: Exclude<Island, "state"> | "mod", minSev = 3): Promise<PushStatus> {
   if (isNative()) return nativeEnable(island, minSev);
@@ -35,13 +67,7 @@ export async function enablePush(island: Exclude<Island, "state"> | "mod", minSe
   const { key } = (await (await fetch(`${API_URL}/v1/push/key`, { signal: AbortSignal.timeout(30_000) })).json()) as { key: string | null };
   if (!key) throw new Error("push not configured");
   const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(key) as BufferSource }));
-  const res = await fetch(`${API_URL}/v1/push/subscribe`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: sub.toJSON(), island, minSev }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`subscribe ${res.status}`);
-  localStorage.setItem("push.island", island);
+  await postSub({ subscription: sub.toJSON(), minSev }, island);
   return "on";
 }
 
@@ -92,14 +118,8 @@ async function nativeEnable(island: string, minSev: number): Promise<PushStatus>
   const token = await nativeToken();
   if (!token) return "denied";
   const { Capacitor } = await import("@capacitor/core");
-  const res = await fetch(`${API_URL}/v1/push/subscribe`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind: Capacitor.getPlatform() === "ios" ? "apns" : "fcm", token, island, minSev }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`subscribe ${res.status}`);
+  await postSub({ kind: Capacitor.getPlatform() === "ios" ? "apns" : "fcm", token, minSev }, island);
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem("push.island", island);
   return "on";
 }
 

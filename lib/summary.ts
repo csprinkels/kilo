@@ -1,5 +1,5 @@
 // Pure weather helpers shared by the Weather page and tests: Dark-Sky-style summary sentence, feels-like, sun times, icon mapping.
-import type { Hourly } from "./pages.ts";
+import type { Hourly, Tide, Weather } from "./pages.ts";
 
 const HST_OFFSET_MIN = -600;
 const hourHST = (ms: number) => new Date(ms + HST_OFFSET_MIN * 60_000).getUTCHours();
@@ -124,3 +124,24 @@ export const ICON_FOR: Record<number, { day: string; night: string; tone: string
   10: { day: "CloudLightning", night: "CloudLightning", tone: "storm" },
 };
 export const condWord = (c: number) => COND_WORD[c] ?? "Clear";
+
+const surfTop = (r: string) => parseInt(r.split("-")[1] ?? r) || 0;
+/** The island's biggest surf in the forecast's first period: which side, and the range in feet as the forecast gives it. */
+export function biggestSurf(zones: NonNullable<Weather["surf"]>["zones"], island: string): { side: string; ft: string } | undefined {
+  const all = Object.entries(zones).flatMap(([zone, shores]) => Object.entries(shores).map(([shore, [ft]]) => ({
+    // Hawaiʻi Island is forecast as two zones, named the way the Weather page names them.
+    side: island === "hawaii" && /leeward/i.test(zone) ? "Kona side" : island === "hawaii" && /windward/i.test(zone) ? "Hilo side" : `${shore} shore`, ft,
+  })));
+  return all.length ? all.reduce((a, b) => (surfTop(b.ft) > surfTop(a.ft) ? b : a)) : undefined;
+}
+
+/** The next high or low. Nothing once the saved table has run out, so an old copy never names a tide that has passed. */
+export const nextTide = (tide: Tide, now: number) => tide.hl.find((x) => x.t > now);
+
+const airRank = (cat: string) => (/good/i.test(cat) ? 0 : /moderate/i.test(cat) ? 1 : /sensitive/i.test(cat) ? 2 : 3);
+/** The town's own monitor, else the island's worst, as one plain word. The number in the file is the 0-500 index, so the category is what gets said. */
+export function airNow(air: Weather["air"] | undefined, townName: string, island: string): { name: string; word: string } | undefined {
+  if (!air?.length) return undefined;
+  const m = air.find((a) => a.name === townName || townName.startsWith(a.name)) ?? air.reduce((a, b) => (airRank(b.cat) > airRank(a.cat) ? b : a));
+  return { name: m.name, word: ["Good", "Okay", island === "hawaii" ? "Vog" : "Poor", "Unhealthy"][airRank(m.cat)] };
+}

@@ -1,7 +1,13 @@
 # App Store listing — Kilo 1.0.0
 
+## Subtitle (≤30, needs a new version)
+Alerts, Roads, Tsunami, Quakes
+
+## Categories
+Primary News, secondary Weather.
+
 ## Promotional Text (≤170, editable any time without a new build)
-Storm season: warnings, shelters, road closures and evacuation zones for your island, in plain words — and still on your phone when the signal drops.
+Winter in Hawaiʻi: high surf, flash floods, road closures and tsunami evacuation zones for your island, in plain words — and still on your phone when the signal drops.
 
 ## Description (≤4000)
 Kilo is Hawaiʻi at a glance. The official warnings, storms, road closures, shelters, weather, earthquakes and volcano status for your island, on one page you can read in ten seconds.
@@ -37,10 +43,10 @@ Kilo is not an emergency service and is not part of any government. In an emerge
 
 Free. No ads. No account, ever. Kilo does not track you and has nothing to sell. Location is optional, used only to sort what is near you, and never leaves your phone.
 
-Made in Hilo.
+Made in Hilo by one person. No company behind it.
 
 ## Keywords (≤100, no spaces after commas)
-hawaii,hurricane,tsunami,civil defense,shelter,road closure,volcano,vog,surf,quake,siren,evacuation
+weather,traffic,flood,lava,volcano,hurricane,civil defense,closure,maui,oahu,kauai,hilo,kona,vog
 
 ## Support URL
 https://kilohi.org/support

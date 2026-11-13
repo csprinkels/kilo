@@ -61,8 +61,8 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     try {
       // Web: { subscription: PushSubscription JSON, island, minSev }. Native: { kind: "apns"|"fcm", token, island, minSev }.
-      const { subscription, kind, token, island, minSev } = await req.json();
-      const common = { island: String(island), minSev: Math.min(4, Math.max(2, Number(minSev) || 3)) };
+      const { subscription, kind, token, island, minSev, modKey } = await req.json();
+      const common = { island: String(island), minSev: Math.min(4, Math.max(2, Number(minSev) || 3)), ...(typeof modKey === "string" ? { modKey } : {}) };
       await ctx.runMutation(api.pushStore.subscribe, kind
         ? { kind: String(kind), endpoint: String(token ?? ""), p256dh: "", auth: "", ...common }
         : { endpoint: String(subscription.endpoint), p256dh: String(subscription.keys.p256dh), auth: String(subscription.keys.auth), ...common });

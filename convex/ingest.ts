@@ -9,6 +9,7 @@ import { HDOT_URL, HIEMA_URL, HNL_TRAFFIC_URL, HPD_URL, HVO_URL, PTWC_URL, USGS_
 import { districtFor } from "../lib/places.ts";
 import { plainAlert } from "../lib/plain.ts";
 import { reportToItem } from "../lib/reportRules.ts";
+import { escalated } from "../lib/pushRules.ts";
 
 export const UA = "Kilo/0.1 (kilohi.org; aloha@csprinkels.com)";
 const BROWSER_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
@@ -80,7 +81,9 @@ export const commit = internalMutation({
     now: v.number(),
   },
   handler: async (ctx, { batches, health, now }) => {
-    const fresh = new Set<string>(); // keys that are new (or came back) this run: push triggers
+    const fresh = new Set<string>(); // keys that are new, came back, or got more urgent this run: push triggers
+    // The most urgent this item reads on any island. A template that throws reads as 0, the same as levelOf below.
+    const peak = (i: Item) => Math.max(...ISLANDS.map((is) => { try { return plainAlert(i, now, is).level; } catch { return 0; } }));
     for (const { source, items } of batches) {
       const existing = await ctx.db.query("items").withIndex("by_source_active", (q) => q.eq("source", source).eq("active", true)).collect();
       const seen = new Set<string>();
@@ -90,7 +93,8 @@ export const commit = internalMutation({
         if (!row) { await ctx.db.insert("items", { ...item, active: true }); fresh.add(item.key); }
         // Islands are outside the content hash, so a fix to how an alert is placed (a zone re-tagged from one
         // island to another) would otherwise never reach a row that is already stored. No push is sent for it.
-        else if (row.hash !== item.hash || !row.active || [...row.islands].sort().join() !== [...item.islands].sort().join()) { await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true }); if (!row.active) fresh.add(item.key); }
+        // A push IS sent when the same key gets more urgent in place (Kīlauea's key never changes: ADVISORY -> WARNING).
+        else if (row.hash !== item.hash || !row.active || [...row.islands].sort().join() !== [...item.islands].sort().join()) { await ctx.db.patch(row._id, { ...item, issuedAt: row.active ? row.issuedAt : item.issuedAt, active: true }); if (!row.active || escalated(peak(row as unknown as Item), peak(item))) fresh.add(item.key); }
         else await ctx.db.patch(row._id, { lastConfirmedAt: now, expiresAt: item.expiresAt });
       }
       for (const row of existing) if (!seen.has(row.key)) await ctx.db.patch(row._id, { active: false });
@@ -110,7 +114,7 @@ export const commit = internalMutation({
 
     const out: { path: string; body: string }[] = [];
     const vmap = {} as Record<Island, number>;
-    const triggers: { island: Island; key: string; level: number }[] = [];
+    const triggers: { island: Island; key: string; level: number; rest: { key: string; level: number }[] }[] = [];
     for (const island of [...ISLANDS, "state" as const]) {
       const items = [
         ...active.filter((r) => island === "state" || r.islands.includes(island) || r.islands.includes("state")).map(toItem),
@@ -132,11 +136,11 @@ export const commit = internalMutation({
         const levelOf = (i: Item) => {
           try { return plainAlert(i, now, island).level; } catch (e) { console.error(`[ingest] plainAlert ${i.key}:`, e); return 0; }
         };
-        const lead = items.find((i) => fresh.has(i.key) && levelOf(i) >= 3);
-        if (lead) triggers.push({ island, key: lead.key, level: levelOf(lead) });
+        const [lead, ...rest] = items.filter((i) => fresh.has(i.key)).map((i) => ({ key: i.key, level: levelOf(i) })).filter((t) => t.level >= 3).sort((a, b) => b.level - a.level).slice(0, 8);
+        if (lead) triggers.push({ island, ...lead, rest });
       }
     }
-    for (const t of triggers) await ctx.scheduler.runAfter(0, internal.push.sendDigest, { island: t.island, trigger: t.key, level: t.level });
+    for (const t of triggers) await ctx.scheduler.runAfter(0, internal.push.sendDigest, { island: t.island, trigger: t.key, level: t.level, rest: t.rest });
     const manifest: Manifest = { gen: now, mode, v: vmap, sources: health };
     out.push({ path: "v1/manifest.json", body: JSON.stringify(manifest) });
 

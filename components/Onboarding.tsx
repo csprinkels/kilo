@@ -7,6 +7,7 @@ import { TOWNS } from "@/lib/towns";
 import { APP_NAME, islandName } from "@/lib/brand";
 import { enablePush, pushStatus, type PushStatus } from "@/lib/push";
 import { track } from "@/lib/stat";
+import { getPosition } from "@/lib/native";
 import "@/app/support/text.css";
 
 type IslandId = Exclude<Island, "state">;
@@ -38,7 +39,7 @@ export default function Onboarding({ onDone }: { onDone: (island: IslandId) => v
   const askLocation = () => {
     setBusy(true); setNote(null);
     if (!("geolocation" in navigator)) { setBusy(false); setNote("This phone cannot share its location."); return; }
-    navigator.geolocation.getCurrentPosition(
+    getPosition(
       () => { setBusy(false); setStep(canAskPush ? "warnings" : "done"); },
       () => { setBusy(false); setNote("That is okay. You can allow it later from the Tsunami or Roads page."); },
       { timeout: 15_000, maximumAge: 600_000 },

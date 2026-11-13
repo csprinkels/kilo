@@ -120,3 +120,32 @@ test("the pin says one kind once: zones of a watch, open shelters and closed sch
   assert.equal(hrefOf(items[0]), "/weather/", "a watch reads in full on the Weather page");
   assert.equal(hrefOf(item({ key: "s", type: "shelter", srcUrl: "https://arcgis.example/dash" })), "https://arcgis.example/dash", "no page here lists shelters: Civil Defense's dashboard does");
 });
+
+test("a long-term closure is not 'happening today'; a fresh one is, and old rows carry a date", () => {
+  const DAY = 86_400_000;
+  const items = [
+    item({ key: "may", type: "road_closure", issuedAt: now - 100 * DAY, fields: { editDate: String(now - 100 * DAY) } }),
+    item({ key: "lt", type: "road_closure", issuedAt: now - 2 * DAY, fields: { reason: "Long-term closure for bridge repair", editDate: String(now - 2 * DAY) } }),
+    item({ key: "new", type: "road_closure" }),
+    item({ key: "work", type: "road_closure", source: "hdot", issuedAt: Date.UTC(2026, 4, 26, 23, 23) }),   // roadwork since May 26, 1:23 PM HST
+    item({ key: "mon", type: "quake", issuedAt: now - 3 * DAY }),
+  ];
+  const plain = new Map(items.map((i) => [i.key, P(`${i.key} row`, 1)]));
+  const rows = buildFeed({ items, plain, now, island: "hawaii" }).flatMap((b) => b.rows);
+  assert.deepEqual(rows.map((r) => r.key).sort(), ["mon", "new", "work"]);
+  const when = Object.fromEntries(rows.map((r) => [r.key, r.when]));
+  assert.equal(when.work, "May 26, 1:23 PM", "a weekday alone cannot tell this Tuesday from one in May");
+  assert.match(when.mon, /^[A-Z][a-z]{2} \d{1,2}:\d{2} [AP]M$/, "inside a week the weekday is enough");
+  assert.match(when.new, /^\d{1,2}:\d{2} [AP]M$/);
+});
+
+test("below 'heads up', a newer police release never sits above roads", () => {
+  const items = [
+    item({ key: "missing", type: "notice", source: "hpd", sev: 1, issuedAt: now - 60_000 }),
+    item({ key: "work", type: "road_closure", source: "hdot", sev: 1, issuedAt: now - 7_200_000 }),
+    item({ key: "closed", type: "notice", source: "hpd", issuedAt: now - 120_000 }),   // "Highway 11 closed": level 2, untouched
+  ];
+  const plain = new Map([["missing", P("Police Seek Missing Runaway", 1)], ["work", P("One lane on Highway 11", 1)], ["closed", P("Highway 11 Closed Near Volcano", 2)]]);
+  const rows = buildFeed({ items, plain, now, island: "hawaii" }).flatMap((b) => b.rows);
+  assert.deepEqual(rows.map((r) => r.key), ["closed", "work", "missing"]);
+});
